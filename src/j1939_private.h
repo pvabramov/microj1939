@@ -17,17 +17,6 @@ extern "C" {
 
 #include "j1939.h"
 
-/**
- * @brief J1939 frame
- */
-typedef struct j1939_primitive {
-    PGN_format PGN;
-    uint8_t priority;
-    uint8_t src_address; // SA
-    uint16_t dlc;
-    uint8_t payload[8];
-} j1939_primitive;
-
 
 /**
  * @brief
