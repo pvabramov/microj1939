@@ -11,6 +11,9 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+
+
+#define J1939_CAN_BAUDRATE              250000
     
     
 #define J1939_MULTIPACKET_DATA_SZ       7
