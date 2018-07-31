@@ -58,8 +58,7 @@ int __j1939_send_lock(const j1939_primitive * const primitive) {
     int level = j1939_bsp_lock();
 
     if (j1939_bsp_CAN_send(primitive) < 0) {
-        j1939_tx_fifo_write(&__j1939_ctx.tx_fifo, primitive);
-        sts = 1;
+        sts = j1939_tx_fifo_write(&__j1939_ctx.tx_fifo, primitive);
     }
 
     j1939_bsp_unlock(level);
@@ -200,7 +199,9 @@ uint8_t j1939_get_address(void) {
  * @return 
  */
 int j1939_claim_address(uint8_t address) {
-    if (address >= 254)
+    int level;
+
+    if (address == 254)
         return -1;
 
     /* set a preferred address for communication with Network Management */
@@ -210,15 +211,24 @@ int j1939_claim_address(uint8_t address) {
     __j1939_ctx.state = ATEMPT_TO_CLAIM_ADDRESS;
 
     /* tell everybody for attempting to claim an address */
-    __send_claim_address(address);
+    __send_claim_address(__j1939_ctx.preferred_address);
 
     /* wait for 250 ms */
     j1939_bsp_mdelay(250);
 
-    if (__j1939_ctx.state == CANNOT_CLAIM_ADDRESS)
-        return -2;
+    level = j1939_bsp_lock();
 
-    return (__j1939_ctx.address == address) ? 0 : -3;
+    if (__j1939_ctx.state == CANNOT_CLAIM_ADDRESS) {
+        j1939_bsp_unlock(level);
+        return -2;
+    }
+
+    __j1939_ctx.address = __j1939_ctx.preferred_address;
+    __j1939_ctx.state = ACTIVE;
+
+    j1939_bsp_unlock(level);
+
+    return 0;
 }
 
 
@@ -244,12 +254,10 @@ int j1939_sendmsg_p(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void 
                                   __j1939_ctx.address, dst_addr,
                                   msg_sz,
                                   payload);
-        __j1939_send_lock(&primitive);
-    } else {
-        return j1939_tp_mgr_open_tx_session(&__j1939_ctx.tp_mgr_ctx, PGN, dst_addr, msg_sz, payload);
+        return __j1939_send_lock(&primitive);
     }
 
-    return 0;
+    return j1939_tp_mgr_open_tx_session(&__j1939_ctx.tp_mgr_ctx, PGN, dst_addr, msg_sz, payload);
 }
 
 
@@ -411,7 +419,7 @@ static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
  * 
  * @return 
  */
-int __j1939_process_rx(const j1939_primitive *const frame) {
+int j1939_process_rx(const j1939_primitive *const frame) {
     if (__j1939_ctx.state == NOT_STARTED || __j1939_ctx.state == BUS_OFF)
         return 0;
 
@@ -454,19 +462,4 @@ int __j1939_process_rx(const j1939_primitive *const frame) {
                            frame->payload);
 
     return 1;
-}
-
-
-/**
- * @brief
- * 
- * @return 
- */
-int __j1939_ISR_rx_simple(void) {
-    j1939_primitive frame;
-
-    if ((j1939_bsp_CAN_recv(&frame)) < 0)
-        return 0;
-
-    return __j1939_process_rx(&frame);
 }

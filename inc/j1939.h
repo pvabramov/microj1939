@@ -180,6 +180,7 @@ int j1939_sendmsg(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *c
 // int j1939_write_request(...);
 
 void j1939_tick(uint32_t t_delta);
+int j1939_process_rx(const j1939_primitive *const frame);
 
 
 #ifdef __cplusplus

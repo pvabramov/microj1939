@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-#include "j1939_private.h"
+#include "j1939.h"
 
 extern int j1939_bsp_lock(void);
 extern void j1939_bsp_unlock(int level);

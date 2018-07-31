@@ -120,10 +120,6 @@ extern int __j1939_send_lock(const j1939_primitive *const primitive);
 extern int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz, const void *const payload);
 
 
-extern int __j1939_process_rx(const j1939_primitive *const frame);
-extern int __j1939_ISR_rx_simple(void);
-
-
 #ifdef __cplusplus
 }
 #endif
