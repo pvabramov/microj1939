@@ -12,9 +12,11 @@ extern "C" {
 
 #include <stdint.h>
 
+#include "j1939_std_addr.h"
+#include "j1939_std_pgn.h"
+
 
 #define J1939_CAN_BAUDRATE              250000
-    
     
 #define J1939_MULTIPACKET_DATA_SZ       7
 #define J1939_MAX_DATA_SZ               (J1939_MULTIPACKET_DATA_SZ * 255)
@@ -23,28 +25,7 @@ extern "C" {
 #define J1939_GENERIC_PRIORITY          6
 #define J1939_TP_PRIORITY               7
 
-#define J1939_NULL_ADDRESS              254U
-#define J1939_GLOBAL_ADDRESS            255U
-    
-#define J1939_STD_PGN_ACKM              59392U
-#define J1939_STD_PGN_ACKM_DLC          8
 
-#define J1939_STD_PGN_RQST              59904U
-#define J1939_STD_PGN_RQST_DLC          3
-
-#define J1939_STD_PGN_TPDT              60160U
-#define J1939_STD_PGN_TPDT_DLC          8
-
-#define J1939_STD_PGN_TPCM              60416U
-#define J1939_STD_PGN_TPCM_DLC          8
-
-#define J1939_STD_PGN_ACLM              60928U
-#define J1939_STD_PGN_ACLM_DLC          8
-    
-#define J1939_STD_PGN_PROPA             61184U
-// no DLC
-
-    
 /**
  * @brief
  */
