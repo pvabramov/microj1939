@@ -157,6 +157,7 @@ int j1939_claim_address(uint8_t address);
 
 int j1939_sendmsg_p(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload, uint8_t priority);
 int j1939_sendmsg(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload);
+int j1939_sendraw(const j1939_primitive *const primitive);
 
 // int j1939_write_request(...);
 

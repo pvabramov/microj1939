@@ -278,6 +278,18 @@ int j1939_sendmsg(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *c
 
 /**
  * @brief
+ *
+ * @param primitive
+ *
+ * @return
+ */
+int j1939_sendraw(const j1939_primitive *const primitive) {
+    return __j1939_send_lock(primitive);
+}
+
+
+/**
+ * @brief
  * 
  * @param time_ms
  */
