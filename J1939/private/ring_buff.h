@@ -1,6 +1,18 @@
+/**
+ * @file ring_buff.h
+ * 
+ * @brief
+ */
+
 
 #ifndef RING_BUFFER_H_
 #define RING_BUFFER_H_
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 /*
  * Ring buffer implementation helpers
@@ -47,6 +59,11 @@ static inline unsigned ring_space_wrapped(unsigned size __attribute__((unused)),
     else
         return tail - 1;
 }
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RING_BUFFER_H_ */
 

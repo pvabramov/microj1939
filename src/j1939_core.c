@@ -1,8 +1,14 @@
+/**
+ * @file j1939_core.c
+ * 
+ * @brief
+ */
 
-#include "j1939_bsp.h"
-#include "j1939_tp_mgr.h"
-#include "j1939_tx_rx_fifo.h"
-#include "j1939_private.h"
+
+#include <J1939/j1939_bsp.h>
+#include <J1939/private/j1939_tp_mgr.h>
+#include <J1939/private/j1939_tx_rx_fifo.h>
+#include <J1939/private/j1939_private.h>
 
 
 /**

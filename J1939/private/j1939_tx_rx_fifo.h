@@ -1,5 +1,6 @@
 /**
  * @file j1939_tx_rx_queue.h
+ * 
  * @brief
  */
 
@@ -7,11 +8,12 @@
 #ifndef J1939_TX_RX_QUEUE_H
 #define J1939_TX_RX_QUEUE_H
 
+#include "j1939_private.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "j1939_private.h"
   
 
 ///

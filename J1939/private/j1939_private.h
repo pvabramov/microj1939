@@ -1,5 +1,6 @@
 /**
  * @file j1939_private.h
+ * 
  * @brief
  */
 
@@ -7,15 +8,15 @@
 #ifndef J1939_PRIVATE_H
 #define J1939_PRIVATE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 #include <stdint.h>
 #include <string.h>
 
-#include "j1939.h"
+#include <J1939/j1939.h>
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 
 /**

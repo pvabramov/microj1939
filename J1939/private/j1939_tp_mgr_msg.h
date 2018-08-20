@@ -1,5 +1,6 @@
 /**
- * @file j1939_tp_mgr_inc.h
+ * @file j1939_tp_mgr_msg.h
+ * 
  * @brief
  */
 
@@ -178,6 +179,7 @@ static inline void __send_EoMA(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN,
     
     __j1939_send_lock(&primitive);
 }
+
 
 #ifdef __cplusplus
 }

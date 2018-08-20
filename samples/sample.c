@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "j1939.h"
+#include <J1939/j1939.h>
 
 
 static const j1939_CA_name j1939_CA_test_controller = {

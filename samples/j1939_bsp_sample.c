@@ -1,7 +1,7 @@
 
 #include <string.h>
 
-#include "j1939_bsp.h"
+#include <J1939/j1939_bsp.h>
 
 
 int j1939_bsp_lock(void) {

@@ -3,14 +3,18 @@
  * 
  * @brief
  */
+
+
 #ifndef J1939_BSP_H
 #define J1939_BSP_H
+
+#include <J1939/j1939.h>
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "j1939.h"
 
 extern int j1939_bsp_lock(void);
 extern void j1939_bsp_unlock(int level);
@@ -22,6 +26,7 @@ extern int j1939_bsp_CAN_recv(j1939_primitive *const primitive);
 extern int j1939_bsp_CAN_send(const j1939_primitive *const primitive);
 
 extern void j1939_bsp_CAN_bus_off(void);
+
 
 #ifdef __cplusplus
 }

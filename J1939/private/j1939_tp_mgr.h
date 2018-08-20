@@ -1,10 +1,13 @@
 /**
  * @file j1939_tp_mgr.h
+ * 
  * @brief
  */
 
+
 #ifndef J1939_TP_MGR_H
 #define J1939_TP_MGR_H
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -203,6 +206,7 @@ void j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta);
 
 int j1939_tp_mgr_open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload);
 int j1939_tp_mgr_close_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid);
+
 
 #ifdef __cplusplus
 }

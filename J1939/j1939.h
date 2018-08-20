@@ -3,18 +3,21 @@
  * 
  * @brief
  */
+
+
 #ifndef J1939_H
 #define J1939_H
+
+#include <stdint.h>
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
 
 #include "j1939_std_addr.h"
 #include "j1939_std_pgn.h"
-
 
 #define J1939_CAN_BAUDRATE              250000
     
