@@ -8,6 +8,9 @@
 #ifndef J1939_TP_MGR_INC_H
 #define J1939_TP_MGR_INC_H
 
+#include "j1939_private.h"
+
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,18 +126,51 @@ static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t
  * 
  * @param src_addr
  * @param dst_addr
+ * @param tp_dt
+ * 
+ * @return 
+ */
+static inline int __send_TPDT(uint8_t src_addr, uint8_t dst_addr, const j1939_tp_dt *const tp_dt) {
+    j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPDT,
+                                                      J1939_TP_PRIORITY,
+                                                      src_addr, dst_addr,
+                                                      J1939_STD_PGN_TPDT_DLC,
+                                                      tp_dt);
+    return __j1939_send_lock(&primitive);
+}
+
+
+/**
+ * @brief
+ * 
+ * @param src_addr
+ * @param dst_addr
+ * @param tp_cm_control
+ * 
+ * @return 
+ */
+static inline int __send_TPCM(uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm_control) {
+    j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPCM,
+                                                      J1939_TP_PRIORITY,
+                                                      src_addr, dst_addr,
+                                                      J1939_STD_PGN_TPCM_DLC,
+                                                      tp_cm_control);
+    return __j1939_send_lock(&primitive);
+}
+
+
+/**
+ * @brief
+ * 
+ * @param src_addr
+ * @param dst_addr
  * @param PGN
  * @param pkt_num
  * @param pkt_next
  */
-static inline void __send_CTS(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t pkt_num, uint8_t pkt_next) {
+static inline int __send_CTS(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t pkt_num, uint8_t pkt_next) {
     j1939_tp_cm_control payload = __new_tp_cm_CTS(pkt_num, pkt_next, PGN);
-    j1939_primitive primitive   = j1939_primitive_build(J1939_STD_PGN_TPCM,
-                                                        J1939_TP_PRIORITY,
-                                                        src_addr, dst_addr,
-                                                        J1939_STD_PGN_TPCM_DLC,
-                                                        &payload);
-    __j1939_send_lock(&primitive);
+    return __send_TPCM(src_addr, dst_addr, &payload);
 }
 
 
@@ -147,15 +183,9 @@ static inline void __send_CTS(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, 
  * @param PGN
  * @param reason
  */
-static inline void __send_Conn_Abort(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason) {
+static inline int __send_Conn_Abort(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason) {
     j1939_tp_cm_control payload = __new_tp_cm_Conn_Abort(reason, PGN);
-    j1939_primitive primitive   = j1939_primitive_build(J1939_STD_PGN_TPCM,
-                                                    J1939_TP_PRIORITY,
-                                                    src_addr, dst_addr,
-                                                    J1939_STD_PGN_TPCM_DLC,
-                                                    &payload);
-    
-    __j1939_send_lock(&primitive);
+    return __send_TPCM(src_addr, dst_addr, &payload);
 }
 
 
@@ -169,15 +199,9 @@ static inline void __send_Conn_Abort(uint8_t src_addr, uint8_t dst_addr, uint32_
  * @param total_msg_sz
  * @param total_pkt_num
  */
-static inline void __send_EoMA(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint16_t total_msg_sz, uint8_t total_pkt_num) {
+static inline int __send_EoMA(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint16_t total_msg_sz, uint8_t total_pkt_num) {
     j1939_tp_cm_control payload = __new_tp_cm_EoMA(total_msg_sz, total_pkt_num, PGN);
-    j1939_primitive primitive   = j1939_primitive_build(J1939_STD_PGN_TPCM,
-                                                    J1939_TP_PRIORITY,
-                                                    src_addr, dst_addr,
-                                                    J1939_STD_PGN_TPCM_DLC,
-                                                    &payload);
-    
-    __j1939_send_lock(&primitive);
+    return __send_TPCM(src_addr, dst_addr, &payload);
 }
 
 
