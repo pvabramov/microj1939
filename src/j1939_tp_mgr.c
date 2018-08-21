@@ -39,7 +39,7 @@ void j1939_tp_mgr_init(j1939_tp_mgr_ctx *const tp_mgr_ctx) {
 
     for (i = 0; i < J1939_TP_SESSIONS_NUM; ++i) {
         tp_mgr_ctx->sessions[i].id = i;
-        tp_mgr_ctx->sessions[i].transmition_timeout = 0;
+        tp_mgr_ctx->sessions[i].transmition_timeout = J1939_TP_TO_INF;
         tp_mgr_ctx->sessions[i].state = J1939_TP_STATE_FREE;
         tp_mgr_ctx->sessions[i].dir = J1939_TP_DIR_UNKNOWN;
     }
@@ -112,12 +112,14 @@ int __detach_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
     session = &tp_mgr_ctx->sessions[sid];
     if (session->state == J1939_TP_STATE_FREE)
         return -2;
-    
-    session->state = J1939_TP_STATE_READY;
-    session->transmition_timeout = 0;
-    
+
+    session->state = J1939_TP_STATE_RESERVED;
+
     __clean_tables(tp_mgr_ctx, session);
-    
+
+    session->transmition_timeout = J1939_TP_TO_INF;
+    session->state = J1939_TP_STATE_READY;
+
     return 0;
 }
 
@@ -139,12 +141,14 @@ int __close_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
     session = &tp_mgr_ctx->sessions[sid];
     if (session->state == J1939_TP_STATE_FREE)
         return -2;
-    
-    session->state = J1939_TP_STATE_FREE;
-    session->transmition_timeout = 0;
-        
+
+    session->state = J1939_TP_STATE_RESERVED;
+
     __clean_tables(tp_mgr_ctx, session);
-    
+
+    session->transmition_timeout = J1939_TP_TO_INF;
+    session->state = J1939_TP_STATE_FREE;
+
     return 0;
 }
 
@@ -567,6 +571,64 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
 /**
  * @brief
  *
+ * @param session
+ * @param t_delta
+ *
+ * @return
+ */
+static int __tp_mgr_session_timeout_check(j1939_tp_session *const session, uint32_t t_delta) {
+    int sts;
+    int level = j1939_bsp_lock();
+
+    if (session->transmition_timeout != J1939_TP_TO_INF)
+        session->transmition_timeout -= t_delta;
+
+    if (session->transmition_timeout < 0) {
+        session->state = J1939_TP_STATE_TIMEDOUT;
+        sts = 1;
+    } else {
+        sts = 0;
+    }
+
+    j1939_bsp_unlock(level);
+
+    return sts;
+}
+
+
+/**
+ * @brief
+ *
+ * @param self_addr
+ * @param tp_mgr_ctx
+ * @param session
+ * @param t_delta
+ *
+ * @return
+ */
+static int __tp_mgr_process_timeout_check(uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session, uint32_t t_delta) {
+    int is_timedout;
+
+    if (session->state != J1939_TP_STATE_TRANSMIT &&
+        session->state != J1939_TP_STATE_WAIT_CTS &&
+        session->state != J1939_TP_STATE_WAIT_EOMA)
+        return 0;
+
+    is_timedout = __tp_mgr_session_timeout_check(session, t_delta);
+
+    if (is_timedout) {
+        if (session->mode == J1939_TP_MODE_RTS) {
+            uint8_t dst_addr = (session->dir == J1939_TP_DIR_IN) ? session->src_addr : session->dst_addr;
+            __send_Conn_Abort(self_addr, dst_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT);
+        }
+        __close_tp_session(tp_mgr_ctx, session->id);
+    }
+
+    return is_timedout;
+}
+/**
+ * @brief
+ *
  * @param tp_mgr_ctx
  * @param time_ms
  */
@@ -587,28 +649,9 @@ void j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) 
 
     for (i = 0; i < J1939_TP_SESSIONS_NUM; ++i) {
         j1939_tp_session *const session = &tp_mgr_ctx->sessions[i];
-        
-        level = j1939_bsp_lock();
-        
-        if (session->state == J1939_TP_STATE_TRANSMIT) {
-            session->transmition_timeout -= t_delta;
-            
-            if (session->transmition_timeout < 0) {
-                session->state = J1939_TP_STATE_TIMEDOUT;
-                
-                j1939_bsp_unlock(level);
-                
-                if (session->mode == J1939_TP_MODE_RTS) {
-                    uint8_t src_addr = CA_addr;
-                    uint8_t dst_addr = (session->dir == J1939_TP_DIR_IN) ? session->src_addr : session->dst_addr;
-                    
-                    __send_Conn_Abort(src_addr, dst_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT);
-                }
-                __close_tp_session(tp_mgr_ctx, session->id);
-            }
-        }
-        
-        j1939_bsp_unlock(level);
+
+        if (__tp_mgr_process_timeout_check(CA_addr, tp_mgr_ctx, session, t_delta))
+            continue;
     }
 }
 
