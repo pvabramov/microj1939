@@ -20,7 +20,8 @@ extern "C" {
 #include "j1939_std_pgn.h"
 
 #define J1939_CAN_BAUDRATE              250000
-    
+
+#define J1939_PACKET_DATA_SZ            8
 #define J1939_MULTIPACKET_DATA_SZ       7
 #define J1939_MAX_DATA_SZ               (J1939_MULTIPACKET_DATA_SZ * 255)
 
