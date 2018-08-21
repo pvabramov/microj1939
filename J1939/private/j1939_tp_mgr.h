@@ -124,6 +124,7 @@ typedef enum j1939_tp_timeouts {
     J1939_TP_TO_T2 = 1250,   // 1250 ms
     J1939_TP_TO_T3 = 1250,   // 1250 ms
     J1939_TP_TO_T4 = 1050,   // 1050 ms
+    J1939_TP_TO_INF = 0x7FFFFFFF,
 } j1939_tp_timeouts;
 
 
