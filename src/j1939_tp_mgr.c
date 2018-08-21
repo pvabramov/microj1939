@@ -473,12 +473,12 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
         /* update a max number of receiving packets */
         session->pkt_max = U8_MIN(J1939_TP_MGR_MAX_PACKETS_PER_CTS, (session->total_pkt_num - session->pkt_next));
 
-        /* acknowledge to receive the next set of packets */
-        __send_CTS(DA, SA, session->PGN, session->pkt_max, session->pkt_next);
-
         /* try receive the next packet */
         session->transmition_timeout = J1939_TP_TO_T2;
         session->pkt_next++;
+
+        /* acknowledge to receive the next set of packets */
+        __send_CTS(DA, SA, session->PGN, session->pkt_max, session->pkt_next);
     } else {
         /* try receive the next packet */
         session->transmition_timeout = J1939_TP_TO_T1;
