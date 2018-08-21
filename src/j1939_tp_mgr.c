@@ -212,7 +212,7 @@ void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_di
     session->total_pkt_num          = tp_cm->BAM.total_pkt_num;
     session->pkt_max                = tp_cm->BAM.total_pkt_num;
     session->pkt_next               = 1;
-    session->transmition_timeout    = J1939_TP_TO_T1;
+    session->transmition_timeout    = (dir == J1939_TP_DIR_IN) ? J1939_TP_TO_T1 : J1939_TP_TO_INF;
 }
 
 
@@ -235,7 +235,7 @@ void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_di
     session->total_pkt_num          = tp_cm->RTS.total_pkt_num;
     session->pkt_max                = U8_MIN(tp_cm->RTS.max_pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS);
     session->pkt_next               = 1;
-    session->transmition_timeout    = J1939_TP_TO_T2;
+    session->transmition_timeout    = (dir == J1939_TP_DIR_IN) ? J1939_TP_TO_T2 : J1939_TP_TO_T3;
 }
 
 
@@ -281,7 +281,48 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
 
 /**
  * @brief
- * 
+ *
+ * @param tp_mgr_ctx
+ * @param dst_addr
+ * @param tp_cm
+ *
+ * @return
+ */
+static int __open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm) {
+    int sid;
+    j1939_tp_session *session;
+    uint8_t self_addr = j1939_get_address();
+
+    if (!tp_mgr_ctx || !tp_cm ||
+         self_addr == J1939_NULL_ADDRESS || dst_addr == J1939_NULL_ADDRESS ||
+         tp_cm->control != J1939_TP_CM_BAM || tp_cm->control != J1939_TP_CM_RTS)
+        return -EINVAL;
+
+    if ((tp_cm->control == J1939_TP_CM_BAM && tp_mgr_ctx->bam_tx_tab[0] != 255) ||
+        (tp_cm->control == J1939_TP_CM_RTS && tp_mgr_ctx->rts_tx_tab[0] != 255))
+        return -EISCONN;
+
+    sid = __get_free_tp_session(tp_mgr_ctx);
+    if (sid < 0)
+        return -ENOMEM;
+
+    session = &tp_mgr_ctx->sessions[sid];
+
+    if (tp_cm->control == J1939_TP_CM_BAM) {
+        __tp_session_setup_BAM(session, J1939_TP_DIR_OUT, self_addr, tp_cm);
+        tp_mgr_ctx->bam_tx_tab[0] = sid;
+    } else {
+        __tp_session_setup_RTS(session, J1939_TP_DIR_OUT, self_addr, dst_addr, tp_cm);
+        tp_mgr_ctx->rts_tx_tab[0] = sid;
+    }
+
+    return sid;
+}
+
+
+/**
+ * @brief
+ *
  * @param tp_mgr_ctx
  * @param SA
  * @param DA
@@ -336,20 +377,33 @@ static void __tp_mgr_rx_handle_BAM_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
  * @param tp_cm
  */
 static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
-    // TODO: implement for transmition
+    j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
+
+    if (!session || session->state != J1939_TP_STATE_WAIT_CTS)
+        return;
+
+    session->transmition_timeout = J1939_TP_TO_INF;
+    session->pkt_max  = tp_cm->CTS.pkt_num;
+    session->pkt_next = tp_cm->CTS.pkt_next;
+    session->state = J1939_TP_STATE_TRANSMIT;
 }
 
 
 /**
  * @brief
- * 
+ *
  * @param tp_mgr_ctx
  * @param SA
  * @param DA
  * @param tp_cm
  */
 static void __tp_mgr_rx_handle_EoMA_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
-    // TODO: implement for transmition
+    j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
+
+    if (!session)
+        return;
+
+    __close_tp_session(tp_mgr_ctx, session->id);
 }
 
 
@@ -626,6 +680,70 @@ static int __tp_mgr_process_timeout_check(uint8_t self_addr, j1939_tp_mgr_ctx *c
 
     return is_timedout;
 }
+
+
+/**
+ * @brief
+ *
+ * @param self_addr
+ * @param tp_mgr_ctx
+ * @param session
+ *
+ * @return
+ */
+static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session) {
+    j1939_tp_dt tp_dt;
+    unsigned msg_start;
+    unsigned msg_sz_min;
+    int level;
+
+    if (session->state != J1939_TP_STATE_TRANSMIT || session->dir != J1939_TP_DIR_OUT)
+        return 0;
+
+    /* receiver holded the transmition */
+    if (session->pkt_max == 0) {
+        session->transmition_timeout = J1939_TP_TO_T4;
+        session->state = J1939_TP_STATE_WAIT_CTS;
+        return 0;
+    }
+
+    memset(&tp_dt, 0xFF, sizeof(j1939_tp_dt));
+
+    msg_start  = (session->pkt_next - 1) * J1939_MULTIPACKET_DATA_SZ;
+    msg_sz_min = U8_MIN(J1939_MULTIPACKET_DATA_SZ, (session->msg_sz - msg_start));
+
+    /* copy transmition data into payload */
+    memcpy(tp_dt.payload, &session->buffer[msg_start], msg_sz_min);
+    tp_dt.seq_num = session->pkt_next;
+
+    level = j1939_bsp_lock();
+
+    if (__send_TPDT(self_addr, session->dst_addr, &tp_dt) < 0) {
+        if (session->mode == J1939_TP_MODE_RTS)
+            __send_Conn_Abort(self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES);
+        __close_tp_session(tp_mgr_ctx, session->id);
+        j1939_bsp_unlock(level);
+        return 0;
+    }
+
+    if (--session->pkt_max == 0) {
+        session->transmition_timeout = J1939_TP_TO_T3;
+        session->state = J1939_TP_STATE_WAIT_CTS;
+    } else if (session->pkt_next == session->total_pkt_num) {
+        session->transmition_timeout = J1939_TP_TO_T3;
+        session->state = J1939_TP_STATE_WAIT_EOMA;
+    } else {
+        /* transmit next packet */
+        session->transmition_timeout = J1939_TP_TO_INF;
+        session->pkt_next++;
+    }
+
+    j1939_bsp_unlock(level);
+
+    return 1;
+}
+
+
 /**
  * @brief
  *
@@ -652,6 +770,8 @@ void j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) 
 
         if (__tp_mgr_process_timeout_check(CA_addr, tp_mgr_ctx, session, t_delta))
             continue;
+
+        (void)__tp_mgr_process_transmition(CA_addr, tp_mgr_ctx, session);
     }
 }
 
@@ -662,7 +782,56 @@ void j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) 
  * @return
  */
 int j1939_tp_mgr_open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload) {
-    return -1;
+    int sid;
+    j1939_tp_session *session;
+    j1939_tp_cm_control tp_cm_control;
+    int level;
+    unsigned pkt_num;
+
+    if (dst_addr == J1939_NULL_ADDRESS || msg_sz > J1939_MAX_DATA_SZ)
+        return -EINVAL;
+
+    /* number of packets should be 2 or more */
+    pkt_num = (msg_sz - 1) / J1939_MULTIPACKET_DATA_SZ + 1;
+    if (pkt_num < 2)
+        return -EINVAL;
+
+    if (dst_addr == J1939_GLOBAL_ADDRESS) {
+        tp_cm_control = __new_tp_cm_BAM(msg_sz, pkt_num, PGN);
+    } else {
+        tp_cm_control = __new_tp_cm_RTS(msg_sz,
+                                        pkt_num,
+                                        U8_MIN(pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS),
+                                        PGN);
+    }
+
+    level = j1939_bsp_lock();
+    sid = __open_tx_session(tp_mgr_ctx, dst_addr, &tp_cm_control);
+    j1939_bsp_unlock(level);
+
+    if (sid < 0)
+        return -ENOMEM;
+
+    session = &tp_mgr_ctx->sessions[sid];
+
+    /* copy data to dedicated buffer */
+    memcpy(session->buffer, payload, msg_sz * sizeof(uint8_t));
+
+    level = j1939_bsp_lock();
+
+    if (__send_TPCM(session->src_addr, session->dst_addr, &tp_cm_control) < 0) {
+        __close_tp_session(tp_mgr_ctx, sid);
+        j1939_bsp_unlock(level);
+        return -EIO;
+    }
+
+    session->state = (session->mode == J1939_TP_MODE_BAM) ?
+                     J1939_TP_STATE_TRANSMIT :
+                     J1939_TP_STATE_WAIT_CTS;
+
+    j1939_bsp_unlock(level);
+
+    return 0;
 }
 
 
