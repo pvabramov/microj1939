@@ -252,7 +252,7 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
     int sid;
     j1939_tp_session *session;
 
-    if (!tp_mgr_ctx || !tp_cm || tp_cm->control != J1939_TP_CM_BAM || tp_cm->control != J1939_TP_CM_RTS)
+    if (!tp_mgr_ctx || !tp_cm || (tp_cm->control != J1939_TP_CM_BAM && tp_cm->control != J1939_TP_CM_RTS))
         return -EINVAL;
 
     if ((tp_cm->control == J1939_TP_CM_BAM && tp_mgr_ctx->bam_rx_tab[src_addr] != 255) ||
@@ -294,8 +294,8 @@ static int __open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_add
     uint8_t self_addr = j1939_get_address();
 
     if (!tp_mgr_ctx || !tp_cm ||
-         self_addr == J1939_NULL_ADDRESS || dst_addr == J1939_NULL_ADDRESS ||
-         tp_cm->control != J1939_TP_CM_BAM || tp_cm->control != J1939_TP_CM_RTS)
+         (self_addr == J1939_NULL_ADDRESS) || (dst_addr == J1939_NULL_ADDRESS) ||
+         (tp_cm->control != J1939_TP_CM_BAM && tp_cm->control != J1939_TP_CM_RTS))
         return -EINVAL;
 
     if ((tp_cm->control == J1939_TP_CM_BAM && tp_mgr_ctx->bam_tx_tab[0] != 255) ||
@@ -558,14 +558,14 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
     int is_TP_CM = (PGN == J1939_STD_PGN_TPCM) && (frame->dlc == J1939_STD_PGN_TPCM_DLC);
     int is_TP_DT = (PGN == J1939_STD_PGN_TPDT) && (frame->dlc == J1939_STD_PGN_TPDT_DLC);
 
-    if (!is_TP_CM || !is_TP_DT)
+    if (!is_TP_CM && !is_TP_DT)
         return 0;
 
     SA = frame->src_address;
     DA = frame->PGN.dest_address;
 
     /* don't handle frame if dest.address is not global or is not mine */
-    if (DA != J1939_GLOBAL_ADDRESS || DA != j1939_get_address())
+    if (DA != J1939_GLOBAL_ADDRESS && DA != j1939_get_address())
         return 1;
 
     /* there isn't receiving at the moment */
