@@ -377,7 +377,7 @@ static void __tp_mgr_rx_handle_BAM_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
  * @param tp_cm
  */
 static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
-    j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
+    j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->rts_tx_tab, SA);
 
     if (!session || session->state != J1939_TP_STATE_WAIT_CTS)
         return;
@@ -398,7 +398,7 @@ static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
  * @param tp_cm
  */
 static void __tp_mgr_rx_handle_EoMA_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
-    j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
+    j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->rts_tx_tab, SA);
 
     if (!session)
         return;
