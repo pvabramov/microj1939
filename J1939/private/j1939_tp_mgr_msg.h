@@ -28,6 +28,8 @@ extern "C" {
  * @return 
  */
 static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t total_pkt_num, uint8_t max_pkt_num, uint32_t PGN) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
     const j1939_tp_cm_control payload = {
         .control = J1939_TP_CM_RTS,
         .RTS.total_msg_sz = total_msg_sz,
@@ -35,6 +37,7 @@ static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t
         .RTS.max_pkt_num = max_pkt_num,      
         .PGN = PGN
     };
+#pragma GCC diagnostic pop
     return payload;
 }
 
@@ -49,6 +52,8 @@ static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t
  * @return 
  */
 static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_next, uint32_t PGN) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
     const j1939_tp_cm_control payload = {
         .control = J1939_TP_CM_CTS,
         .CTS.pkt_num = pkt_num,
@@ -56,6 +61,7 @@ static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_n
         .CTS.__reserved__ = { 0xFF, 0xFF },
         .PGN = PGN
     };
+#pragma GCC diagnostic pop
     return payload;
 }
 
@@ -70,6 +76,8 @@ static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_n
  * @return 
  */
 static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
     const j1939_tp_cm_control payload = {
         .control = J1939_TP_CM_EndOfMsgACK,
         .EoMA.total_msg_sz = total_msg_sz,
@@ -77,6 +85,7 @@ static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_
         .EoMA.__reserved__ = { 0xFF },
         .PGN = PGN
     };
+#pragma GCC diagnostic pop
     return payload;
 }
 
@@ -90,12 +99,15 @@ static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_
  * @return 
  */
 static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint32_t PGN) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
     const j1939_tp_cm_control payload = {
         .control = J1939_TP_CM_Conn_Abort,
         .Conn_Abort.reason = reason,
         .Conn_Abort.__reserved__ = { 0xFF, 0xFF, 0xFF },
         .PGN = PGN
     };
+#pragma GCC diagnostic pop
     return payload;
 }
 
@@ -110,6 +122,8 @@ static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint32_
  * @return 
  */
 static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
     const j1939_tp_cm_control payload = {
         .control = J1939_TP_CM_BAM,
         .BAM.total_msg_sz = total_msg_sz,
@@ -117,6 +131,7 @@ static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t
         .BAM.__reserved__ = { 0xFF },
         .PGN = PGN
     };
+#pragma GCC diagnostic pop
     return payload;
 }
 
