@@ -166,16 +166,16 @@ typedef enum j1939_tp_session_dir {
  */
 typedef struct j1939_tp_session {
     uint8_t id;
-    uint8_t state;
+    volatile uint8_t state;
     uint8_t mode;
     uint8_t dir;
     
     // pkt transmition control fields
-    int transmition_timeout;
+    volatile int transmition_timeout;
     
-    uint8_t total_pkt_num;
-    uint8_t pkt_max;
-    uint8_t pkt_next;
+    volatile uint8_t total_pkt_num;
+    volatile uint8_t pkt_max;
+    volatile uint8_t pkt_next;
     
     // pkt data and info
     uint32_t PGN;
@@ -193,7 +193,7 @@ typedef struct j1939_tp_session {
  * @brief
  */
 typedef struct j1939_tp_mgr_ctx {
-    int reset;
+    volatile int reset;
     uint8_t bam_rx_tab[256];
     uint8_t rts_rx_tab[256];
     uint8_t bam_tx_tab[1]; // only one can be sent from originator at a given time

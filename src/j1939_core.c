@@ -29,11 +29,12 @@ typedef enum {
  * @brief
  */
 typedef struct j1939_drv_ctx {
-    j1939_drv_state state;
+    volatile j1939_drv_state state;
+
+    volatile uint8_t address;
+    uint8_t preferred_address;
 
     j1939_CA_name CA_name;
-    uint8_t address;
-    uint8_t preferred_address;
 
     j1939_tp_mgr_ctx tp_mgr_ctx;
     j1939_rx_fifo rx_fifo;
