@@ -1,6 +1,6 @@
 /**
  * @file j1939_core.c
- * 
+ *
  * @brief
  */
 
@@ -28,7 +28,7 @@ typedef enum {
 /**
  * @brief
  */
-struct j1939_drv_ctx {
+typedef struct j1939_drv_ctx {
     j1939_drv_state state;
 
     j1939_CA_name CA_name;
@@ -40,13 +40,13 @@ struct j1939_drv_ctx {
     j1939_tx_fifo tx_fifo;
 
     j1939_callbacks callbacks;
-};
+} j1939_drv_ctx;
 
 
 /**
  * @brief
  */
-static struct j1939_drv_ctx __j1939_ctx = {
+static j1939_drv_ctx __j1939_ctx = {
     .state = NOT_STARTED,
     .address = J1939_NULL_ADDRESS,
     .preferred_address = J1939_NULL_ADDRESS,
@@ -55,9 +55,9 @@ static struct j1939_drv_ctx __j1939_ctx = {
 
 /**
  * @brief
- * 
+ *
  * @param primitive
- * @return 
+ * @return
  */
 int __j1939_send_lock(const j1939_primitive * const primitive) {
     int sts = 0;
@@ -75,13 +75,13 @@ int __j1939_send_lock(const j1939_primitive * const primitive) {
 
 /**
  * @brief
- * 
+ *
  * @param type
  * @param PGN
  * @param src_addr
  * @param msg_sz
  * @param payload
- * @return 
+ * @return
  */
 int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz, const void *const payload) {
     j1939_rx_info rx_info;
@@ -110,7 +110,7 @@ int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16
 
 /**
  * @brief
- * 
+ *
  * @param address
  */
 static inline void __send_claim_address(uint8_t address) {
@@ -123,7 +123,7 @@ static inline void __send_claim_address(uint8_t address) {
 
 /**
  * @brief
- * 
+ *
  * @param ack_type
  * @param gf
  * @param originator_sa
@@ -171,7 +171,7 @@ void j1939_initialize(const j1939_callbacks * const callbacks) {
 
 /**
  * @brief
- * 
+ *
  * @param drv_conf
  */
 void j1939_configure(uint8_t preferred_address, const j1939_CA_name * const CA_name) {
@@ -189,8 +189,8 @@ void j1939_configure(uint8_t preferred_address, const j1939_CA_name * const CA_n
 
 /**
  * @brief
- * 
- * @return 
+ *
+ * @return
  */
 uint8_t j1939_get_address(void) {
     return __j1939_ctx.address;
@@ -199,10 +199,10 @@ uint8_t j1939_get_address(void) {
 
 /**
  * @brief
- * 
+ *
  * @param address
- * 
- * @return 
+ *
+ * @return
  */
 int j1939_claim_address(uint8_t address) {
     int level;
@@ -240,20 +240,20 @@ int j1939_claim_address(uint8_t address) {
 
 /**
  * @brief
- * 
+ *
  * @param PGN
  * @param dst_addr
  * @param msg_sz
  * @param payload
  * @param priority
- * 
- * @return 
+ *
+ * @return
  */
 int j1939_sendmsg_p(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload, uint8_t priority) {
     if (__j1939_ctx.state != ACTIVE)
         return -1;
 
-    if (msg_sz <= 8) {        
+    if (msg_sz <= 8) {
         j1939_primitive primitive =
             j1939_primitive_build(PGN,
                                   priority,
@@ -269,13 +269,13 @@ int j1939_sendmsg_p(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void 
 
 /**
  * @brief
- * 
+ *
  * @param PGN
  * @param dst_addr
  * @param msg_sz
  * @param payload
- * 
- * @return 
+ *
+ * @return
  */
 int j1939_sendmsg(uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload) {
     return j1939_sendmsg_p(PGN, dst_addr, msg_sz, payload, J1939_GENERIC_PRIORITY);
@@ -296,29 +296,57 @@ int j1939_sendraw(const j1939_primitive *const primitive) {
 
 /**
  * @brief
- * 
- * @param time_ms
  */
-void j1939_tick(uint32_t t_delta) {
-    static const int max_rx_per_tick = 10;
-    int rx_upcount;
+void j1939_process_tx(void) {
+    static volatile int already_tx = 0;
     int tx_downcount;
+    int level;
 
-    j1939_tp_mgr_process(&__j1939_ctx.tp_mgr_ctx, t_delta);
+    level = j1939_bsp_lock();
 
-    /* Transmition processing */
-    for (tx_downcount = j1939_tx_fifo_size(&__j1939_ctx.tx_fifo); tx_downcount > 0; --tx_downcount) {
-        int read_sts;
-        j1939_primitive primitive;
-
-        read_sts = j1939_tx_fifo_read(&__j1939_ctx.tx_fifo, &primitive);
-        if (read_sts < 0)
-            break;
-
-        __j1939_send_lock(&primitive);
+    if (__j1939_ctx.state != ACTIVE || already_tx) {
+        j1939_bsp_unlock(level);
+        return;
     }
 
-    /* Receiving processing */
+    already_tx = 1;
+    j1939_bsp_unlock(level);
+
+    for (tx_downcount = j1939_tx_fifo_size(&__j1939_ctx.tx_fifo); tx_downcount > 0; --tx_downcount) {
+        j1939_primitive primitive;
+
+        if (j1939_tx_fifo_read(&__j1939_ctx.tx_fifo, &primitive) < 0)
+            break;
+
+        if (__j1939_send_lock(&primitive) < 0)
+            break;
+    }
+
+    already_tx = 0;
+}
+
+
+/**
+ * @brief
+ */
+void j1939_process_rx(void) {
+    static volatile int already_rx = 0;
+    int rx_upcount;
+    int max_rx_per_tick;
+    int level;
+
+    level = j1939_bsp_lock();
+
+    if (__j1939_ctx.state != ACTIVE || already_rx) {
+        j1939_bsp_unlock(level);
+        return;
+    }
+
+    already_rx = 1;
+    j1939_bsp_unlock(level);
+
+    max_rx_per_tick = j1939_rx_fifo_size(&__j1939_ctx.rx_fifo);
+
     for (rx_upcount = 0; rx_upcount < max_rx_per_tick; ++rx_upcount) {
         int read_sts;
         j1939_rx_info rx_info;
@@ -336,15 +364,46 @@ void j1939_tick(uint32_t t_delta) {
             j1939_tp_mgr_close_session(&__j1939_ctx.tp_mgr_ctx, rx_info.sid);
         }
     }
+
+    already_rx = 0;
 }
 
 
 /**
  * @brief
- * 
+ *
+ * @param time_ms
+ */
+void j1939_process(uint32_t the_time) {
+    static int oneshot = 0;
+    static uint32_t last_time;
+    uint32_t t_delta;
+
+    if (!oneshot) {
+        last_time = the_time;
+        oneshot = 1;
+    }
+
+    t_delta = the_time - last_time;
+    last_time = the_time;
+
+    /* TP management processing */
+    j1939_tp_mgr_process(&__j1939_ctx.tp_mgr_ctx, t_delta);
+
+    /* Transmition processing */
+    j1939_process_tx();
+
+    /* Receiving processing */
+    j1939_process_rx();
+}
+
+
+/**
+ * @brief
+ *
  * @param frame
- * 
- * @return 
+ *
+ * @return
  */
 static int __rx_handle_PGN_claim_address(const j1939_primitive * const frame) {
     /* PDU1 format */
@@ -386,10 +445,10 @@ static int __rx_handle_PGN_claim_address(const j1939_primitive * const frame) {
 
 /**
  * @brief
- * 
+ *
  * @param frame
- * 
- * @return 
+ *
+ * @return
  */
 static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
     /* PDU1 format */
@@ -432,12 +491,12 @@ static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
 
 /**
  * @brief
- * 
+ *
  * @param frame
- * 
- * @return 
+ *
+ * @return
  */
-int j1939_process_rx(const j1939_primitive *const frame) {
+int j1939_handle_receiving(const j1939_primitive *const frame) {
     if (__j1939_ctx.state == NOT_STARTED || __j1939_ctx.state == BUS_OFF)
         return 0;
 
@@ -468,7 +527,7 @@ int j1939_process_rx(const j1939_primitive *const frame) {
 
     if (j1939_tp_mgr_rx_handler(&__j1939_ctx.tp_mgr_ctx, frame))
         return 1;
-    
+
     if (j1939_is_PDU1(frame->PGN) && (frame->PGN.dest_address != __j1939_ctx.address && frame->PGN.dest_address != J1939_GLOBAL_ADDRESS))
         return 0;
 

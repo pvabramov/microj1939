@@ -31,6 +31,7 @@ typedef struct j1939_rx_fifo {
 
 
 void j1939_rx_fifo_init(j1939_rx_fifo *const fifo);
+unsigned j1939_rx_fifo_size(const j1939_rx_fifo *const fifo);
 int j1939_rx_fifo_write(j1939_rx_fifo *const fifo, const j1939_rx_info *const rx_info);
 int j1939_rx_fifo_read(j1939_rx_fifo *const fifo, j1939_rx_info *const rx_info);
 
