@@ -166,10 +166,8 @@ int j1939_sendraw(const j1939_primitive *const primitive);
 // int j1939_write_request(...);
 
 void j1939_process(uint32_t the_time);
-
 int j1939_handle_receiving(const j1939_primitive *const frame);
-void j1939_process_tx(void);
-void j1939_process_rx(void);
+int j1939_hanle_transmiting(void);
 
 
 #ifdef __cplusplus

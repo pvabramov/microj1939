@@ -30,6 +30,8 @@ typedef enum {
  */
 typedef struct j1939_drv_ctx {
     volatile j1939_drv_state state;
+    volatile int already_tx;
+    volatile int already_rx;
 
     volatile uint8_t address;
     uint8_t preferred_address;
@@ -167,6 +169,8 @@ void j1939_initialize(const j1939_callbacks * const callbacks) {
     __j1939_ctx.preferred_address = J1939_NULL_ADDRESS;
 
     __j1939_ctx.state = NOT_STARTED;
+    __j1939_ctx.already_rx = 0;
+    __j1939_ctx.already_tx = 0;
 }
 
 
@@ -298,20 +302,32 @@ int j1939_sendraw(const j1939_primitive *const primitive) {
 /**
  * @brief
  */
-void j1939_process_tx(void) {
-    static volatile int already_tx = 0;
+int j1939_hanle_transmiting(void) {
+    j1939_primitive primitive;
+
+    if (__j1939_ctx.already_tx)
+        return 0;
+
+    if (j1939_tx_fifo_read(&__j1939_ctx.tx_fifo, &primitive) < 0)
+        return 0;
+
+    if (__j1939_send_lock(&primitive) < 0)
+        return 0;
+
+    return 1;
+}
+
+
+/**
+ * @brief
+ */
+static void j1939_process_tx(void) {
     int tx_downcount;
-    int level;
 
-    level = j1939_bsp_lock();
-
-    if (__j1939_ctx.state != ACTIVE || already_tx) {
-        j1939_bsp_unlock(level);
+    if (__j1939_ctx.state != ACTIVE)
         return;
-    }
 
-    already_tx = 1;
-    j1939_bsp_unlock(level);
+    __j1939_ctx.already_tx = 1;
 
     for (tx_downcount = j1939_tx_fifo_size(&__j1939_ctx.tx_fifo); tx_downcount > 0; --tx_downcount) {
         j1939_primitive primitive;
@@ -323,28 +339,21 @@ void j1939_process_tx(void) {
             break;
     }
 
-    already_tx = 0;
+    __j1939_ctx.already_tx = 0;
 }
 
 
 /**
  * @brief
  */
-void j1939_process_rx(void) {
-    static volatile int already_rx = 0;
+static void j1939_process_rx(void) {
     int rx_upcount;
     int max_rx_per_tick;
-    int level;
 
-    level = j1939_bsp_lock();
-
-    if (__j1939_ctx.state != ACTIVE || already_rx) {
-        j1939_bsp_unlock(level);
+    if (__j1939_ctx.state != ACTIVE)
         return;
-    }
 
-    already_rx = 1;
-    j1939_bsp_unlock(level);
+    __j1939_ctx.already_rx = 1;
 
     max_rx_per_tick = j1939_rx_fifo_size(&__j1939_ctx.rx_fifo);
 
@@ -366,7 +375,7 @@ void j1939_process_rx(void) {
         }
     }
 
-    already_rx = 0;
+    __j1939_ctx.already_rx = 0;
 }
 
 
