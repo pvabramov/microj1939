@@ -167,7 +167,7 @@ int j1939_sendraw(const j1939_primitive *const primitive);
 
 void j1939_process(uint32_t the_time);
 int j1939_handle_receiving(const j1939_primitive *const frame);
-int j1939_hanle_transmiting(void);
+int j1939_handle_transmiting(void);
 
 
 #ifdef __cplusplus

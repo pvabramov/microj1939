@@ -302,7 +302,7 @@ int j1939_sendraw(const j1939_primitive *const primitive) {
 /**
  * @brief
  */
-int j1939_hanle_transmiting(void) {
+int j1939_handle_transmiting(void) {
     j1939_primitive primitive;
 
     if (__j1939_ctx.already_tx)
