@@ -196,8 +196,7 @@ typedef struct j1939_tp_mgr_ctx {
     volatile int reset;
     uint8_t bam_rx_tab[256];
     uint8_t rts_rx_tab[256];
-    uint8_t bam_tx_tab[1]; // only one can be sent from originator at a given time
-    uint8_t rts_tx_tab[1]; // only one can be sent from originator at a given time
+    uint8_t xxx_tx_tab[1]; // only one can be sent from originator at a given time
     j1939_tp_session sessions[J1939_TP_SESSIONS_NUM];
 } j1939_tp_mgr_ctx;
     
