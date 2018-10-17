@@ -726,16 +726,27 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
         return 0;
     }
 
-    if (--session->pkt_max == 0) {
-        session->transmition_timeout = J1939_TP_TO_T3;
-        session->state = J1939_TP_STATE_WAIT_CTS;
-    } else if (session->pkt_next == session->total_pkt_num) {
-        session->transmition_timeout = J1939_TP_TO_T3;
-        session->state = J1939_TP_STATE_WAIT_EOMA;
-    } else {
-        /* transmit next packet */
-        session->transmition_timeout = J1939_TP_TO_INF;
-        session->pkt_next++;
+    if (session->mode == J1939_TP_MODE_RTS) {
+        if (--session->pkt_max == 0) {
+            session->transmition_timeout = J1939_TP_TO_T3;
+            session->state = J1939_TP_STATE_WAIT_CTS;
+        } else if (session->pkt_next == session->total_pkt_num) {
+            session->transmition_timeout = J1939_TP_TO_T3;
+            session->state = J1939_TP_STATE_WAIT_EOMA;
+        } else {
+            /* transmit next packet */
+            session->transmition_timeout = J1939_TP_TO_INF;
+            session->pkt_next++;
+        }
+    } else /* BAM mode */ {
+        if (session->pkt_next == session->total_pkt_num) {
+            /* we have sent the last frame, close the session */
+            __close_tp_session(tp_mgr_ctx, session->id);
+        } else {
+            /* transmit next packet */
+            session->transmition_timeout = J1939_TP_TO_INF;
+            session->pkt_next++;
+        }
     }
 
     j1939_bsp_unlock(level);
