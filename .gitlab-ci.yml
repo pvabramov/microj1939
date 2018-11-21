@@ -5,6 +5,3 @@ build_project:
     stage: build
     script:
         - make -f Makefile -j 1
-    artifacts:
-        paths:
-            - "./CAN_J1939_sample"
