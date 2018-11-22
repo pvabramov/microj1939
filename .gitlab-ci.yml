@@ -5,3 +5,8 @@ build_project:
     stage: build
     script:
         - make -f Makefile -j 1
+
+build_tests:
+    stage: build
+    script:
+        - make -f Makefile -j 1 tests
