@@ -1,12 +1,21 @@
 stages:
     - build
+    - test
     
-build_project:
-    stage: build
-    script:
-        - make -f Makefile -j 1
+.test_executables: &test_executables
+    - paths:
+        - tests/unittest
+    - expire_in: 1 minute
 
-build_tests:
+building:
     stage: build
     script:
-        - make -f Makefile -j 1 tests
+        - make clean
+        - make all
+        - make tests
+    artifacts: &test_executables
+
+testing/unittest:
+    stage: test
+    script:
+        - tests/unittest -v
