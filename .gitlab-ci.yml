@@ -41,6 +41,7 @@ generate/coverage:
     stage: coverage
     script:
         - make coverage
+    coverage: '/^\s*lines......: (\d+.\d+\%)/'
     <<: *coverage_artifacts
     dependencies:
         - testing/unittest
