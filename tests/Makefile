@@ -39,7 +39,7 @@ $(TARGET): unity $(OBJS)
 unity: $(UNITY_OBJS)
 
 
-run: $(TARGET)
+run:
 	@./$(TARGET) -v
 
 
