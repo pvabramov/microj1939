@@ -63,6 +63,37 @@ TEST(j1939_claim_address, successful_address_assigment) {
 }
 
 
+static void __receive_claim_address(void) {
+    /* send "Claim Address" by another node that has same address and has more priority */
+    unittest_post_input(60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+}
+
+
+TEST(j1939_claim_address, abort_address_assigment) {
+    j1939_primitive jframe;
+
+    /* receiving message from another node while waiting */
+    unittest_set_callback_on_delay(__receive_claim_address);
+
+    /* try to claim address, it should be not ok */
+    TEST_ASSERT(j1939_claim_address(CA_ADDR) < 0);
+
+    /* skip our "Claim Address" message */
+    unittest_get_output(&jframe);
+
+    /* check our address, it should be the null address */
+    TEST_ASSERT_EQUAL(254U, j1939_get_address());
+
+    /* check for "Cannot Claim Address" message */
+    unittest_get_output(&jframe);
+
+    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(8, jframe.dlc);
+    TEST_ASSERT_EQUAL(254 /* null address */, jframe.src_address);
+    TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
+}
+
+
 TEST(j1939_claim_address, address_loosing) {
     j1939_primitive jframe;
 
@@ -121,6 +152,7 @@ TEST(j1939_claim_address, address_protecting) {
 TEST_GROUP_RUNNER(j1939_claim_address) {
     RUN_TEST_CASE(j1939_claim_address, claim_address_message_sending);
     RUN_TEST_CASE(j1939_claim_address, successful_address_assigment);
+    RUN_TEST_CASE(j1939_claim_address, abort_address_assigment);
     RUN_TEST_CASE(j1939_claim_address, address_loosing);
     RUN_TEST_CASE(j1939_claim_address, address_protecting);
 }

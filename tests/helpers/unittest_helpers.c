@@ -22,6 +22,8 @@
 static void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload);
 
 
+callback_on_delay __on_delay = NULL;
+
 static uint32_t __the_time = 0;
 static int __sent_pipes[2] = { -1, -1 };
 static int __recv_pipes[2] = { -1, -1 };
@@ -41,6 +43,8 @@ int unittest_helpers_setup(void) {
     if (pipe2(__recv_pipes, O_DIRECT) < 0) {
         return -1;
     }
+
+    unittest_set_callback_on_delay(NULL);
 
     j1939_initialize(&cb);
     
@@ -72,6 +76,11 @@ void unittest_helpers_cleanup(void) {
     }
     
     __recv_pipes[PIPE_WR] = -1;
+}
+
+
+void unittest_set_callback_on_delay(callback_on_delay cb) {
+    __on_delay = cb;
 }
 
 

@@ -13,6 +13,9 @@ typedef struct unittest_j1939_rx_msg {
 } unittest_j1939_rx_msg;
 
 
+typedef void (*callback_on_delay)(void);
+
+
 int unittest_helpers_setup(void);
 void unittest_helpers_cleanup(void);
 
@@ -23,6 +26,8 @@ int unittest_get_input(unittest_j1939_rx_msg *m);
 
 uint32_t unittest_get_time(void);
 void unittest_add_time(uint32_t time);
+
+void unittest_set_callback_on_delay(callback_on_delay cb);
 
 #endif /* UNITTEST_HELPERS_H_ */
 

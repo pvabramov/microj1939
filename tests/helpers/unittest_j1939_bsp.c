@@ -8,6 +8,8 @@
 #include "unittest_helpers.h"
 
 
+extern callback_on_delay __on_delay;
+
 static pthread_mutex_t __lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
 
@@ -30,6 +32,10 @@ void j1939_bsp_mdelay(uint32_t ms) {
         --ms;
     }
 #endif
+    if (__on_delay) {
+        __on_delay();
+    }
+
     unittest_add_time(ms);
 }
 
