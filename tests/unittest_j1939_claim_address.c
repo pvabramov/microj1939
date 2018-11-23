@@ -148,6 +148,30 @@ TEST(j1939_claim_address, address_protecting) {
    TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
 }
 
+TEST(j1939_claim_address, response_on_request_claim_address) {
+    j1939_primitive jframe;
+
+    /* try to claim address, it should be ok */
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+
+    /* skip "Claim Address" message */
+    unittest_get_output(&jframe);
+
+    /* check our address, it should be like we've pointed in j1939_claim_address() */
+    TEST_ASSERT_EQUAL(CA_ADDR, j1939_get_address());
+
+    /* send "Request PGN" : "Claim Address" */
+    unittest_post_input(59904U, CA_ADDR, 20, 3, 0x00, 0xEE, 0x00);
+
+    /* check for "Claim Address" message from self */
+    unittest_get_output(&jframe);
+
+    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(8, jframe.dlc);
+    TEST_ASSERT_EQUAL(CA_ADDR, jframe.src_address);
+    TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
+}
+
 
 TEST_GROUP_RUNNER(j1939_claim_address) {
     RUN_TEST_CASE(j1939_claim_address, claim_address_message_sending);
@@ -155,4 +179,5 @@ TEST_GROUP_RUNNER(j1939_claim_address) {
     RUN_TEST_CASE(j1939_claim_address, abort_address_assigment);
     RUN_TEST_CASE(j1939_claim_address, address_loosing);
     RUN_TEST_CASE(j1939_claim_address, address_protecting);
+    RUN_TEST_CASE(j1939_claim_address, response_on_request_claim_address);
 }
