@@ -2,10 +2,11 @@ stages:
     - build
     - test
     
-.test_executables: &test_executables
-    - paths:
-        - tests/unittest
-    - expire_in: 1 minute
+.artifacts_test_executables: &artifacts_test_executables
+    artifacts:
+        paths:
+            - tests/unittest
+        expire_in: 5 minutes
 
 building:
     stage: build
@@ -13,7 +14,7 @@ building:
         - make clean
         - make all
         - make tests
-    artifacts: &test_executables
+    <<: *artifacts_test_executables
 
 testing/unittest:
     stage: test
