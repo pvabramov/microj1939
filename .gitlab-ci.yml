@@ -1,12 +1,20 @@
 stages:
     - build
     - test
+    - coverage
     
-.artifacts_test_executables: &artifacts_test_executables
+.building_artifacts: &building_artifacts
     artifacts:
         paths:
+            - .o/
+            - libj1939.a
             - tests/unittest
         expire_in: 5 minutes
+        
+.coverage_artifacts: &coverage_artifacts
+    artifacts:
+        paths:
+            - coverage_report
 
 building:
     stage: build
@@ -14,9 +22,18 @@ building:
         - make clean
         - make all
         - make tests
-    <<: *artifacts_test_executables
+    <<: *building_artifacts
 
 testing/unittest:
     stage: test
     script:
-        - tests/unittest -v
+        - make check
+    <<: *building_artifacts
+
+generate/coverage:
+    stage: coverage
+    script:
+        - make coverage
+    <<: *coverage_artifacts
+    dependencies:
+        - testing/unittest
