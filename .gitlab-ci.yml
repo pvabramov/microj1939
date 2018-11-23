@@ -7,9 +7,15 @@ stages:
     artifacts:
         paths:
             - .o/
-            - .d/
             - libj1939.a
-            - tests/
+            - tests/unittest
+        expire_in: 5 minutes
+
+.testing_artifacts: &testing_artifacts
+    artifacts:
+        paths:
+            - .o/src/*.gcda
+            - .o/src/*.gcno
         expire_in: 5 minutes
         
 .coverage_artifacts: &coverage_artifacts
@@ -29,7 +35,7 @@ testing/unittest:
     stage: test
     script:
         - make check
-    <<: *building_artifacts
+    <<: *testing_artifacts
 
 generate/coverage:
     stage: coverage
