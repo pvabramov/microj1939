@@ -78,11 +78,11 @@ tests: $(BIN)
 	@make -C tests
 
 .PHONY: check
-check: tests
+check:
 	@make -C tests run
 
 .PHONY: coverage
-coverage: check
+coverage:
 	@lcov --directory .o --capture --output-file $(COV_INFO) -t unittest
 	@mkdir -p $(COV_REPORT_DIR)
 	@genhtml -o $(COV_REPORT_DIR) --function-coverage -s -t "unittest coverage report" --legend $(COV_INFO)
