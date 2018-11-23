@@ -28,8 +28,12 @@ $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 # tar
 TAR := tar
 
+COV_INFO = libj1939.info
+COV_REPORT_DIR = coverage_report
+
 # C flags
-CFLAGS := -std=c11 $(INCS:%=-I%) -g -Wall -Wextra -pedantic
+COVFLAGS := -fprofile-arcs -ftest-coverage
+CFLAGS := -std=c11 $(INCS:%=-I%) -g -Wall -Wextra -pedantic $(COVFLAGS)
 #
 # flags required for dependency generation; passed to compilers
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
@@ -54,6 +58,8 @@ clean:
 	@make -C tests $@
 	$(RM) -r $(OBJDIR) $(DEPDIR)
 	$(RM) $(BIN)
+	$(RM) $(COV_INFO)
+	$(RM) -r $(COV_REPORT_DIR)
 
 .PHONY: distclean
 distclean: clean
@@ -72,8 +78,14 @@ tests: $(BIN)
 	@make -C tests
 
 .PHONY: check
-check: $(BIN)
+check: tests
 	@make -C tests run
+
+.PHONY: coverage
+coverage: check
+	@lcov --directory .o --capture --output-file $(COV_INFO) -t unittest
+	@mkdir -p $(COV_REPORT_DIR)
+	@genhtml -o $(COV_REPORT_DIR) --function-coverage -s -t "unittest coverage report" --legend $(COV_INFO)
 
 .PHONY: help
 help:
