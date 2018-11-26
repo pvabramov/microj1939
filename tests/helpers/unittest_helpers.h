@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <J1939/j1939.h>
+#include <J1939/j1939_bsp.h>
 
 
 typedef struct unittest_j1939_rx_msg {

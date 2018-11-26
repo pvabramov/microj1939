@@ -36,11 +36,11 @@ static const j1939_callbacks cb = {
 int unittest_helpers_setup(void) {
     __the_time = 0;
     
-    if (pipe2(__sent_pipes, O_DIRECT) < 0) {
+    if (pipe2(__sent_pipes, O_DIRECT | O_NONBLOCK) < 0) {
         return -1;
     }
     
-    if (pipe2(__recv_pipes, O_DIRECT) < 0) {
+    if (pipe2(__recv_pipes, O_DIRECT | O_NONBLOCK) < 0) {
         return -1;
     }
 
@@ -156,9 +156,16 @@ int unittest_post_input(uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...) 
 
 
 int unittest_get_input(unittest_j1939_rx_msg *m) {
-    if (__recv_pipes[PIPE_RD] < 0 || m == NULL)
+    unittest_j1939_rx_msg rx_msg;
+    int sts;
+
+    if (__recv_pipes[PIPE_RD] < 0)
         return -1;
 
-    return read(__recv_pipes[PIPE_RD], m, sizeof(unittest_j1939_rx_msg));
+    sts = read(__recv_pipes[PIPE_RD], &rx_msg, sizeof(unittest_j1939_rx_msg));
+    if (m)
+        *m = rx_msg;
+
+    return sts;
 }
 
