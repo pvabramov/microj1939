@@ -120,13 +120,14 @@ int j1939_bsp_CAN_send(const j1939_primitive *const primitive) {
 int unittest_get_output(j1939_primitive *f) {
     j1939_primitive frame;
     
-    if (__sent_pipes[PIPE_RD] < 0 || f == NULL)
+    if (__sent_pipes[PIPE_RD] < 0)
         return -1;
         
     if (read(__sent_pipes[PIPE_RD], &frame, sizeof(j1939_primitive)) < 0)
         return -2;
     
-    *f = frame;
+    if (f)
+        *f = frame;
     
     return 0;
 }
