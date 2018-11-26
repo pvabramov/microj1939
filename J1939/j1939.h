@@ -28,6 +28,7 @@ extern "C" {
 #define J1939_CONTROL_PRIORITY          3
 #define J1939_GENERIC_PRIORITY          6
 #define J1939_TP_PRIORITY               7
+#define J1939_MAX_PRIORITY              7
 
 
 /**

@@ -42,7 +42,7 @@ static inline uint8_t U8_MIN(uint8_t a, uint8_t b) {
  */
 static inline j1939_primitive j1939_primitive_build(uint32_t PGN, uint8_t priority, uint8_t SA, uint8_t DA, uint8_t DLC, const void *const payload) {
     struct j1939_primitive msg = {
-        .priority = priority,
+        .priority = (priority > J1939_MAX_PRIORITY) ? J1939_MAX_PRIORITY : priority,
         .src_address = SA,
         .dlc = U8_MIN(DLC, 8),
     };
