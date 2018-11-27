@@ -230,7 +230,7 @@ void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_di
     session->PGN                    = j1939_PGN_code_get(tp_cm->PGN);
     session->msg_sz                 = tp_cm->RTS.total_msg_sz;
     session->total_pkt_num          = tp_cm->RTS.total_pkt_num;
-    session->pkt_max                = U8_MIN(tp_cm->RTS.max_pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS);
+    session->pkt_max                = U8_MIN(tp_cm->RTS.max_pkt_num, U8_MIN(J1939_TP_MGR_MAX_PACKETS_PER_CTS, tp_cm->RTS.total_pkt_num));
     session->pkt_next               = 1;
     session->transmition_timeout    = (dir == J1939_TP_DIR_IN) ? J1939_TP_TO_T2 : J1939_TP_TO_T3;
 }
@@ -527,7 +527,9 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
         }
     } else if (0 == (session->pkt_next % session->pkt_max)) {
         /* update a max number of receiving packets */
-        session->pkt_max = U8_MIN(J1939_TP_MGR_MAX_PACKETS_PER_CTS, (session->total_pkt_num - session->pkt_next));
+        /* SAE J1939-21:
+         * This value shall be no larger than the value in byte 5 of the RTS message. */
+        session->pkt_max = U8_MIN(session->pkt_max, (session->total_pkt_num - session->pkt_next));
 
         /* try receive the next packet */
         session->transmition_timeout = J1939_TP_TO_T2;
