@@ -32,7 +32,7 @@ LDFLAGS         := -L.. -lj1939 -lgcov
 all: $(TARGET)
 
 
-$(TARGET): unity $(OBJS)
+$(TARGET): unity $(OBJS) ../libj1939.a
 	$(CC) -o $@ $(UNITY_OBJS) $(OBJS) $(LDFLAGS)
 
 
