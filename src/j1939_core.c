@@ -491,7 +491,7 @@ static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
              * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
              */
             if (frame->PGN.dest_address != J1939_GLOBAL_ADDRESS)
-                __send_ACK(J1939_ACK_NEGATIVE, 0xFF, frame->src_address, frame->PGN);
+                __send_ACK(J1939_ACK_NEGATIVE, 0xFF, frame->src_address, request->PGN);
             break;
     }
 
