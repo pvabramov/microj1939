@@ -306,6 +306,35 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     );
 
     /*
+     * THE THIRD TP_DT frame
+     */
+    j1939_process(j1939_bsp_get_time());
+    unittest_add_time(20);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x3F,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[2]); /* SAE J1939-21: */
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[3]); /* The extra bytes should be filled with FF */
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
+
+    /* lets do retransmition of 3rd packet */
+    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+        17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
+        1,                                                  /* Number of packets that can be sent. */
+        3,                                                  /* Next packet number to be sent */
+        0xFF, 0xFF, 0xFF,
+        0x00, 0x56, 0x00                                    /* Parameter Group Number of the packeted message */
+    );
+
+    /*
      * THE THIRD (the last) TP_DT frame
      */
     j1939_process(j1939_bsp_get_time());
