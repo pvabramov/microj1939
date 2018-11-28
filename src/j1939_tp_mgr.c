@@ -727,7 +727,7 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
     }
 
     if (session->mode == J1939_TP_MODE_RTS) {
-        if (--session->pkt_max == 0) {
+        if ((--session->pkt_max == 0) && (session->pkt_next < session->total_pkt_num)) {
             session->transmition_timeout = J1939_TP_TO_T3;
             session->state = J1939_TP_STATE_WAIT_CTS;
         } else if (session->pkt_next == session->total_pkt_num) {
