@@ -375,10 +375,11 @@ static void __tp_mgr_rx_handle_BAM_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
 static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
 
-    if (!session || session->state != J1939_TP_STATE_WAIT_CTS)
+    if (!session || !(session->state == J1939_TP_STATE_WAIT_CTS || session->state == J1939_TP_STATE_WAIT_EOMA))
         return;
 
     session->transmition_timeout = J1939_TP_TO_INF;
+    /* FIXME: what to do if destination sent wrong parameters? */
     session->pkt_max  = tp_cm->CTS.pkt_num;
     session->pkt_next = tp_cm->CTS.pkt_next;
     session->state = J1939_TP_STATE_TRANSMIT;
@@ -396,7 +397,7 @@ static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
 static void __tp_mgr_rx_handle_EoMA_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
 
-    if (!session || session->mode != J1939_TP_MODE_RTS)
+    if (!session || session->state != J1939_TP_STATE_WAIT_EOMA /* close session only in state WAIT_EOMA */)
         return;
 
     __close_tp_session(tp_mgr_ctx, session->id);
