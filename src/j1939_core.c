@@ -397,6 +397,9 @@ void j1939_process(uint32_t the_time) {
     t_delta = the_time - last_time;
     last_time = the_time;
 
+    if (0 == t_delta)
+        return;
+
     /* TP management processing */
     j1939_tp_mgr_process(&__j1939_ctx.tp_mgr_ctx, t_delta);
 
