@@ -32,7 +32,9 @@ COV_INFO = libj1939.info
 COV_REPORT_DIR = coverage_report
 
 # C flags
+ifndef NOTEST
 COVFLAGS := -fprofile-arcs -ftest-coverage
+endif
 CFLAGS := -std=c11 $(INCS:%=-I%) -g -Wall -Wextra -pedantic $(COVFLAGS)
 #
 # flags required for dependency generation; passed to compilers
