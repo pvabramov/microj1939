@@ -558,6 +558,7 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
     uint8_t DA;
     int is_TP_CM = (PGN == J1939_STD_PGN_TPCM) && (frame->dlc == J1939_STD_PGN_TPCM_DLC);
     int is_TP_DT = (PGN == J1939_STD_PGN_TPDT) && (frame->dlc == J1939_STD_PGN_TPDT_DLC);
+    int level;
 
     if (!is_TP_CM && !is_TP_DT)
         return 0;
@@ -572,6 +573,8 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
     /* there isn't receiving at the moment */
     if (is_TP_DT && (tp_mgr_ctx->bam_rx_tab[SA] == 255 && tp_mgr_ctx->rts_rx_tab[SA] == 255))
         return 1;
+
+    level = j1939_bsp_lock();
 
     if (is_TP_CM) {
         /* handle TP Connection Management frame */
@@ -604,6 +607,7 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
                 break;
 
             default:
+                j1939_bsp_unlock(level);
                 return 1;
         }
     } else {
@@ -618,6 +622,8 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
             __tp_mgr_rx_handle_RTS_DT_transmition(tp_mgr_ctx, SA, DA, tp_dt);
         }
     }
+
+    j1939_bsp_unlock(level);
 
     return 1;
 }
