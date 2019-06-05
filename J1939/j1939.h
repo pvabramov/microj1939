@@ -181,7 +181,7 @@ int j1939_sendraw(const j1939_primitive *const primitive);
 
 // int j1939_write_request(...);
 
-void j1939_process(void);
+int j1939_process(void);
 int j1939_handle_receiving(const j1939_primitive *const frame);
 int j1939_handle_transmiting(void);
 

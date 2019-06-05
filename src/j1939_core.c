@@ -11,6 +11,9 @@
 #include <J1939/private/j1939_private.h>
 
 
+#define PREIDLE_TIMEOUT 1000
+
+
 /**
  * @brief
  */
@@ -45,6 +48,7 @@ typedef struct j1939_drv_ctx {
     j1939_rx_tx_error_fifo tx_error_fifo;
 
     j1939_callbacks callbacks;
+    int preidle_timer;
 } j1939_drv_ctx;
 
 
@@ -220,6 +224,8 @@ void j1939_initialize(const j1939_callbacks * const callbacks) {
     __j1939_ctx.state = NOT_STARTED;
     __j1939_ctx.already_rx = 0;
     __j1939_ctx.already_tx = 0;
+
+    __j1939_ctx.preidle_timer = PREIDLE_TIMEOUT;
 }
 
 
@@ -369,12 +375,15 @@ int j1939_handle_transmiting(void) {
 
 /**
  * @brief
+ * 
+ * @return
  */
-static void j1939_process_tx(void) {
+static int j1939_process_tx(void) {
+    int is_active = 0;
     int tx_downcount;
 
     if (__j1939_ctx.state != ACTIVE)
-        return;
+        return 0;
 
     __j1939_ctx.already_tx = 1;
 
@@ -384,23 +393,30 @@ static void j1939_process_tx(void) {
         if (j1939_tx_fifo_read(&__j1939_ctx.tx_fifo, &primitive) < 0)
             break;
 
+        is_active = 1;
+
         if (__j1939_send_lock(&primitive) < 0)
             break;
     }
 
     __j1939_ctx.already_tx = 0;
+
+    return is_active;
 }
 
 
 /**
  * @brief
+ * 
+ * @return
  */
-static void j1939_process_rx(void) {
+static int j1939_process_rx(void) {
+    int is_active = 0;
     int rx_upcount;
     int max_rx_per_tick;
 
     if (__j1939_ctx.state != ACTIVE)
-        return;
+        return 0;
 
     __j1939_ctx.already_rx = 1;
 
@@ -414,6 +430,8 @@ static void j1939_process_rx(void) {
         if (read_sts < 0)
             break;
 
+        is_active = 1;
+
         if (rx_info.type == J1939_RX_INFO_TYPE_FRAME) {
             if (__j1939_ctx.callbacks.rx_handler)
                 __j1939_ctx.callbacks.rx_handler(rx_info.PGN, rx_info.src_addr, rx_info.msg_sz, &rx_info.payload[0]);
@@ -425,18 +443,21 @@ static void j1939_process_rx(void) {
     }
 
     __j1939_ctx.already_rx = 0;
+
+    return is_active;
 }
 
 
 /**
  * @brief
  */
-static void j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callback_rx_tx_error_handler handler) {
+static int j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callback_rx_tx_error_handler handler) {
+    int is_active = 0;
     int upcount;
     int max_per_tick;
 
     if (__j1939_ctx.state != ACTIVE)
-        return;
+        return 0;
 
     max_per_tick = j1939_rx_tx_error_fifo_size(fifo);
 
@@ -449,7 +470,11 @@ static void j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callba
             break;
 
         handler(info.error, info.PGN, info.addr, info.msg_sz);
+
+        is_active = 1;
     }
+
+    return is_active;
 }
 
 
@@ -457,11 +482,14 @@ static void j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callba
  * @brief
  * 
  * @param the_time
+ * 
+ * @return
  */
-static inline void __j1939_process(uint32_t the_time) {
+static inline int __j1939_process(uint32_t the_time) {
     static int oneshot = 0;
     static uint32_t last_time;
     uint32_t t_delta;
+    int activities;
 
     if (!oneshot) {
         last_time = the_time;
@@ -472,29 +500,41 @@ static inline void __j1939_process(uint32_t the_time) {
     last_time = the_time;
 
     if (0 == t_delta)
-        return;
+        return -1;
+
+    activities = 0;
 
     /* Error notifications */
-    j1939_notify_errors(&__j1939_ctx.rx_error_fifo, __j1939_ctx.callbacks.rx_error_handler);
-    j1939_notify_errors(&__j1939_ctx.tx_error_fifo, __j1939_ctx.callbacks.tx_error_handler);
+    activities += j1939_notify_errors(&__j1939_ctx.rx_error_fifo, __j1939_ctx.callbacks.rx_error_handler);
+    activities += j1939_notify_errors(&__j1939_ctx.tx_error_fifo, __j1939_ctx.callbacks.tx_error_handler);
 
     /* TP management processing */
-    j1939_tp_mgr_process(&__j1939_ctx.tp_mgr_ctx, t_delta);
+    activities += j1939_tp_mgr_process(&__j1939_ctx.tp_mgr_ctx, t_delta);
 
     /* Transmition processing */
-    j1939_process_tx();
+    activities += j1939_process_tx();
 
     /* Receiving processing */
-    j1939_process_rx();
+    activities += j1939_process_rx();
+
+    if (activities > 0) {
+        __j1939_ctx.preidle_timer = PREIDLE_TIMEOUT;
+    } else {
+        __j1939_ctx.preidle_timer -= t_delta;
+    }
+
+    return (__j1939_ctx.preidle_timer > 0);
 }
 
 
 /**
  * @brief
+ * 
+ * @return
  */
-void j1939_process(void) {
+int j1939_process(void) {
     const uint32_t the_time = j1939_bsp_get_time();
-    __j1939_process(the_time);
+    return __j1939_process(the_time);
 }
 
 

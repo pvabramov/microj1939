@@ -734,6 +734,7 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
     unsigned msg_start;
     unsigned msg_sz_min;
     int level;
+    int is_active;
 
     if (session->state != J1939_TP_STATE_TRANSMIT || session->dir != J1939_TP_DIR_OUT)
         return 0;
@@ -742,7 +743,7 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
     if (session->pkt_max == 0) {
         session->transmition_timeout = J1939_TP_TO_T4;
         session->state = J1939_TP_STATE_WAIT_CTS;
-        return 0;
+        return 1;
     }
 
     memset(&tp_dt, 0xFF, sizeof(j1939_tp_dt));
@@ -764,6 +765,8 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
         return 0;
     }
 
+    is_active = 1;
+
     if (session->mode == J1939_TP_MODE_RTS) {
         if ((--session->pkt_max == 0) && (session->pkt_next < session->total_pkt_num)) {
             session->transmition_timeout = J1939_TP_TO_T3;
@@ -780,6 +783,7 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
         if (session->pkt_next == session->total_pkt_num) {
             /* we have sent the last frame, close the session */
             __close_tp_session(tp_mgr_ctx, session->id);
+            is_active = 0;
         } else {
             /* transmit next packet */
             session->transmition_timeout = J1939_TP_TO_INF;
@@ -789,7 +793,7 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
 
     j1939_bsp_unlock(level);
 
-    return 1;
+    return is_active;
 }
 
 
@@ -799,25 +803,29 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
  * @param tp_mgr_ctx
  * @param time_ms
  */
-void j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) {
+int j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) {
     register int i;
     int level;
     uint8_t CA_addr = j1939_get_address();
+    int activities;
 
     if (tp_mgr_ctx->reset) {
         level = j1939_bsp_lock();
         j1939_tp_mgr_init(tp_mgr_ctx);
         j1939_bsp_unlock(level);
-        return;
+        return 1;
     }
 
     if (CA_addr == J1939_NULL_ADDRESS)
-        return;
+        return 0;
+
+    activities = 0;
 
     /* process timeout functionality */
     for (i = 0; i < J1939_TP_SESSIONS_NUM; ++i) {
         j1939_tp_session *const session = &tp_mgr_ctx->sessions[i];
-        (void)__tp_mgr_process_timeout_check(CA_addr, tp_mgr_ctx, session, t_delta);
+        activities += (session->state != J1939_TP_STATE_FREE);
+        __tp_mgr_process_timeout_check(CA_addr, tp_mgr_ctx, session, t_delta);
     }
 
     /* process RTS & BAM transmition functionality */
@@ -826,6 +834,8 @@ void j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) 
         j1939_tp_session *const session = &tp_mgr_ctx->sessions[sid];
         (void)__tp_mgr_process_transmition(CA_addr, tp_mgr_ctx, session);
     }
+
+    return (activities > 0);
 }
 
 
