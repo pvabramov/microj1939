@@ -130,15 +130,30 @@ static inline uint32_t j1939_PGN_code_get(PGN_format PGN) {
     return PGN.value;
 }
 
+/**
+ * @brief
+ */
+typedef enum j1939_rx_tx_errno {
+    J1939_RX_TX_ERROR_SUCCESS = 0,
+    J1939_RX_TX_ERROR_FAILED = 1,
+    J1939_RX_TX_ERROR_EXISTS,
+    J1939_RX_TX_ERROR_ABORTED,
+    J1939_RX_TX_ERROR_LOST_PACKET,
+    J1939_RX_TX_ERROR_TIMEDOUT,
+} j1939_rx_tx_errno;
+
 ///
 typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload);
-
+///
+typedef void (*j1939_callback_rx_tx_error_handler)(j1939_rx_tx_errno error, uint32_t PGN, uint32_t address, uint16_t msg_sz);
 
 /**
  * @brief
  */
 typedef struct j1939_callbacks {
     j1939_callback_rx_handler rx_handler;
+    j1939_callback_rx_tx_error_handler rx_error_handler;
+    j1939_callback_rx_tx_error_handler tx_error_handler;
 } j1939_callbacks;
 
 

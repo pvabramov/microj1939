@@ -41,6 +41,8 @@ typedef struct j1939_drv_ctx {
     j1939_tp_mgr_ctx tp_mgr_ctx;
     j1939_rx_fifo rx_fifo;
     j1939_tx_fifo tx_fifo;
+    j1939_rx_tx_error_fifo rx_error_fifo;
+    j1939_rx_tx_error_fifo tx_error_fifo;
 
     j1939_callbacks callbacks;
 } j1939_drv_ctx;
@@ -113,6 +115,51 @@ int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16
 
 /**
  * @brief
+ * 
+ * @param error
+ * @param PGN
+ * @param dst_addr
+ * @param msg_sz
+ */
+int __j1939_tx_error_notify(j1939_rx_tx_errno error, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz) {
+    if (__j1939_ctx.callbacks.tx_error_handler) {
+        const j1939_rx_tx_error_info info = {
+            .error = error,
+            .PGN = PGN,
+            .addr = dst_addr,
+            .msg_sz = msg_sz
+        };
+        return j1939_rx_tx_error_fifo_write(&__j1939_ctx.tx_error_fifo, &info);
+    }
+    return 0;
+}
+
+
+/**
+ * @brief 
+ * 
+ * @param error 
+ * @param PGN 
+ * @param src_addr 
+ * @param msg_sz 
+ * @return int 
+ */
+int __j1939_rx_error_notify(j1939_rx_tx_errno error, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz) {
+    if (__j1939_ctx.callbacks.rx_error_handler) {
+        const j1939_rx_tx_error_info info = {
+            .error = error,
+            .PGN = PGN,
+            .addr = src_addr,
+            .msg_sz = msg_sz
+        };
+        return j1939_rx_tx_error_fifo_write(&__j1939_ctx.rx_error_fifo, &info);
+    }
+    return 0;
+}
+
+
+/**
+ * @brief
  *
  * @param address
  */
@@ -161,6 +208,8 @@ void j1939_initialize(const j1939_callbacks * const callbacks) {
 
     __j1939_ctx.callbacks = *callbacks;
 
+    j1939_rx_tx_error_fifo_init(&__j1939_ctx.tx_error_fifo);
+    j1939_rx_tx_error_fifo_init(&__j1939_ctx.rx_error_fifo);
     j1939_rx_fifo_init(&__j1939_ctx.rx_fifo);
     j1939_tx_fifo_init(&__j1939_ctx.tx_fifo);
     j1939_tp_mgr_init(&__j1939_ctx.tp_mgr_ctx);
@@ -378,6 +427,32 @@ static void j1939_process_rx(void) {
     __j1939_ctx.already_rx = 0;
 }
 
+
+/**
+ * @brief
+ */
+static void j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callback_rx_tx_error_handler handler) {
+    int upcount;
+    int max_per_tick;
+
+    if (__j1939_ctx.state != ACTIVE)
+        return;
+
+    max_per_tick = j1939_rx_tx_error_fifo_size(fifo);
+
+    for (upcount = 0; upcount < max_per_tick; ++upcount) {
+        int read_sts;
+        j1939_rx_tx_error_info info;
+
+        read_sts = j1939_rx_tx_error_fifo_read(fifo, &info);
+        if (read_sts < 0)
+            break;
+
+        handler(info.error, info.PGN, info.addr, info.msg_sz);
+    }
+}
+
+
 /**
  * @brief
  * 
@@ -398,6 +473,10 @@ static inline void __j1939_process(uint32_t the_time) {
 
     if (0 == t_delta)
         return;
+
+    /* Error notifications */
+    j1939_notify_errors(&__j1939_ctx.rx_error_fifo, __j1939_ctx.callbacks.rx_error_handler);
+    j1939_notify_errors(&__j1939_ctx.tx_error_fifo, __j1939_ctx.callbacks.tx_error_handler);
 
     /* TP management processing */
     j1939_tp_mgr_process(&__j1939_ctx.tp_mgr_ctx, t_delta);

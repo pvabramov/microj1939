@@ -56,6 +56,25 @@ int j1939_tx_fifo_write(j1939_tx_fifo *const fifo, const j1939_primitive *const 
 int j1939_tx_fifo_read(j1939_tx_fifo *const fifo, j1939_primitive *const primitive);
 
 
+///
+#define J1939_RX_TX_ERROR_FIFO_SZ    32
+
+
+/**
+ * @brief
+ */
+typedef struct j1939_rx_tx_error_fifo {
+    unsigned head;
+    unsigned tail;
+    j1939_rx_tx_error_info items[J1939_RX_TX_ERROR_FIFO_SZ];
+} j1939_rx_tx_error_fifo;
+
+
+void j1939_rx_tx_error_fifo_init(j1939_rx_tx_error_fifo *const fifo);
+unsigned j1939_rx_tx_error_fifo_size(const j1939_rx_tx_error_fifo *const fifo);
+int j1939_rx_tx_error_fifo_write(j1939_rx_tx_error_fifo *const fifo, const j1939_rx_tx_error_info *const info);
+int j1939_rx_tx_error_fifo_read(j1939_rx_tx_error_fifo *const fifo, j1939_rx_tx_error_info *const info);
+
 #ifdef __cplusplus
 }
 #endif

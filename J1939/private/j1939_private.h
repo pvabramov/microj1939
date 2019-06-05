@@ -117,9 +117,21 @@ typedef struct {
 } j1939_rx_info;
 
 
+/**
+ * @brief
+ */
+typedef struct {
+    j1939_rx_tx_errno error;
+    uint32_t PGN;
+    uint16_t msg_sz;
+    uint8_t addr; // SA or DA
+} j1939_rx_tx_error_info;
+
+
 extern int __j1939_send_lock(const j1939_primitive *const primitive);
 extern int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz, const void *const payload);
-
+extern int __j1939_tx_error_notify(j1939_rx_tx_errno error, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz);
+extern int __j1939_rx_error_notify(j1939_rx_tx_errno error, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz);
 
 #ifdef __cplusplus
 }
