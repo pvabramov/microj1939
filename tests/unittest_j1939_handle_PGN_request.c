@@ -41,7 +41,7 @@ TEST_SETUP(j1939_handle_PGN_request) {
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 }
 

@@ -378,13 +378,12 @@ static void j1939_process_rx(void) {
     __j1939_ctx.already_rx = 0;
 }
 
-
 /**
  * @brief
- *
- * @param time_ms
+ * 
+ * @param the_time
  */
-void j1939_process(uint32_t the_time) {
+static inline void __j1939_process(uint32_t the_time) {
     static int oneshot = 0;
     static uint32_t last_time;
     uint32_t t_delta;
@@ -408,6 +407,15 @@ void j1939_process(uint32_t the_time) {
 
     /* Receiving processing */
     j1939_process_rx();
+}
+
+
+/**
+ * @brief
+ */
+void j1939_process(void) {
+    const uint32_t the_time = j1939_bsp_get_time();
+    __j1939_process(the_time);
 }
 
 

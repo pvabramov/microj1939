@@ -43,7 +43,7 @@ TEST_SETUP(j1939_tp_mgr_send_bam) {
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 }
 
@@ -79,7 +79,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -99,7 +99,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -119,7 +119,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /*
      * THE THIRD (the last) TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -171,7 +171,7 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
 
@@ -192,7 +192,7 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -246,7 +246,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* get failure on already sending a BAM message */
@@ -272,7 +272,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -312,7 +312,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -332,7 +332,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));

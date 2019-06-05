@@ -43,7 +43,7 @@ TEST_SETUP(j1939_tp_mgr_receive_bam) {
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 }
 
@@ -75,7 +75,7 @@ TEST(j1939_tp_mgr_receive_bam, receive_BAM_message) {
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* there are data */
@@ -117,7 +117,7 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_without_TP_CM) {
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* there are no data */
@@ -144,7 +144,7 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_wrong_seq_number) {
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* there are no data, session should be closed */
@@ -170,14 +170,14 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_timedout) {
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(750 /* T1 */);
 
     /* there are no data */
     TEST_ASSERT(unittest_get_input(NULL) < 0);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
 
     /* there are no data */
     TEST_ASSERT(unittest_get_input(NULL) < 0);
@@ -188,7 +188,7 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_timedout) {
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* there are no data */
@@ -214,7 +214,7 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_if_dst_address_isnt_glob
             0x38, 0x39, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* there are no data, cause dst.address of BAM message should be global address */

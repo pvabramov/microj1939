@@ -43,7 +43,7 @@ TEST_SETUP(j1939_tp_mgr_send_rts) {
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 }
 
@@ -74,7 +74,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     TEST_ASSERT_EQUAL(0x13,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
@@ -94,7 +94,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
      * THE FIRST TP_DT frame
      */
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -123,7 +123,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -153,7 +153,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /*
      * THE SECOND TP_DT frame (ONE MORE TIME)
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -183,7 +183,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /*
      * THE THIRD (the last) TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -238,7 +238,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     TEST_ASSERT_EQUAL(0x56,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
@@ -258,7 +258,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
      * THE FIRST TP_DT frame
      */
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -278,7 +278,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -308,7 +308,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /*
      * THE THIRD TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -337,7 +337,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /*
      * THE THIRD (the last) TP_DT frame
      */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));

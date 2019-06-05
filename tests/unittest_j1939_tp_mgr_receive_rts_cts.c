@@ -45,7 +45,7 @@ TEST_SETUP(j1939_tp_mgr_receive_rts_cts) {
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 }
 
@@ -70,7 +70,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on RTS receiving controller should send CTS to establish connection */
@@ -94,7 +94,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on TP_DT receiving controller should send CTS to make acknowledge */
@@ -118,7 +118,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
             2,                  /* Sequence Number */
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on TP_DT receiving controller should send CTS to make acknowledge */
@@ -142,7 +142,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on the last TP_DT receiving controller should send EndOfMsgAck to close connection */
@@ -204,7 +204,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on RTS receiving controller should send CTS to establish connection */
@@ -232,7 +232,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
             2,                  /* Sequence Number */
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on TP_DT receiving controller should send CTS to make acknowledge */
@@ -256,7 +256,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on the last TP_DT receiving controller should send EndOfMsgAck to close connection */
@@ -317,7 +317,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_any_packets_per_CTS) {
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on RTS receiving controller should send CTS to establish connection */
@@ -348,7 +348,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_any_packets_per_CTS) {
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on the last TP_DT receiving controller should send EndOfMsgAck to close connection */
@@ -408,7 +408,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_wrong_seq_number) {
             0xFF,               /* Maximum number of packets that can be sent in response to one CTS */
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on RTS receiving controller should send CTS to establish connection */
@@ -435,7 +435,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_wrong_seq_number) {
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on wrong seq.number receiving controller should send Conn_Abort to close connection */
@@ -475,7 +475,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_already_managed_session) 
             0xFF,               /* Maximum number of packets that can be sent in response to one CTS */
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on RTS receiving controller should send CTS to establish connection */
@@ -503,7 +503,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_already_managed_session) 
             2,                  /* Maximum number of packets that can be sent in response to one CTS */
             0x00, 0xAE, 0x00    /* PGN of the packeted message */);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on another RTS receiving controller should send Conn_Abort to not establish the second session from same source */
@@ -536,7 +536,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_connection_abort) {
             0xFF,               /* Maximum number of packets that can be sent in response to one CTS */
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /* on RTS receiving controller should send CTS to establish connection */
@@ -564,7 +564,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_connection_abort) {
             2,                  /* Sequence Number */
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
@@ -583,7 +583,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_connection_abort) {
             0xFF, 0xFF, 0xFF,   /* Reserved */
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
 
-    j1939_process(j1939_bsp_get_time());
+    j1939_process();
     unittest_add_time(20);
 
     /*

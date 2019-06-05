@@ -61,9 +61,7 @@ int main(int argc, char** argv) {
     }
 
     while (n_ticks-- > 0) {
-        const uint32_t t_now = n_tick;
-
-        j1939_process(t_now);
+        j1939_process();
 
         n_tick++;
     }
