@@ -145,7 +145,7 @@ typedef enum j1939_rx_tx_errno {
 ///
 typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload);
 ///
-typedef void (*j1939_callback_rx_tx_error_handler)(j1939_rx_tx_errno error, uint32_t PGN, uint32_t address, uint16_t msg_sz);
+typedef void (*j1939_callback_rx_tx_error_handler)(j1939_rx_tx_errno error, uint32_t PGN, uint8_t address, uint16_t msg_sz);
 
 /**
  * @brief
