@@ -30,6 +30,18 @@ static inline uint8_t U8_MIN(uint8_t a, uint8_t b) {
 
 
 /**
+ * @brief 
+ * 
+ * @param a 
+ * @param b 
+ * @return uint16_t 
+ */
+static inline uint16_t U16_MIN(uint16_t a, uint16_t b) {
+    return (a < b) ? a : b;
+}
+
+
+/**
  * @brief
  * 
  * @param PGN

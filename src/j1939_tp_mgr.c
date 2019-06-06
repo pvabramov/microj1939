@@ -749,7 +749,7 @@ static int __tp_mgr_process_transmition(uint8_t self_addr, j1939_tp_mgr_ctx *con
     memset(&tp_dt, 0xFF, sizeof(j1939_tp_dt));
 
     msg_start  = (session->pkt_next - 1) * J1939_MULTIPACKET_DATA_SZ;
-    msg_sz_min = U8_MIN(J1939_MULTIPACKET_DATA_SZ, (session->msg_sz - msg_start));
+    msg_sz_min = U16_MIN(J1939_MULTIPACKET_DATA_SZ, (session->msg_sz - msg_start));
 
     /* copy transmition data into payload */
     memcpy(tp_dt.payload, &session->buffer[msg_start], msg_sz_min);
