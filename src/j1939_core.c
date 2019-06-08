@@ -11,7 +11,7 @@
 #include <J1939/private/j1939_private.h>
 
 
-#define PREIDLE_TIMEOUT 1000
+#define PREIDLE_TIMEOUT 2000
 
 
 /**
@@ -521,6 +521,8 @@ static inline int __j1939_process(uint32_t the_time) {
         __j1939_ctx.preidle_timer = PREIDLE_TIMEOUT;
     } else {
         __j1939_ctx.preidle_timer -= t_delta;
+        if (__j1939_ctx.preidle_timer < 0)
+            __j1939_ctx.preidle_timer = 0;
     }
 
     return (__j1939_ctx.preidle_timer > 0);
