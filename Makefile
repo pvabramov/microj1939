@@ -1,5 +1,5 @@
 # output binary
-BIN := libj1939.a
+BIN := $(CURDIR)/libj1939.a
 
 # source files
 SRCS := $(wildcard $(CURDIR)/src/*.c)
@@ -12,9 +12,9 @@ DISTFILES := $(BIN)
 DISTOUTPUT := $(BIN).tar.gz
 
 # intermediate directory for generated object files
-OBJDIR := .o
+OBJDIR := $(CURDIR)/.o
 # intermediate directory for generated dependency files
-DEPDIR := .d
+DEPDIR := $(CURDIR)/.d
 
 # object files, auto generated from source files
 OBJS := $(patsubst %,$(OBJDIR)/%.o,$(basename $(SRCS)))
@@ -28,20 +28,31 @@ $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 # tar
 TAR := tar
 
-COV_INFO = libj1939.info
-COV_REPORT_DIR = coverage_report
+# coverage support
+ifdef COVERAGE
+COV_INFO 		:= $(CURDIR)/libj1939.info
+COV_REPORT_DIR 	:= $(CURDIR)/coverage_report
+ifeq ($(COVERAGE),1)
+COVFLAGS 		:= -fprofile-arcs -ftest-coverage
+endif
+endif
 
 # C flags
-ifndef NOTEST
-COVFLAGS := -fprofile-arcs -ftest-coverage
-endif
-CFLAGS := -std=c11 $(INCS:%=-I%) -g -Wall -Wextra -pedantic $(COVFLAGS)
-#
+CFLAGS ?= -O0 -g
+CFLAGS := -pipe -std=c11 -Wall -Wextra -pedantic $(CFLAGS)
+
 # flags required for dependency generation; passed to compilers
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
 
+# in order to set a cross compiler
+ifdef CROSS_COMPILE
+LD  := $(CROSS_COMPILE)gcc
+CC  := $(CROSS_COMPILE)gcc
+AR  := $(CROSS_COMPILE)ar
+endif
+
 # compile C source files
-COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) -c -o $@
+COMPILE.c = $(CC) $(DEPFLAGS) $(CFLAGS) $(COVFLAGS) $(INCS:%=-I%) -c -o $@
 # link object files to binary
 LINK.o = $(CC) $(LDFLAGS) $(LDLIBS) -o $@
 STLIB  = $(AR) rcs ${@}
@@ -60,8 +71,10 @@ clean:
 	@make -C tests $@
 	$(RM) -r $(OBJDIR) $(DEPDIR)
 	$(RM) $(BIN)
+ifdef COVERAGE
 	$(RM) $(COV_INFO)
 	$(RM) -r $(COV_REPORT_DIR)
+endif
 
 .PHONY: distclean
 distclean: clean

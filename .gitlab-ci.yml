@@ -27,7 +27,7 @@ building:
     stage: build
     script:
         - make clean
-        - make all
+        - make COVERAGE=1 all
         - make tests
     <<: *building_artifacts
 
