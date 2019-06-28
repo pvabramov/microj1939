@@ -29,9 +29,9 @@ $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 TAR := tar
 
 # coverage support
-ifdef COVERAGE
 COV_INFO 		:= $(CURDIR)/libj1939.info
 COV_REPORT_DIR 	:= $(CURDIR)/coverage_report
+ifdef COVERAGE
 ifeq ($(COVERAGE),1)
 COVFLAGS 		:= -fprofile-arcs -ftest-coverage
 endif
@@ -71,10 +71,8 @@ clean:
 	@make -C tests $@
 	$(RM) -r $(OBJDIR) $(DEPDIR)
 	$(RM) $(BIN)
-ifdef COVERAGE
 	$(RM) $(COV_INFO)
 	$(RM) -r $(COV_REPORT_DIR)
-endif
 
 .PHONY: distclean
 distclean: clean
