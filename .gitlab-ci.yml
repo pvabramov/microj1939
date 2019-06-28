@@ -14,8 +14,7 @@ stages:
 .testing_artifacts: &testing_artifacts
     artifacts:
         paths:
-            - .o/**/*.gcda
-            - .o/**/*.gcno
+            - .o/
         expire_in: 5 minutes
         
 .coverage_artifacts: &coverage_artifacts
