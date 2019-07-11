@@ -83,6 +83,7 @@ TEST(j1939_receive_generic, receive_PDU1_message_data_len_0) {
     TEST_ASSERT_EQUAL(0x2F00,   rx_msg.PGN);
     TEST_ASSERT_EQUAL(0x20,     rx_msg.SA);
     TEST_ASSERT_EQUAL(0,        rx_msg.len);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 }
 
 
@@ -103,6 +104,7 @@ TEST(j1939_receive_generic, receive_PDU1_message_data_len_5) {
     TEST_ASSERT_EQUAL(0x33,     rx_msg.data[2]);
     TEST_ASSERT_EQUAL(0x34,     rx_msg.data[3]);
     TEST_ASSERT_EQUAL(0x35,     rx_msg.data[4]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 }
 
 
@@ -125,6 +127,7 @@ TEST(j1939_receive_generic, receive_PDU1_message_to_all_data_len_7) {
     TEST_ASSERT_EQUAL(0x35,     rx_msg.data[4]);
     TEST_ASSERT_EQUAL(0x36,     rx_msg.data[5]);
     TEST_ASSERT_EQUAL(0x37,     rx_msg.data[6]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 }
 
 
@@ -141,6 +144,7 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_1) {
     TEST_ASSERT_EQUAL(0x20,     rx_msg.SA);
     TEST_ASSERT_EQUAL(1,        rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 }
 
 
@@ -159,6 +163,7 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_3) {
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
     TEST_ASSERT_EQUAL(0x32,     rx_msg.data[1]);
     TEST_ASSERT_EQUAL(0x33,     rx_msg.data[2]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 }
 
 
@@ -182,6 +187,28 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_8) {
     TEST_ASSERT_EQUAL(0x36,     rx_msg.data[5]);
     TEST_ASSERT_EQUAL(0x37,     rx_msg.data[6]);
     TEST_ASSERT_EQUAL(0x38,     rx_msg.data[7]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
+}
+
+
+TEST(j1939_receive_generic, receive_message_in_time) {
+    /* on enter time should be 270 ms */
+
+    unittest_add_time(120);
+
+    unittest_post_input(0xF021, 254, 0x20, 1, 0x31);
+
+    /* process tick */
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
+
+    TEST_ASSERT_EQUAL(0xF021,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(0x20,     rx_msg.SA);
+    TEST_ASSERT_EQUAL(1,        rx_msg.len);
+    TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
+    TEST_ASSERT_EQUAL(270 + 120,rx_msg.time);
 }
 
 
@@ -194,4 +221,5 @@ TEST_GROUP_RUNNER(j1939_receive_generic) {
     RUN_TEST_CASE(j1939_receive_generic, receive_PDU2_message_data_len_1);
     RUN_TEST_CASE(j1939_receive_generic, receive_PDU2_message_data_len_3);
     RUN_TEST_CASE(j1939_receive_generic, receive_PDU2_message_data_len_8);
+    RUN_TEST_CASE(j1939_receive_generic, receive_message_in_time);
 }

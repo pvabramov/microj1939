@@ -183,6 +183,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
     TEST_ASSERT_EQUAL(0x3D,     rx_msg.data[12]);
     TEST_ASSERT_EQUAL(0x3E,     rx_msg.data[13]);
     TEST_ASSERT_EQUAL(0x3F,     rx_msg.data[14]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 
     /* there is only one multiframe message */
     TEST_ASSERT(unittest_get_input(NULL) < 0);
@@ -297,6 +298,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
     TEST_ASSERT_EQUAL(0x3D,     rx_msg.data[12]);
     TEST_ASSERT_EQUAL(0x3E,     rx_msg.data[13]);
     TEST_ASSERT_EQUAL(0x3F,     rx_msg.data[14]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 
     /* there is only one multiframe message */
     TEST_ASSERT(unittest_get_input(NULL) < 0);
@@ -389,6 +391,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_any_packets_per_CTS) {
     TEST_ASSERT_EQUAL(0x3D,     rx_msg.data[12]);
     TEST_ASSERT_EQUAL(0x3E,     rx_msg.data[13]);
     TEST_ASSERT_EQUAL(0x3F,     rx_msg.data[14]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 
     /* there is only one multiframe message */
     TEST_ASSERT(unittest_get_input(NULL) < 0);

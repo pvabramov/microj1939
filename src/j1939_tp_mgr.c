@@ -217,7 +217,7 @@ j1939_tp_session *__look_at_tx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const u
  * @param src_address
  * @param tp_cm
  */
-void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, const j1939_tp_cm_control *const tp_cm) {
+void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     session->dst_addr               = J1939_GLOBAL_ADDRESS;
     session->src_addr               = src_address;
     session->dir                    = dir;
@@ -228,6 +228,7 @@ void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_di
     session->pkt_max                = tp_cm->BAM.total_pkt_num;
     session->pkt_next               = 1;
     session->transmition_timeout    = (dir == J1939_TP_DIR_IN) ? J1939_TP_TO_T1 : J1939_TP_TO_INF;
+    session->time                   = time;
 }
 
 
@@ -240,7 +241,7 @@ void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_di
  * @param dst_address
  * @param tp_cm
  */
-void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, uint8_t dst_address, const j1939_tp_cm_control *const tp_cm) {
+void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, uint8_t dst_address, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     session->dst_addr               = dst_address;
     session->src_addr               = src_address;
     session->dir                    = dir;
@@ -251,6 +252,7 @@ void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_di
     session->pkt_max                = U8_MIN(tp_cm->RTS.max_pkt_num, U8_MIN(J1939_TP_MGR_MAX_PACKETS_PER_CTS, tp_cm->RTS.total_pkt_num));
     session->pkt_next               = 1;
     session->transmition_timeout    = (dir == J1939_TP_DIR_IN) ? J1939_TP_TO_T2 : J1939_TP_TO_T3;
+    session->time                   = time;
 }
 
 
@@ -263,7 +265,7 @@ void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_di
  *
  * @return
  */
-static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm) {
+static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     int sid;
     j1939_tp_session *session;
 
@@ -281,10 +283,10 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
     session = &tp_mgr_ctx->sessions[sid];
 
     if (tp_cm->control == J1939_TP_CM_BAM) {
-        __tp_session_setup_BAM(session, J1939_TP_DIR_IN, src_addr, tp_cm);
+        __tp_session_setup_BAM(session, J1939_TP_DIR_IN, src_addr, tp_cm, time);
         tp_mgr_ctx->bam_rx_tab[src_addr] = sid;
     } else {
-        __tp_session_setup_RTS(session, J1939_TP_DIR_IN, src_addr, dst_addr, tp_cm);
+        __tp_session_setup_RTS(session, J1939_TP_DIR_IN, src_addr, dst_addr, tp_cm, time);
         tp_mgr_ctx->rts_rx_tab[src_addr] = sid;
     }
 
@@ -323,9 +325,9 @@ static int __open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_add
     session = &tp_mgr_ctx->sessions[sid];
 
     if (tp_cm->control == J1939_TP_CM_BAM) {
-        __tp_session_setup_BAM(session, J1939_TP_DIR_OUT, self_addr, tp_cm);
+        __tp_session_setup_BAM(session, J1939_TP_DIR_OUT, self_addr, tp_cm, 0 /* on tx there is no time */);
     } else {
-        __tp_session_setup_RTS(session, J1939_TP_DIR_OUT, self_addr, dst_addr, tp_cm);
+        __tp_session_setup_RTS(session, J1939_TP_DIR_OUT, self_addr, dst_addr, tp_cm, 0 /* on tx there is no time */);
     }
 
     tp_mgr_ctx->xxx_tx_tab[0] = sid;
@@ -342,11 +344,11 @@ static int __open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_add
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_RTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
+static void __tp_mgr_rx_handle_RTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     const uint32_t tp_cm_PGN = j1939_PGN_code_get(tp_cm->PGN);
     int sid;
 
-    if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm)) < 0) {
+    if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm, time)) < 0) {
         j1939_rx_tx_errno rx_tx_error;
         j1939_tp_cm_conn_abort_reason reason;
 
@@ -382,11 +384,11 @@ static void __tp_mgr_rx_handle_RTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_BAM_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
+static void __tp_mgr_rx_handle_BAM_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     int sid;
 
     /* opens BAM session */
-    if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm)) < 0) {
+    if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm, time)) < 0) {
         const uint32_t tp_cm_PGN = j1939_PGN_code_get(tp_cm->PGN);
         /* no error check, just notify */
         __j1939_rx_error_notify(((sid == -EISCONN) ? J1939_RX_TX_ERROR_EXISTS : J1939_RX_TX_ERROR_FAILED),
@@ -498,7 +500,8 @@ static void __tp_mgr_rx_handle_BAM_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
                                             session->PGN,
                                             session->src_addr,
                                             session->msg_sz,
-                                            session->buffer);
+                                            session->buffer,
+                                            session->time);
         if (status < 0) {
             /* if we cannot append a message just close */
             __close_tp_session_with_error(tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
@@ -547,7 +550,8 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
                                             session->PGN,
                                             session->src_addr,
                                             session->msg_sz,
-                                            session->buffer);
+                                            session->buffer,
+                                            session->time);
         if (status < 0) {
             /* if we cannot append a message just abort transmition */
             __send_Conn_Abort(DA, SA, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES);
@@ -583,7 +587,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
  * @param time_ms
  * @param frame
  */
-int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame) {
+int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame, uint32_t time) {
     const uint32_t PGN = j1939_PGN_code_get(frame->PGN);
     uint8_t SA;
     uint8_t DA;
@@ -614,12 +618,12 @@ int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_prim
         switch (tp_cm->control) {
             case J1939_TP_CM_RTS:
                 if (DA != J1939_GLOBAL_ADDRESS)
-                    __tp_mgr_rx_handle_RTS_control(tp_mgr_ctx, SA, DA, tp_cm);
+                    __tp_mgr_rx_handle_RTS_control(tp_mgr_ctx, SA, DA, tp_cm, time);
                 break;
 
             case J1939_TP_CM_BAM:
                 if (DA == J1939_GLOBAL_ADDRESS)
-                    __tp_mgr_rx_handle_BAM_control(tp_mgr_ctx, SA, DA, tp_cm);
+                    __tp_mgr_rx_handle_BAM_control(tp_mgr_ctx, SA, DA, tp_cm, time);
                 break;
 
             case J1939_TP_CM_CTS:

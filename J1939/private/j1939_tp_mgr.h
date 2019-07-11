@@ -178,6 +178,7 @@ typedef struct j1939_tp_session {
     volatile uint8_t pkt_next;
     
     // pkt data and info
+    uint32_t time;
     uint32_t PGN;
     uint8_t dst_addr;
     uint8_t src_addr;
@@ -202,7 +203,7 @@ typedef struct j1939_tp_mgr_ctx {
     
     
 void j1939_tp_mgr_init(j1939_tp_mgr_ctx *const tp_mgr_ctx);
-int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame);
+int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame, uint32_t time);
 int j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta);
 
 int j1939_tp_mgr_open_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload);

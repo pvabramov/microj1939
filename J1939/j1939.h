@@ -143,7 +143,7 @@ typedef enum j1939_rx_tx_errno {
 } j1939_rx_tx_errno;
 
 ///
-typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload);
+typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 ///
 typedef void (*j1939_callback_rx_tx_error_handler)(j1939_rx_tx_errno error, uint32_t PGN, uint8_t address, uint16_t msg_sz);
 
@@ -182,7 +182,7 @@ int j1939_sendraw(const j1939_primitive *const primitive);
 // int j1939_write_request(...);
 
 int j1939_process(void);
-int j1939_handle_receiving(const j1939_primitive *const frame);
+int j1939_handle_receiving(const j1939_primitive *const frame, uint32_t time);
 int j1939_handle_transmiting(void);
 
 

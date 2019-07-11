@@ -65,6 +65,10 @@ TEST(j1939_tp_mgr_receive_bam, receive_BAM_message) {
     unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
+
+    /* add some time to check we save the time for initial frame */
+    unittest_add_time(100);
+
     /* TP.DT, 2 */
     unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
             2,                  /* Sequence Number */
@@ -99,6 +103,7 @@ TEST(j1939_tp_mgr_receive_bam, receive_BAM_message) {
     TEST_ASSERT_EQUAL(0x3D,     rx_msg.data[12]);
     TEST_ASSERT_EQUAL(0x3E,     rx_msg.data[13]);
     TEST_ASSERT_EQUAL(0x3F,     rx_msg.data[14]);
+    TEST_ASSERT_EQUAL(270,      rx_msg.time);
 }
 
 

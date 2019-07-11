@@ -19,7 +19,7 @@
 #define PIPE_WR     1
 
 
-static void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload);
+static void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 
 
 callback_on_delay __on_delay = NULL;
@@ -94,7 +94,7 @@ void unittest_add_time(uint32_t time) {
 }
 
 
-void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload) {
+void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
     unittest_j1939_rx_msg msg;
 
     if (__recv_pipes[PIPE_WR] < 0)
@@ -104,6 +104,7 @@ void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz,
     msg.SA  = src_address;
     msg.len = msg_sz;
     memcpy(msg.data, payload, msg_sz);
+    msg.time = time;
 
     write(__recv_pipes[PIPE_WR], &msg, sizeof(unittest_j1939_rx_msg));
 }
@@ -151,7 +152,7 @@ int unittest_post_input(uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...) 
     frame.src_address   = SA;
     frame.priority      = 7;
 
-    return j1939_handle_receiving(&frame);
+    return j1939_handle_receiving(&frame, __the_time);
 }
 
 

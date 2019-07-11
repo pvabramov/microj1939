@@ -11,6 +11,7 @@ typedef struct unittest_j1939_rx_msg {
     uint8_t SA;
     uint16_t len;
     uint8_t data[J1939_MAX_DATA_SZ];
+    uint32_t time;
 } unittest_j1939_rx_msg;
 
 

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "unity/unity_fixture.h"
 #include "helpers/unittest_helpers.h"
 
