@@ -470,7 +470,8 @@ static int j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callbac
         if (read_sts < 0)
             break;
 
-        handler(info.error, info.PGN, info.addr, info.msg_sz);
+        if (handler)
+            handler(info.error, info.PGN, info.addr, info.msg_sz);
 
         is_active = 1;
     }
