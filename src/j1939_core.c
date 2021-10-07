@@ -639,7 +639,7 @@ static int __rx_handle_PGN_request(const j1939_primitive * const frame, uint32_t
             break;
 
         default:
-            if (__j1939_ctx.state == ACTIVE) {
+            if ((__j1939_ctx.state == ACTIVE) && (__j1939_ctx.callbacks.request_handler != NULL)) {
                 __j1939_receive_notify(J1939_RX_INFO_TYPE_REQUEST,
                         requested_PGN,
                         frame->src_address,
