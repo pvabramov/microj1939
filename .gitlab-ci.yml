@@ -25,7 +25,8 @@ stages:
 building:
     stage: build
     script:
-        - make clean
+        - make distclean
+        - make default_defconfig
         - make COVERAGE=1 all
         - make tests
     <<: *building_artifacts
