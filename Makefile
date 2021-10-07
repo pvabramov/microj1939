@@ -1,6 +1,9 @@
 # output binary
 BIN := $(CURDIR)/libj1939.a
 
+CONFIGDIR := $(CURDIR)/config
+CONFIG_H  := $(CURDIR)/j1939_conf.h
+
 # source files
 SRCS := $(wildcard $(CURDIR)/src/*.c)
 INCS := $(CURDIR)
@@ -27,6 +30,7 @@ $(shell mkdir -p $(dir $(DEPS)) >/dev/null)
 
 # tar
 TAR := tar
+CP := cp
 
 # coverage support
 COV_INFO 		:= $(CURDIR)/libj1939.info
@@ -77,6 +81,7 @@ clean:
 .PHONY: distclean
 distclean: clean
 	$(RM) $(BIN) $(DISTOUTPUT)
+	$(RM) $(CONFIG_H)
 
 .PHONY: install
 install:
@@ -136,3 +141,8 @@ $(DEPDIR)/%.d: ;
 
 -include $(DEPS)
 
+$(CONFIG_H):
+	$(error To build generate $(CONFIG_H) first! Run `make <name>_defconfig`, you may look at $(CONFIGDIR) directory for predefined configurations.)
+
+%defconfig:
+	@$(CP) $(CONFIGDIR)/$@ $(CONFIG_H)

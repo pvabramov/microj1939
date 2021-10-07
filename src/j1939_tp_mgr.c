@@ -4,6 +4,7 @@
  * @brief
  */
 
+#include <J1939/j1939_config.h>
 
 #include <errno.h>
 

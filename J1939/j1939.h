@@ -8,6 +8,8 @@
 #ifndef J1939_H
 #define J1939_H
 
+#include <J1939/j1939_config.h>
+
 #include <stdint.h>
 
 
@@ -15,15 +17,8 @@
 extern "C" {
 #endif
 
-
 #include "j1939_std_addr.h"
 #include "j1939_std_pgn.h"
-
-#define J1939_CAN_BAUDRATE              250000
-
-#define J1939_PACKET_DATA_SZ            8
-#define J1939_MULTIPACKET_DATA_SZ       7
-#define J1939_MAX_DATA_SZ               (J1939_MULTIPACKET_DATA_SZ * 255)
 
 #define J1939_CONTROL_PRIORITY          3
 #define J1939_GENERIC_PRIORITY          6

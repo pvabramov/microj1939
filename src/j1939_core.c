@@ -4,6 +4,7 @@
  * @brief
  */
 
+#include <J1939/j1939_config.h>
 
 #include <J1939/j1939_bsp.h>
 #include <J1939/private/j1939_tp_mgr.h>

@@ -9,6 +9,9 @@
 #define J1939_TP_MGR_H
 
 
+#define J1939_MULTIPACKET_DATA_SZ           7
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -185,9 +188,6 @@ typedef struct j1939_tp_session {
     uint16_t msg_sz;
     uint8_t buffer[J1939_MAX_DATA_SZ];
 } j1939_tp_session;
-
-
-#define J1939_TP_SESSIONS_NUM 32 // XXX: maximum number of sessions should be 254
 
 
 /**

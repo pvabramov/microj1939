@@ -1,0 +1,7 @@
+
+#define J1939_CAN_BAUDRATE               (250000)
+#define J1939_RX_FIFO_SZ                 (32)
+#define J1939_TX_FIFO_SZ                 (32)
+#define J1939_RX_TX_ERROR_FIFO_SZ        (32)
+#define J1939_TP_SESSIONS_NUM            (32)
+#define J1939_MAX_DATA_SZ                (1785)

@@ -14,10 +14,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  
-
-///
-#define J1939_RX_FIFO_SZ   32
 
 
 /**
@@ -36,10 +32,6 @@ int j1939_rx_fifo_write(j1939_rx_fifo *const fifo, const j1939_rx_info *const rx
 int j1939_rx_fifo_read(j1939_rx_fifo *const fifo, j1939_rx_info *const rx_info);
 
 
-///
-#define J1939_TX_FIFO_SZ    32
-
-
 /**
  * @brief
  */
@@ -54,10 +46,6 @@ void j1939_tx_fifo_init(j1939_tx_fifo *const fifo);
 unsigned j1939_tx_fifo_size(const j1939_tx_fifo *const fifo);
 int j1939_tx_fifo_write(j1939_tx_fifo *const fifo, const j1939_primitive *const primitive);
 int j1939_tx_fifo_read(j1939_tx_fifo *const fifo, j1939_primitive *const primitive);
-
-
-///
-#define J1939_RX_TX_ERROR_FIFO_SZ    32
 
 
 /**
