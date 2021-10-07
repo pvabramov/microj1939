@@ -577,6 +577,8 @@ static int __rx_handle_PGN_claim_address(const j1939_primitive * const frame, ui
     j1939_drv_state new_state;
     int address;
 
+    (void)time;
+
     if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC)
         return 0;
 

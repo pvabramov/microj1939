@@ -409,6 +409,8 @@ static void __tp_mgr_rx_handle_BAM_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
 static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
 
+    (void)DA;
+
     if (!session || !(session->state == J1939_TP_STATE_WAIT_CTS || session->state == J1939_TP_STATE_WAIT_EOMA))
         return;
 
@@ -431,6 +433,9 @@ static void __tp_mgr_rx_handle_CTS_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, u
 static void __tp_mgr_rx_handle_EoMA_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
 
+    (void)DA;
+    (void)tp_cm;
+
     if (!session || session->state != J1939_TP_STATE_WAIT_EOMA /* close session only in state WAIT_EOMA */)
         return;
 
@@ -449,6 +454,8 @@ static void __tp_mgr_rx_handle_EoMA_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, 
 static void __tp_mgr_rx_handle_Conn_Abort_control(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     const uint32_t tp_cm_PGN = j1939_PGN_code_get(tp_cm->PGN);
     j1939_tp_session *session;
+
+    (void)DA;
 
     /* try to close in session */
     session = __look_at_rx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
@@ -478,6 +485,8 @@ static void __tp_mgr_rx_handle_Conn_Abort_control(j1939_tp_mgr_ctx *const tp_mgr
  */
 static void __tp_mgr_rx_handle_BAM_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_dt *const tp_dt) {
     j1939_tp_session *const session = __look_at_rx_table(tp_mgr_ctx, tp_mgr_ctx->bam_rx_tab, SA);
+
+    (void)DA;
 
     if (!session || session->state != J1939_TP_STATE_TRANSMIT)
         return;
