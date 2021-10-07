@@ -112,7 +112,7 @@ int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint8_
     if (type == J1939_RX_INFO_TYPE_MULTIPACKET) {
         rx_info.payload_ptr = payload;
     } else {
-        memcpy(rx_info.payload, payload, 8);
+        memcpy(rx_info.payload, payload, U16_MIN(msg_sz, 8));
     }
 
     return j1939_rx_fifo_write(&__j1939_ctx.rx_fifo, &rx_info);
