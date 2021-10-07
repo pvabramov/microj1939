@@ -74,7 +74,16 @@ typedef union PGN_format {
 } PGN_format;
 
 
-#define TREAT_AS_PGN(x) ((PGN_format)(x))
+/**
+ * @brief Cast integer value to PGN_format type
+ *
+ * @param x Value to cast
+ * @return PGN_format
+ */
+static inline PGN_format TREAT_AS_PGN(uint32_t x) {
+    PGN_format PGN = { x };
+    return PGN;
+}
 
 
 /**
