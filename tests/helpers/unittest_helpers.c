@@ -19,7 +19,7 @@
 #define PIPE_WR     1
 
 
-static void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload, uint32_t time);
+static void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 
 
 callback_on_delay __on_delay = NULL;
@@ -94,7 +94,7 @@ void unittest_add_time(uint32_t time) {
 }
 
 
-void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
+void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
     unittest_j1939_rx_msg msg;
 
     if (__recv_pipes[PIPE_WR] < 0)
@@ -102,6 +102,7 @@ void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint16_t msg_sz,
 
     msg.PGN = PGN;
     msg.SA  = src_address;
+    msg.DA = dst_address;
     msg.len = msg_sz;
     memcpy(msg.data, payload, msg_sz);
     msg.time = time;
