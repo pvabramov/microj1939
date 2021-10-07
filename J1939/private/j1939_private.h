@@ -109,7 +109,8 @@ typedef struct __attribute__((__packed__)) j1939_payload_ack {
 typedef enum j1939_rx_info_type {
     J1939_RX_INFO_TYPE_UNKNOWN      = 0,
     J1939_RX_INFO_TYPE_FRAME        = 1,
-    J1939_RX_INFO_TYPE_MULTIPACKET  = 0x40000000,
+    J1939_RX_INFO_TYPE_REQUEST      = 2,
+    J1939_RX_INFO_TYPE_MULTIPACKET  = 0x40000000
 } j1939_rx_info_type;
     
     

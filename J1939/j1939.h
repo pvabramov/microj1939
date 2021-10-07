@@ -159,16 +159,30 @@ typedef enum j1939_rx_tx_errno {
     J1939_RX_TX_ERROR_TIMEDOUT,
 } j1939_rx_tx_errno;
 
+
+/**
+ * @brief
+ */
+typedef enum j1939_request_status {
+    J1939_REQ_HANDLED = 0,
+    J1939_REQ_NOT_SUPPORTED = 1,
+    J1939_REQ_ACCESS_DENIED = 2,
+    J1939_REQ_BUSY = 3
+} j1939_request_status;
+
 ///
 typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 ///
 typedef void (*j1939_callback_rx_tx_error_handler)(j1939_rx_tx_errno error, uint32_t PGN, uint8_t address, uint16_t msg_sz);
+///
+typedef j1939_request_status (*j1939_callback_request_handler)(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint32_t time);
 
 /**
  * @brief
  */
 typedef struct j1939_callbacks {
     j1939_callback_rx_handler rx_handler;
+    j1939_callback_request_handler request_handler;
     j1939_callback_rx_tx_error_handler rx_error_handler;
     j1939_callback_rx_tx_error_handler tx_error_handler;
 } j1939_callbacks;

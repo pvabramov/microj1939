@@ -425,11 +425,9 @@ static int j1939_process_rx(void) {
     max_rx_per_tick = j1939_rx_fifo_size(&__j1939_ctx.rx_fifo);
 
     for (rx_upcount = 0; rx_upcount < max_rx_per_tick; ++rx_upcount) {
-        int read_sts;
         j1939_rx_info rx_info;
 
-        read_sts = j1939_rx_fifo_read(&__j1939_ctx.rx_fifo, &rx_info);
-        if (read_sts < 0)
+        if (j1939_rx_fifo_read(&__j1939_ctx.rx_fifo, &rx_info) < 0)
             break;
 
         is_active = 1;
@@ -438,6 +436,19 @@ static int j1939_process_rx(void) {
 
             if (__j1939_ctx.callbacks.rx_handler) {
                 __j1939_ctx.callbacks.rx_handler(rx_info.PGN, rx_info.src_addr, rx_info.dst_addr, rx_info.msg_sz, &rx_info.payload[0], rx_info.time);
+            }
+
+        } else if (rx_info.type == J1939_RX_INFO_TYPE_REQUEST) {
+            j1939_request_status status;
+
+            if (__j1939_ctx.callbacks.request_handler) {
+                status = __j1939_ctx.callbacks.request_handler(rx_info.PGN, rx_info.src_addr, rx_info.dst_addr, rx_info.time);
+            } else {
+                status = J1939_REQ_NOT_SUPPORTED;
+            }
+
+            if ((status != J1939_REQ_HANDLED) && (rx_info.dst_addr != J1939_GLOBAL_ADDRESS)) {
+                __send_ACK((j1939_ack_control)status, 0xFF, rx_info.src_addr, TREAT_AS_PGN(rx_info.PGN));
             }
 
         } else if (rx_info.type == J1939_RX_INFO_TYPE_MULTIPACKET && rx_info.sid != 255) {
@@ -470,11 +481,9 @@ static int j1939_notify_errors(j1939_rx_tx_error_fifo *const fifo, j1939_callbac
     max_per_tick = j1939_rx_tx_error_fifo_size(fifo);
 
     for (upcount = 0; upcount < max_per_tick; ++upcount) {
-        int read_sts;
         j1939_rx_tx_error_info info;
 
-        read_sts = j1939_rx_tx_error_fifo_read(fifo, &info);
-        if (read_sts < 0)
+        if (j1939_rx_tx_error_fifo_read(fifo, &info) < 0)
             break;
 
         if (handler)
@@ -556,7 +565,7 @@ int j1939_process(void) {
  *
  * @return
  */
-static int __rx_handle_PGN_claim_address(const j1939_primitive * const frame) {
+static int __rx_handle_PGN_claim_address(const j1939_primitive * const frame, uint32_t time) {
     /* PDU1 format */
     const int is_ACLM_PGN = j1939_PGN_code_get(frame->PGN) == J1939_STD_PGN_ACLM;
     const int is_our_addr =
@@ -601,21 +610,21 @@ static int __rx_handle_PGN_claim_address(const j1939_primitive * const frame) {
  *
  * @return
  */
-static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
+static int __rx_handle_PGN_request(const j1939_primitive * const frame, uint32_t time) {
     /* PDU1 format */
     const int is_RQST_PGN = j1939_PGN_code_get(frame->PGN) == J1939_STD_PGN_RQST;
-    const int is_our_addr =
-        (frame->PGN.dest_address != J1939_NULL_ADDRESS) &&
-        ((frame->PGN.dest_address == __j1939_ctx.address) ||
-        (frame->PGN.dest_address == J1939_GLOBAL_ADDRESS));
+    const uint8_t dst_addr = j1939_PGN_da_get(frame->PGN);
+    const int is_our_addr = (dst_addr != J1939_NULL_ADDRESS) && ((dst_addr == __j1939_ctx.address) || (dst_addr == J1939_GLOBAL_ADDRESS));
     const j1939_payload_request *request;
+    uint32_t requested_PGN;
 
     if (!is_RQST_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_RQST_DLC)
         return 0;
 
     request = ((j1939_payload_request*) & frame->payload[0]);
+    requested_PGN = j1939_PGN_code_get(request->PGN);
 
-    switch (j1939_PGN_code_get(request->PGN)) {
+    switch (requested_PGN) {
         case J1939_STD_PGN_ACLM:
             /*
              * The address claim message is an exception to the requirements on request messages specified in SAE J1939­21.
@@ -626,13 +635,23 @@ static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
             __send_claim_address((__j1939_ctx.state == INITIALIZED) ? __j1939_ctx.preferred_address : __j1939_ctx.address);
             break;
 
-            /* XXX: we don't support any PGN yet */
         default:
-            /*
-             * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
-             */
-            if (frame->PGN.dest_address != J1939_GLOBAL_ADDRESS)
-                __send_ACK(J1939_ACK_NEGATIVE, 0xFF, frame->src_address, request->PGN);
+            if (__j1939_ctx.state == ACTIVE) {
+                __j1939_receive_notify(J1939_RX_INFO_TYPE_REQUEST,
+                        requested_PGN,
+                        frame->src_address,
+                        dst_addr,
+                        frame->dlc,
+                        request,
+                        time);
+            } else {
+                /*
+                * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
+                */
+                if (dst_addr != J1939_GLOBAL_ADDRESS) {
+                    __send_ACK(J1939_ACK_NEGATIVE, 0xFF, frame->src_address, request->PGN);
+                }
+            }
             break;
     }
 
@@ -658,7 +677,7 @@ int j1939_handle_receiving(const j1939_primitive *const frame, uint32_t time) {
     /*
      * "Address Claim" message handling
      */
-    if (__rx_handle_PGN_claim_address(frame))
+    if (__rx_handle_PGN_claim_address(frame, time))
         return 1;
 
     /* we are still attempting to claim an address, so dont handle any requests */
@@ -668,7 +687,7 @@ int j1939_handle_receiving(const j1939_primitive *const frame, uint32_t time) {
     /*
      * "PGN request" message handling
      */
-    if (__rx_handle_PGN_request(frame))
+    if (__rx_handle_PGN_request(frame, time))
         return 1;
 
     /*
