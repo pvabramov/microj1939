@@ -92,7 +92,7 @@ int __j1939_send_lock(const j1939_primitive * const primitive) {
  * @param payload
  * @return
  */
-int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz, const void *const payload, uint32_t time) {
+int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint8_t dst_addr, uint16_t msg_sz, const void *const payload, uint32_t time) {
     j1939_rx_info rx_info;
 
     if (type & J1939_RX_INFO_TYPE_MULTIPACKET) {
@@ -105,6 +105,7 @@ int __j1939_receive_notify(uint32_t type, uint32_t PGN, uint8_t src_addr, uint16
     rx_info.type = type;
     rx_info.msg_sz = msg_sz;
     rx_info.src_addr = src_addr;
+    rx_info.dst_addr = dst_addr;
     rx_info.PGN = PGN;
     rx_info.time = time;
 
@@ -434,11 +435,17 @@ static int j1939_process_rx(void) {
         is_active = 1;
 
         if (rx_info.type == J1939_RX_INFO_TYPE_FRAME) {
-            if (__j1939_ctx.callbacks.rx_handler)
-                __j1939_ctx.callbacks.rx_handler(rx_info.PGN, rx_info.src_addr, rx_info.msg_sz, &rx_info.payload[0], rx_info.time);
+
+            if (__j1939_ctx.callbacks.rx_handler) {
+                __j1939_ctx.callbacks.rx_handler(rx_info.PGN, rx_info.src_addr, rx_info.dst_addr, rx_info.msg_sz, &rx_info.payload[0], rx_info.time);
+            }
+
         } else if (rx_info.type == J1939_RX_INFO_TYPE_MULTIPACKET && rx_info.sid != 255) {
-            if (__j1939_ctx.callbacks.rx_handler)
-                __j1939_ctx.callbacks.rx_handler(rx_info.PGN, rx_info.src_addr, rx_info.msg_sz, rx_info.payload_ptr, rx_info.time);
+
+            if (__j1939_ctx.callbacks.rx_handler) {
+                __j1939_ctx.callbacks.rx_handler(rx_info.PGN, rx_info.src_addr, rx_info.dst_addr, rx_info.msg_sz, rx_info.payload_ptr, rx_info.time);
+            }
+
             j1939_tp_mgr_close_session(&__j1939_ctx.tp_mgr_ctx, rx_info.sid);
         }
     }
@@ -641,6 +648,8 @@ static int __rx_handle_PGN_request(const j1939_primitive * const frame) {
  * @return
  */
 int j1939_handle_receiving(const j1939_primitive *const frame, uint32_t time) {
+    uint8_t dst_addr;
+
     if (__j1939_ctx.state == NOT_STARTED || __j1939_ctx.state == BUS_OFF)
         return 0;
 
@@ -672,13 +681,16 @@ int j1939_handle_receiving(const j1939_primitive *const frame, uint32_t time) {
     if (j1939_tp_mgr_rx_handler(&__j1939_ctx.tp_mgr_ctx, frame, time))
         return 1;
 
-    if (j1939_is_PDU1(frame->PGN) && (frame->PGN.dest_address != __j1939_ctx.address && frame->PGN.dest_address != J1939_GLOBAL_ADDRESS))
+    dst_addr = j1939_PGN_da_get(frame->PGN);
+
+    if ((dst_addr != __j1939_ctx.address) && (dst_addr != J1939_GLOBAL_ADDRESS))
         return 0;
 
     /* append receiving data into fifo */
     __j1939_receive_notify(J1939_RX_INFO_TYPE_FRAME,
                            j1939_PGN_code_get(frame->PGN),
                            frame->src_address,
+                           dst_addr,
                            frame->dlc,
                            frame->payload,
                            time);

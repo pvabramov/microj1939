@@ -499,6 +499,7 @@ static void __tp_mgr_rx_handle_BAM_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
         int status = __j1939_receive_notify(J1939_RX_INFO_TYPE_MULTIPACKET | session->id,
                                             session->PGN,
                                             session->src_addr,
+                                            session->dst_addr,
                                             session->msg_sz,
                                             session->buffer,
                                             session->time);
@@ -549,6 +550,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(j1939_tp_mgr_ctx *const tp_mgr
         int status = __j1939_receive_notify(J1939_RX_INFO_TYPE_MULTIPACKET | session->id,
                                             session->PGN,
                                             session->src_addr,
+                                            session->dst_addr,
                                             session->msg_sz,
                                             session->buffer,
                                             session->time);

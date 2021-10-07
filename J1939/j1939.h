@@ -139,6 +139,14 @@ static inline uint32_t j1939_PGN_code_get(PGN_format PGN) {
     return PGN.value;
 }
 
+
+static inline uint8_t j1939_PGN_da_get(PGN_format PGN) {
+    if (j1939_is_PDU1(PGN))
+        return PGN.dest_address;
+
+    return J1939_GLOBAL_ADDRESS;
+}
+
 /**
  * @brief
  */
@@ -152,7 +160,7 @@ typedef enum j1939_rx_tx_errno {
 } j1939_rx_tx_errno;
 
 ///
-typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint16_t msg_sz, const void *const payload, uint32_t time);
+typedef void (*j1939_callback_rx_handler)(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 ///
 typedef void (*j1939_callback_rx_tx_error_handler)(j1939_rx_tx_errno error, uint32_t PGN, uint8_t address, uint16_t msg_sz);
 
