@@ -17,8 +17,6 @@
 
 ///
 #define J1939_TP_MGR_NO_ID                  ((uint8_t)0xFFU)
-///
-#define J1939_TP_MGR_MAX_PACKETS_PER_CTS    ((uint8_t)8U)
 
 
 /**

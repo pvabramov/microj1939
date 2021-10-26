@@ -41,6 +41,11 @@
 #endif
 
 ///
+#ifndef J1939_TP_MGR_MAX_PACKETS_PER_CTS
+#   define J1939_TP_MGR_MAX_PACKETS_PER_CTS    (8)
+#endif
+
+///
 #ifndef J1939_MAX_DATA_SZ
 #   define J1939_MAX_DATA_SZ                (1785)
 #endif
