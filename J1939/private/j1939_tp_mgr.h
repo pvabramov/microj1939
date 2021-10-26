@@ -195,13 +195,41 @@ typedef struct j1939_tp_session {
  */
 typedef struct j1939_tp_mgr_ctx {
     volatile int reset;
+    /*
+     * J1939-21, 5.10.5.1:
+     *
+     * A node must also be able to support one RTS/CTS session and one BAM session concurrently from the same source
+     * address. Therefore, the responder must use the destination address of the two transport protocol messages to keep
+     * them properly separated.
+     */
     uint8_t bam_rx_tab[256];
     uint8_t rts_rx_tab[256];
-    uint8_t xxx_tx_tab[1]; // only one can be sent from originator at a given time
-    j1939_tp_session sessions[J1939_TP_SESSIONS_NUM];
+
+    /*
+     * J1939-21, 5.10.5.1:
+     *
+     * Each node on the network can originate one destination specific connection transfer with a given destination at a time.
+     * This is due to the fact that the TP.DT only contains the source address and destination address and not the PGN of the
+     * data being transferred.
+     *
+     * Only one multipacket BAM (i.e. global destination) can be sent from an originator at a given time. This is due to TP.DT
+     * not containing the actual PGN or a connection identifier. However, responders (i.e. receiving devices in this specific
+     * example) must recognize that multiple multipacket messages can be received, interspersed with one another, from
+     * different originators (i.e. source addresses).
+     */
+    uint8_t xxx_tx_tab[256]; /* 255 index is BAM session id */
+
+    union {
+        j1939_tp_session sessions[J1939_TP_SESSIONS_NUM + 1 /* plus one session for BAM session */];
+
+        struct {
+            j1939_tp_session rx_sessions[J1939_TP_RX_SESSIONS_NUM];
+            j1939_tp_session tx_sessions[J1939_TP_TX_SESSIONS_NUM + 1 /* 0 index is BAM session */];
+        };
+    };
 } j1939_tp_mgr_ctx;
-    
-    
+
+
 void j1939_tp_mgr_init(j1939_tp_mgr_ctx *const tp_mgr_ctx);
 int j1939_tp_mgr_rx_handler(j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame, uint32_t time);
 int j1939_tp_mgr_process(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta);
