@@ -111,7 +111,14 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     TEST_ASSERT_EQUAL(0x36,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x37,             jframe.payload[7]);
 
-    /* cause we set Number of packets = 1 controller is waiting for CTS */
+    /* cause we set Number of packets = 1, controller should wait for CTS */
+    j1939_process();
+    unittest_add_time(20);
+
+    /* thus there shouldn't be an output */
+    TEST_ASSERT(unittest_get_output(NULL) < 0);
+
+    /* send CTS to continue */
     unittest_post_input(236 << 8, CA_ADDR, 57, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
@@ -371,7 +378,228 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
 }
 
 
+TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
+    uint8_t data[15] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F };
+
+    /* try to send data to the first destination by RTS method of transport protocol */
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x5631, 17, 15, data));
+
+    /* try to send data to the second destination by RTS method of transport protocol */
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x6513, 45, 15, data));
+
+    /* controller should send TP_CM with RTS control byte for the first destination */
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(236 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(16,               jframe.payload[0]); /* Control byte = Request_To_Send (RTS) */
+    TEST_ASSERT_EQUAL(15 /* lo byte */, jframe.payload[1]); /* Total message size, number of bytes */
+    TEST_ASSERT_EQUAL(0  /* hi byte */, jframe.payload[2]);
+    TEST_ASSERT_EQUAL(3,                jframe.payload[3]); /* Total number of packets */
+    TEST_ASSERT_EQUAL(3,                jframe.payload[4]); /* Maximum number of packets that can be sent in response to one CTS */
+    TEST_ASSERT_EQUAL(0x31,             jframe.payload[5]); /* Parameter Group Number of the packeted message */
+    TEST_ASSERT_EQUAL(0x56,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
+
+    /* controller should send TP_CM with RTS control byte for the first destination */
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(236 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(16,               jframe.payload[0]); /* Control byte = Request_To_Send (RTS) */
+    TEST_ASSERT_EQUAL(15 /* lo byte */, jframe.payload[1]); /* Total message size, number of bytes */
+    TEST_ASSERT_EQUAL(0  /* hi byte */, jframe.payload[2]);
+    TEST_ASSERT_EQUAL(3,                jframe.payload[3]); /* Total number of packets */
+    TEST_ASSERT_EQUAL(3,                jframe.payload[4]); /* Maximum number of packets that can be sent in response to one CTS */
+    TEST_ASSERT_EQUAL(0x13,             jframe.payload[5]); /* Parameter Group Number of the packeted message */
+    TEST_ASSERT_EQUAL(0x65,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT(unittest_get_output(NULL) < 0);
+
+    /* now controller should wait for CTS frame from the first destination to establish connection */
+    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+        17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
+        3,                                                  /* Number of packets that can be sent. */
+        1,                                                  /* Next packet number to be sent */
+        0xFF, 0xFF, 0xFF,
+        0x31, 0x56, 0x00                                    /* Parameter Group Number of the packeted message */
+    );
+
+    /*
+     * THE FIRST TP_DT frame (to the first destination)
+     */
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x31,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0x32,             jframe.payload[2]);
+    TEST_ASSERT_EQUAL(0x33,             jframe.payload[3]);
+    TEST_ASSERT_EQUAL(0x34,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0x35,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0x36,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0x37,             jframe.payload[7]);
+
+    /*
+     * THE SECOND TP_DT frame (to the first destination)
+     */
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x38,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0x39,             jframe.payload[2]);
+    TEST_ASSERT_EQUAL(0x3A,             jframe.payload[3]);
+    TEST_ASSERT_EQUAL(0x3B,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0x3C,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0x3D,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0x3E,             jframe.payload[7]);
+
+    /* now controller got CTS frame from the second destination to establish connection */
+    unittest_post_input(236 << 8, CA_ADDR, 45, 8,
+        17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
+        3,                                                  /* Number of packets that can be sent. */
+        1,                                                  /* Next packet number to be sent */
+        0xFF, 0xFF, 0xFF,
+        0x13, 0x65, 0x00                                    /* Parameter Group Number of the packeted message */
+    );
+
+    /*
+     * THE THIRD TP_DT frame (to the first destination)
+     */
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x3F,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[2]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[3]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
+
+    /*
+     * THE FIRST TP_DT frame (to the second destination)
+     */
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x31,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0x32,             jframe.payload[2]);
+    TEST_ASSERT_EQUAL(0x33,             jframe.payload[3]);
+    TEST_ASSERT_EQUAL(0x34,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0x35,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0x36,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0x37,             jframe.payload[7]);
+
+    /*
+     * THE SECOND TP_DT frame (to the second destination)
+     */
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x38,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0x39,             jframe.payload[2]);
+    TEST_ASSERT_EQUAL(0x3A,             jframe.payload[3]);
+    TEST_ASSERT_EQUAL(0x3B,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0x3C,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0x3D,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0x3E,             jframe.payload[7]);
+
+    /*
+     * THE THIRD TP_DT frame (to the second destination)
+     */
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
+
+    TEST_ASSERT_EQUAL(235 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
+    TEST_ASSERT_EQUAL(8,                jframe.dlc);
+    TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
+    TEST_ASSERT_EQUAL(0x3F,             jframe.payload[1]); /* Packetized Data (7 bytes) */
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[2]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[3]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[4]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[5]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[6]);
+    TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
+
+    j1939_process();
+    unittest_add_time(20);
+
+    TEST_ASSERT(unittest_get_output(NULL) < 0);
+
+    /* check that sessions aren't closed, cause EoMA should be received first */
+    TEST_ASSERT(j1939_sendmsg(0x5631, 17, 15, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(0x6513, 45, 15, data) < 0);
+
+    /* we got the last frame so we should send EndOfMsgAck */
+    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+        19,                                                 /* Control byte = 19, End_of_Message Acknowledge */
+        15, 0,                                              /* Total message size, number of bytes */
+        3,                                                  /* Total number of packets */
+        0xFF, 0xFF, 0xFF,
+        0x31, 0x56, 0x00                                    /* Parameter Group Number of the packeted message */
+    );
+
+    unittest_post_input(236 << 8, CA_ADDR, 45, 8,
+        19,                                                 /* Control byte = 19, End_of_Message Acknowledge */
+        15, 0,                                              /* Total message size, number of bytes */
+        3,                                                  /* Total number of packets */
+        0xFF, 0xFF, 0xFF,
+        0x13, 0x65, 0x00                                    /* Parameter Group Number of the packeted message */
+    );
+
+    /* there shouldn't be any output data from controller anymore */
+    TEST_ASSERT(unittest_get_output(NULL) < 0);
+
+    /* session should be closed to check that do sendmsg one more time */
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x5631, 17, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x6513, 45, 15, data));
+}
+
+
 TEST_GROUP_RUNNER(j1939_tp_mgr_send_rts) {
     RUN_TEST_CASE(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS);
     RUN_TEST_CASE(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS);
+    RUN_TEST_CASE(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages);
 }
