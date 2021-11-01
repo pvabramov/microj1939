@@ -25,18 +25,18 @@
 
 ///
 #ifndef J1939_TP_RX_SESSIONS_NUM
-#   define J1939_TP_SESSIONS_NUM            (32)
+#   define J1939_TP_RX_SESSIONS_NUM         (32)
 #endif
 
 ///
 #ifndef J1939_TP_TX_SESSIONS_NUM
-#   define J1939_TP_SESSIONS_NUM            (32)
+#   define J1939_TP_TX_SESSIONS_NUM         (32)
 #endif
 
 #undef J1939_TP_SESSIONS_NUM
 #define J1939_TP_SESSIONS_NUM               (J1939_TP_RX_SESSIONS_NUM + J1939_TP_TX_SESSIONS_NUM + 1 /* for TX BAM session */)
 
-#if (J1939_TP_RX_SESSIONS_NUM > 254)
+#if (J1939_TP_SESSIONS_NUM > 254)
 #   error "J1939_TP_SESSIONS_NUM: A maximum sum of RX and TX sessions should be 254"
 #endif
 
