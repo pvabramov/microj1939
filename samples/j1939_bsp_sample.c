@@ -24,7 +24,7 @@ void j1939_bsp_mdelay(uint32_t ms) {
 }
 
 
-int j1939_bsp_CAN_send(const j1939_primitive *const primitive) {
+int j1939_bsp_CAN_send(uint8_t index, const j1939_primitive *const primitive) {
     return 0;
 }
 

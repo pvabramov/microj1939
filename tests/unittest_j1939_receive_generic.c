@@ -33,18 +33,18 @@ TEST_GROUP(j1939_receive_generic);
 TEST_SETUP(j1939_receive_generic) {
     memset(&rx_msg, 0xFF, sizeof(unittest_j1939_rx_msg));
 
-    TEST_ASSERT_EQUAL(0, unittest_helpers_setup());
+    TEST_ASSERT_EQUAL(0, unittest_helpers_setup(CAN_INDEX));
 
     /* need to be configured each time for one test */
-    j1939_configure(CA_ADDR, &CA_name);
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 }
 
@@ -61,10 +61,10 @@ TEST(j1939_receive_generic, no_receive) {
 
 
 TEST(j1939_receive_generic, no_receive_PDU1_message_to_another_node) {
-    unittest_post_input(0x4200, 0x20, 0x66, 2, 0x31, 0x32);
+    unittest_post_input(CAN_INDEX, 0x4200, 0x20, 0x66, 2, 0x31, 0x32);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) < 0);
@@ -72,10 +72,10 @@ TEST(j1939_receive_generic, no_receive_PDU1_message_to_another_node) {
 
 
 TEST(j1939_receive_generic, receive_PDU1_message_data_len_0) {
-    unittest_post_input(0x2F00, CA_ADDR, 0x20, 0);
+    unittest_post_input(CAN_INDEX, 0x2F00, CA_ADDR, 0x20, 0);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
@@ -88,10 +88,10 @@ TEST(j1939_receive_generic, receive_PDU1_message_data_len_0) {
 
 
 TEST(j1939_receive_generic, receive_PDU1_message_data_len_5) {
-    unittest_post_input(0x5600, CA_ADDR, 0x66, 5, 0x31, 0x32, 0x33, 0x34, 0x35);
+    unittest_post_input(CAN_INDEX, 0x5600, CA_ADDR, 0x66, 5, 0x31, 0x32, 0x33, 0x34, 0x35);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
@@ -109,10 +109,10 @@ TEST(j1939_receive_generic, receive_PDU1_message_data_len_5) {
 
 
 TEST(j1939_receive_generic, receive_PDU1_message_to_all_data_len_7) {
-    unittest_post_input(0x7100, 0xFF, 0x31, 7, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
+    unittest_post_input(CAN_INDEX, 0x7100, 0xFF, 0x31, 7, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
@@ -132,10 +132,10 @@ TEST(j1939_receive_generic, receive_PDU1_message_to_all_data_len_7) {
 
 
 TEST(j1939_receive_generic, receive_PDU2_message_data_len_1) {
-    unittest_post_input(0xF021, 254, 0x20, 1, 0x31);
+    unittest_post_input(CAN_INDEX, 0xF021, 254, 0x20, 1, 0x31);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
@@ -149,10 +149,10 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_1) {
 
 
 TEST(j1939_receive_generic, receive_PDU2_message_data_len_3) {
-    unittest_post_input(0xFF10, 254, 0x70, 3, 0x31, 0x32, 0x33);
+    unittest_post_input(CAN_INDEX, 0xFF10, 254, 0x70, 3, 0x31, 0x32, 0x33);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
@@ -168,10 +168,10 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_3) {
 
 
 TEST(j1939_receive_generic, receive_PDU2_message_data_len_8) {
-    unittest_post_input(0xF433, 254, 0x90, 8, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38);
+    unittest_post_input(CAN_INDEX, 0xF433, 254, 0x90, 8, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
@@ -196,10 +196,10 @@ TEST(j1939_receive_generic, receive_message_in_time) {
 
     unittest_add_time(120);
 
-    unittest_post_input(0xF021, 254, 0x20, 1, 0x31);
+    unittest_post_input(CAN_INDEX, 0xF021, 254, 0x20, 1, 0x31);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);

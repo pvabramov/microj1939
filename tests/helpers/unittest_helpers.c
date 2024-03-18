@@ -19,7 +19,7 @@
 #define PIPE_WR     1
 
 
-static void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
+static void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 
 
 callback_on_delay __on_delay = NULL;
@@ -33,7 +33,7 @@ static const j1939_callbacks cb = {
 
 
 
-int unittest_helpers_setup(void) {
+int unittest_helpers_setup(uint8_t index) {
     __the_time = 0;
     
     if (pipe2(__sent_pipes, O_DIRECT | O_NONBLOCK) < 0) {
@@ -46,7 +46,7 @@ int unittest_helpers_setup(void) {
 
     unittest_set_callback_on_delay(NULL);
 
-    j1939_initialize(&cb);
+    j1939_initialize(index, &cb);
     
     return 0;
 }
@@ -94,12 +94,13 @@ void unittest_add_time(uint32_t time) {
 }
 
 
-void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
+void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
     unittest_j1939_rx_msg msg;
 
-    if (__recv_pipes[PIPE_WR] < 0)
+    if (__recv_pipes[PIPE_WR] < 0 || index != CAN_INDEX)
         return;
 
+    msg.index = index;
     msg.PGN = PGN;
     msg.SA  = src_address;
     msg.DA = dst_address;
@@ -111,8 +112,8 @@ void __user_j1939_rx_handler(uint32_t PGN, uint8_t src_address, uint8_t dst_addr
 }
 
 
-int j1939_bsp_CAN_send(const j1939_primitive *const primitive) {
-    if (__sent_pipes[PIPE_WR] < 0)
+int j1939_bsp_CAN_send(uint8_t index, const j1939_primitive *const primitive) {
+    if (__sent_pipes[PIPE_WR] < 0 || index != CAN_INDEX)
         return -1;
         
     return write(__sent_pipes[PIPE_WR], primitive, sizeof(j1939_primitive));
@@ -135,7 +136,7 @@ int unittest_get_output(j1939_primitive *f) {
 }
 
 
-int unittest_post_input(uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...) {
+int unittest_post_input(uint8_t index, uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...) {
     va_list va;
     j1939_primitive frame;
     uint8_t i;
@@ -153,7 +154,7 @@ int unittest_post_input(uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...) 
     frame.src_address   = SA;
     frame.priority      = 7;
 
-    return j1939_handle_receiving(&frame, __the_time);
+    return j1939_handle_receiving(index, &frame, __the_time);
 }
 
 

@@ -32,18 +32,18 @@ TEST_GROUP(j1939_tp_mgr_send_rts);
 TEST_SETUP(j1939_tp_mgr_send_rts) {
     memset(&jframe, 0xFF, sizeof(j1939_primitive));
 
-    TEST_ASSERT_EQUAL(0, unittest_helpers_setup());
+    TEST_ASSERT_EQUAL(0, unittest_helpers_setup(CAN_INDEX));
 
     /* need to be configured each time for one test */
-    j1939_configure(CA_ADDR, &CA_name);
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 }
 
@@ -57,7 +57,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     uint8_t data[15] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F };
 
     /* try to send data to specific destination by RTS method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x1300, 57, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x1300, 57, 15, data));
 
     /* controller should send TP_CM with RTS control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -74,13 +74,13 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     TEST_ASSERT_EQUAL(0x13,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* now controller should wait for CTS frame from destination to establish connection */
-    unittest_post_input(236 << 8, CA_ADDR, 57, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 57, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
         1,                                                  /* Next packet number to be sent */
@@ -94,7 +94,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
      * THE FIRST TP_DT frame
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -112,14 +112,14 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     TEST_ASSERT_EQUAL(0x37,             jframe.payload[7]);
 
     /* cause we set Number of packets = 1, controller should wait for CTS */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* thus there shouldn't be an output */
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* send CTS to continue */
-    unittest_post_input(236 << 8, CA_ADDR, 57, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 57, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
         2,                                                  /* Next packet number to be sent */
@@ -130,7 +130,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -149,7 +149,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
 
     /* cause we set Number of packets = 1 controller is waiting for CTS */
     /* now lets try to receive the 2nd frame one more time */
-    unittest_post_input(236 << 8, CA_ADDR, 57, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 57, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
         2,                                                  /* Next packet number to be sent */
@@ -160,7 +160,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /*
      * THE SECOND TP_DT frame (ONE MORE TIME)
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -179,7 +179,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
 
     /* cause we set Number of packets = 1 controller is waiting for CTS */
     /* tell controller to send the last frame */
-    unittest_post_input(236 << 8, CA_ADDR, 57, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 57, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
         3,                                                  /* Next packet number to be sent */
@@ -190,7 +190,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /*
      * THE THIRD (the last) TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -208,7 +208,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
 
     /* we got the last frame so we should send EndOfMsgAck */
-    unittest_post_input(236 << 8, CA_ADDR, 57, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 57, 8,
         19,                                                 /* Control byte = 19, End_of_Message Acknowledge */
         15, 0,                                              /* Total message size, number of bytes */
         3,                                                  /* Total number of packets */
@@ -220,7 +220,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* session should be closed to check that do sendmsg one more time */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x5600, 17, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x5600, 17, 15, data));
 }
 
 
@@ -228,7 +228,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     uint8_t data[15] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F };
 
     /* try to send data to specific destination by RTS method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x5600, 17, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x5600, 17, 15, data));
 
     /* controller should send TP_CM with RTS control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -245,13 +245,13 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     TEST_ASSERT_EQUAL(0x56,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* now controller should wait for CTS frame from destination to establish connection */
-    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 17, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         2,                                                  /* Number of packets that can be sent. */
         1,                                                  /* Next packet number to be sent */
@@ -265,7 +265,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
      * THE FIRST TP_DT frame
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -285,7 +285,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -304,7 +304,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
 
     /* cause we set Number of packets = 2 now controller is waiting for CTS */
     /* tell controller to send the last frame */
-    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 17, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
         3,                                                  /* Next packet number to be sent */
@@ -315,7 +315,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /*
      * THE THIRD TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -333,7 +333,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
 
     /* lets do retransmition of 3rd packet */
-    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 17, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         1,                                                  /* Number of packets that can be sent. */
         3,                                                  /* Next packet number to be sent */
@@ -344,7 +344,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /*
      * THE THIRD (the last) TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -362,7 +362,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
 
     /* we got the last frame so we should send EndOfMsgAck */
-    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 17, 8,
         19,                                                 /* Control byte = 19, End_of_Message Acknowledge */
         15, 0,                                              /* Total message size, number of bytes */
         3,                                                  /* Total number of packets */
@@ -374,7 +374,7 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* session should be closed to check that do sendmsg one more time */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x1300, 57, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x1300, 57, 15, data));
 }
 
 
@@ -382,10 +382,10 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     uint8_t data[15] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F };
 
     /* try to send data to the first destination by RTS method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x5631, 17, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x5631, 17, 15, data));
 
     /* try to send data to the second destination by RTS method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x6513, 45, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x6513, 45, 15, data));
 
     /* controller should send TP_CM with RTS control byte for the first destination */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -417,13 +417,13 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     TEST_ASSERT_EQUAL(0x65,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* now controller should wait for CTS frame from the first destination to establish connection */
-    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 17, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         3,                                                  /* Number of packets that can be sent. */
         1,                                                  /* Next packet number to be sent */
@@ -435,7 +435,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
      * THE FIRST TP_DT frame (to the first destination)
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -456,7 +456,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
      * THE SECOND TP_DT frame (to the first destination)
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -474,7 +474,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     TEST_ASSERT_EQUAL(0x3E,             jframe.payload[7]);
 
     /* now controller got CTS frame from the second destination to establish connection */
-    unittest_post_input(236 << 8, CA_ADDR, 45, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 45, 8,
         17,                                                 /* Control byte = 17, Destination Specific Clear_To_Send (CTS) */
         3,                                                  /* Number of packets that can be sent. */
         1,                                                  /* Next packet number to be sent */
@@ -486,7 +486,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
      * THE THIRD TP_DT frame (to the first destination)
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -525,7 +525,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
      * THE SECOND TP_DT frame (to the second destination)
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -546,7 +546,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
      * THE THIRD TP_DT frame (to the second destination)
      */
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -563,17 +563,17 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     TEST_ASSERT_EQUAL(0xFF,             jframe.payload[6]);
     TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
 
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* check that sessions aren't closed, cause EoMA should be received first */
-    TEST_ASSERT(j1939_sendmsg(0x5631, 17, 15, data) < 0);
-    TEST_ASSERT(j1939_sendmsg(0x6513, 45, 15, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x5631, 17, 15, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x6513, 45, 15, data) < 0);
 
     /* we got the last frame so we should send EndOfMsgAck */
-    unittest_post_input(236 << 8, CA_ADDR, 17, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 17, 8,
         19,                                                 /* Control byte = 19, End_of_Message Acknowledge */
         15, 0,                                              /* Total message size, number of bytes */
         3,                                                  /* Total number of packets */
@@ -581,7 +581,7 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
         0x31, 0x56, 0x00                                    /* Parameter Group Number of the packeted message */
     );
 
-    unittest_post_input(236 << 8, CA_ADDR, 45, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 45, 8,
         19,                                                 /* Control byte = 19, End_of_Message Acknowledge */
         15, 0,                                              /* Total message size, number of bytes */
         3,                                                  /* Total number of packets */
@@ -593,8 +593,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     TEST_ASSERT(unittest_get_output(NULL) < 0);
 
     /* session should be closed to check that do sendmsg one more time */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x5631, 17, 15, data));
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x6513, 45, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x5631, 17, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x6513, 45, 15, data));
 }
 
 

@@ -46,8 +46,9 @@ unsigned j1939_rx_fifo_size(const j1939_rx_fifo *const fifo) {
 int j1939_rx_fifo_write(j1939_rx_fifo *const fifo, const j1939_rx_info *const rx_info) {
     const unsigned avail = ring_space_avail(J1939_RX_FIFO_SZ, fifo->head, fifo->tail);
 
-    if (avail == 0)
+    if (avail == 0) {
         return -1;
+    }
 
     do {
         int level = j1939_bsp_lock();
@@ -75,8 +76,9 @@ int j1939_rx_fifo_write(j1939_rx_fifo *const fifo, const j1939_rx_info *const rx
 int j1939_rx_fifo_read(j1939_rx_fifo *const fifo, j1939_rx_info *const rx_info) {
     const unsigned data_avail = ring_data_avail(J1939_RX_FIFO_SZ, fifo->head, fifo->tail);
 
-    if (data_avail == 0)
+    if (data_avail == 0) {
         return -1;
+    }
 
     do {
         int level = j1939_bsp_lock();
@@ -126,8 +128,9 @@ unsigned j1939_tx_fifo_size(const j1939_tx_fifo *const fifo) {
 int j1939_tx_fifo_write(j1939_tx_fifo *const fifo, const j1939_primitive *const primitive) {
     const unsigned avail = ring_space_avail(J1939_TX_FIFO_SZ, fifo->head, fifo->tail);
 
-    if (avail == 0)
+    if (avail == 0) {
         return -1;
+    }
 
     do {
         int level = j1939_bsp_lock();
@@ -155,8 +158,9 @@ int j1939_tx_fifo_write(j1939_tx_fifo *const fifo, const j1939_primitive *const 
 int j1939_tx_fifo_read(j1939_tx_fifo *const fifo, j1939_primitive *const primitive) {
     const unsigned data_avail = ring_data_avail(J1939_TX_FIFO_SZ, fifo->head, fifo->tail);
 
-    if (data_avail == 0)
+    if (data_avail == 0) {
         return -1;
+    }
 
     do {
         int level = j1939_bsp_lock();

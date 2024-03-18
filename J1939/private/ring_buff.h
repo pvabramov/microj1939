@@ -25,10 +25,11 @@ static inline unsigned ring_wrap(unsigned size, unsigned idx) {
 
 /* Returns the number of bytes available in buffer */
 static inline unsigned ring_data_avail(unsigned size, unsigned head, unsigned tail) {
-    if (head >= tail)
+    if (head >= tail) {
         return head - tail;
-    else
+    } else {
         return size + head - tail;
+    }
 }
 
 /* Returns the amount of free space available in buffer */
@@ -38,26 +39,29 @@ static inline unsigned ring_space_avail(unsigned size, unsigned head, unsigned t
 
 /* Returns the number of contiguous data bytes available in buffer */
 static inline unsigned ring_data_contig(unsigned size, unsigned head, unsigned tail) {
-    if (head >= tail)
+    if (head >= tail) {
         return head - tail;
-    else
+    } else {
         return size - tail;
+    }
 }
 
 /* Returns the amount of contiguous space available in buffer */
 static inline unsigned ring_space_contig(unsigned size, unsigned head, unsigned tail) {
-    if (head >= tail)
+    if (head >= tail) {
         return (tail ? size : size - 1) - head;
-    else
+    } else {
         return tail - head - 1;
+    }
 }
 
 /* Returns the amount of free space available after wrapping up the head */
 static inline unsigned ring_space_wrapped(unsigned size __attribute__((unused)), unsigned head, unsigned tail) {
-    if (head < tail || !tail)
+    if (head < tail || !tail) {
         return 0;
-    else
+    } else {
         return tail - 1;
+    }
 }
 
 
@@ -66,4 +70,3 @@ static inline unsigned ring_space_wrapped(unsigned size __attribute__((unused)),
 #endif
 
 #endif /* RING_BUFFER_H_ */
-

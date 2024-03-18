@@ -33,7 +33,7 @@ static const j1939_CA_name j1939_CA_test_controller = {
  *
  * @return
  */
-void __j1939_rx_handler(uint32_t PGN, uint8_t src_addr, uint16_t msg_sz, const void *const payload) {
+void __j1939_rx_handler(uint8_ index, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz, const void *const payload) {
 
 }
 
@@ -51,17 +51,17 @@ int main(int argc, char** argv) {
     uint32_t n_tick = 0;
     int status = 0;
 
-    j1939_initialize(&callbacks);
-    j1939_configure(0x70, &j1939_CA_test_controller);
+    j1939_initialize(0, &callbacks);
+    j1939_configure(0, 0x70, &j1939_CA_test_controller);
 
-    status = j1939_claim_address(J1939_GLOBAL_ADDRESS /* means preffered */);
+    status = j1939_claim_address(0, J1939_GLOBAL_ADDRESS /* means preffered */);
     if (status < 0) {
         // TODO: Cannot claim address
         return (EXIT_FAILURE);
     }
 
     while (n_ticks-- > 0) {
-        j1939_process();
+        j1939_process(0);
 
         n_tick++;
     }

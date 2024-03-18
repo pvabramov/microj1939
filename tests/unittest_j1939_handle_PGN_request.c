@@ -32,18 +32,18 @@ TEST_GROUP(j1939_handle_PGN_request);
 TEST_SETUP(j1939_handle_PGN_request) {
     memset(&jframe, 0xFF, sizeof(j1939_primitive));
 
-    TEST_ASSERT_EQUAL(0, unittest_helpers_setup());
+    TEST_ASSERT_EQUAL(0, unittest_helpers_setup(CAN_INDEX));
 
     /* need to be configured each time for one test */
-    j1939_configure(CA_ADDR, &CA_name);
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 }
 
@@ -54,7 +54,7 @@ TEST_TEAR_DOWN(j1939_handle_PGN_request) {
 
 
 TEST(j1939_handle_PGN_request, Claim_Address_specific_request) {
-    unittest_post_input(234 << 8, CA_ADDR, 251, 3,
+    unittest_post_input(CAN_INDEX, 234 << 8, CA_ADDR, 251, 3,
         0x00, 0xEE, 0x00                                /* Parameter Group Number being requested = Claim_Address */
     );
 
@@ -75,7 +75,7 @@ TEST(j1939_handle_PGN_request, Claim_Address_specific_request) {
 
 
 TEST(j1939_handle_PGN_request, Claim_Address_global_request) {
-    unittest_post_input(234 << 8, 255 /* global address */, 251, 3,
+    unittest_post_input(CAN_INDEX, 234 << 8, 255 /* global address */, 251, 3,
         0x00, 0xEE, 0x00                                /* Parameter Group Number being requested = Claim_Address */
     );
 
@@ -96,7 +96,7 @@ TEST(j1939_handle_PGN_request, Claim_Address_global_request) {
 
 
 TEST(j1939_handle_PGN_request, NACK_on_unsupported_PGN_specific_request) {
-    unittest_post_input(234 << 8, CA_ADDR, 251, 3,
+    unittest_post_input(CAN_INDEX, 234 << 8, CA_ADDR, 251, 3,
         0x00, 0xAF, 0x00                                /* Parameter Group Number being requested */
     );
 
@@ -121,7 +121,7 @@ TEST(j1939_handle_PGN_request, NACK_on_unsupported_PGN_specific_request) {
 
 
 TEST(j1939_handle_PGN_request, no_response_on_unsupported_PGN_global_request) {
-    unittest_post_input(234 << 8, 255 /* global request */, 251, 3,
+    unittest_post_input(CAN_INDEX, 234 << 8, 255 /* global request */, 251, 3,
         0x00, 0xAF, 0x00                                /* Parameter Group Number being requested */
     );
 

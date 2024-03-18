@@ -32,18 +32,18 @@ TEST_GROUP(j1939_tp_mgr_receive_bam);
 TEST_SETUP(j1939_tp_mgr_receive_bam) {
     memset(&rx_msg, 0xFF, sizeof(unittest_j1939_rx_msg));
 
-    TEST_ASSERT_EQUAL(0, unittest_helpers_setup());
+    TEST_ASSERT_EQUAL(0, unittest_helpers_setup(CAN_INDEX));
 
     /* need to be configured each time for one test */
-    j1939_configure(CA_ADDR, &CA_name);
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 }
 
@@ -55,14 +55,14 @@ TEST_TEAR_DOWN(j1939_tp_mgr_receive_bam) {
 
 TEST(j1939_tp_mgr_receive_bam, receive_BAM_message) {
     /* TP.CM = BAM */
-    unittest_post_input(236 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, 255 /* global address */, 0x45, 8,
             0x20                /* Control Byte = BAM */,
             0x0F, 0x00,         /* Total message size = 15 */
             3,                  /* Total number of packets */
             0xFF,
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
     /* TP.DT, 1*/
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
 
@@ -70,16 +70,16 @@ TEST(j1939_tp_mgr_receive_bam, receive_BAM_message) {
     unittest_add_time(100);
 
     /* TP.DT, 2 */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             2,                  /* Sequence Number */
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
     /* TP.DT, 3 (the last) */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* there are data */
@@ -109,20 +109,20 @@ TEST(j1939_tp_mgr_receive_bam, receive_BAM_message) {
 
 TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_without_TP_CM) {
     /* TP.DT, 1*/
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
     /* TP.DT, 2 */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             2,                  /* Sequence Number */
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
     /* TP.DT, 3 (the last) */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* there are no data */
@@ -132,24 +132,24 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_without_TP_CM) {
 
 TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_wrong_seq_number) {
     /* TP.CM = BAM */
-    unittest_post_input(236 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, 255 /* global address */, 0x45, 8,
             0x20                /* Control Byte = BAM */,
             0x0F, 0x00,         /* Total message size = 15 */
             3,                  /* Total number of packets */
             0xFF,
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
     /* TP.DT, 1*/
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
     /* TP.DT, 2 has been lost or next seq. number is wrong */
     /* TP.DT, 3 (the last) */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* there are no data, session should be closed */
@@ -159,41 +159,41 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_wrong_seq_number) {
 
 TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_timedout) {
     /* TP.CM = BAM */
-    unittest_post_input(236 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, 255 /* global address */, 0x45, 8,
             0x20                /* Control Byte = BAM */,
             0x0F, 0x00,         /* Total message size = 15 */
             3,                  /* Total number of packets */
             0xFF,
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
     /* TP.DT, 1*/
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
     /* TP.DT, 2 */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             2,                  /* Sequence Number */
             0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(750 /* T1 */);
 
     /* there are no data */
     TEST_ASSERT(unittest_get_input(NULL) < 0);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
 
     /* there are no data */
     TEST_ASSERT(unittest_get_input(NULL) < 0);
 
     /* TP.DT, 3 (the last) */
-    unittest_post_input(235 << 8, 255 /* global address */, 0x45, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, 255 /* global address */, 0x45, 8,
             3,                  /* Sequence Number */
             0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* there are no data */
@@ -203,23 +203,23 @@ TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_on_timedout) {
 
 TEST(j1939_tp_mgr_receive_bam, dont_receive_BAM_message_if_dst_address_isnt_global) {
     /* TP.CM = BAM */
-    unittest_post_input(236 << 8, CA_ADDR, 0x34, 8,
+    unittest_post_input(CAN_INDEX, 236 << 8, CA_ADDR, 0x34, 8,
             0x20                /* Control Byte = BAM */,
             0x09, 0x00,         /* Total message size = 15 */
             2,                  /* Total number of packets */
             0xFF,
             0x00, 0xAD, 0x00    /* PGN of the packeted message */);
     /* TP.DT, 1*/
-    unittest_post_input(235 << 8, CA_ADDR, 0x34, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, CA_ADDR, 0x34, 8,
             1,                  /* Sequence Number */
             0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37);
     /* TP.DT, 2 */
-    unittest_post_input(235 << 8, CA_ADDR, 0x34, 8,
+    unittest_post_input(CAN_INDEX, 235 << 8, CA_ADDR, 0x34, 8,
             2,                  /* Sequence Number */
             0x38, 0x39, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
     /* process tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* there are no data, cause dst.address of BAM message should be global address */

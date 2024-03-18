@@ -32,18 +32,18 @@ TEST_GROUP(j1939_tp_mgr_send_bam);
 TEST_SETUP(j1939_tp_mgr_send_bam) {
     memset(&jframe, 0xFF, sizeof(j1939_primitive));
 
-    TEST_ASSERT_EQUAL(0, unittest_helpers_setup());
+    TEST_ASSERT_EQUAL(0, unittest_helpers_setup(CAN_INDEX));
 
     /* need to be configured each time for one test */
-    j1939_configure(CA_ADDR, &CA_name);
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
 
     /* process one IDLE tick */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 }
 
@@ -57,7 +57,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     uint8_t data[15] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F };
 
     /* try to send data to all by BAM method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x1300, J1939_GLOBAL_ADDRESS, 15, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x1300, J1939_GLOBAL_ADDRESS, 15, data));
 
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -79,7 +79,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -99,7 +99,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -119,7 +119,7 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /*
      * THE THIRD (the last) TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -145,10 +145,10 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
     uint8_t data[9] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
 
     /* try to send data to all by BAM method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x4500, J1939_GLOBAL_ADDRESS, 9, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x4500, J1939_GLOBAL_ADDRESS, 9, data));
 
     /* get failure on already sending a BAM message */
-    TEST_ASSERT(j1939_sendmsg(0x6400, J1939_GLOBAL_ADDRESS, 15, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x6400, J1939_GLOBAL_ADDRESS, 15, data) < 0);
 
     /* checking the first sendmsg call was not interrupted */
     /* controller should send TP_CM with BAM control byte */
@@ -171,7 +171,7 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
 
@@ -192,7 +192,7 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -218,10 +218,10 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     uint8_t data[9] = { 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
 
     /* try to send data to all by BAM method of transport protocol */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x4500, J1939_GLOBAL_ADDRESS, 9, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x4500, J1939_GLOBAL_ADDRESS, 9, data));
 
     /* get failure on already sending a BAM message */
-    TEST_ASSERT(j1939_sendmsg(0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
 
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -239,18 +239,18 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     TEST_ASSERT_EQUAL(0x00,             jframe.payload[7]);
 
     /* get failure on already sending a BAM message */
-    TEST_ASSERT(j1939_sendmsg(0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
 
     /* now controller should send 2 TP_DT frames to completely transfer data */
 
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     /* get failure on already sending a BAM message */
-    TEST_ASSERT(j1939_sendmsg(0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
@@ -267,12 +267,12 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     TEST_ASSERT_EQUAL(0x37,             jframe.payload[7]);
 
     /* get failure on already sending a BAM message */
-    TEST_ASSERT(j1939_sendmsg(0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
+    TEST_ASSERT(j1939_sendmsg(CAN_INDEX, 0x6400, J1939_GLOBAL_ADDRESS, 9, data) < 0);
 
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -290,7 +290,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     TEST_ASSERT_EQUAL(0xFF,             jframe.payload[7]);
 
     /* now we can send a new BAM with another PGN */
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0x6400, J1939_GLOBAL_ADDRESS, 9, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0x6400, J1939_GLOBAL_ADDRESS, 9, data));
 
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -312,7 +312,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /*
      * THE FIRST TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
@@ -332,7 +332,7 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /*
      * THE SECOND TP_DT frame
      */
-    j1939_process();
+    j1939_process(CAN_INDEX);
     unittest_add_time(20);
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));

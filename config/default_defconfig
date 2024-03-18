@@ -7,3 +7,4 @@
 #define J1939_TP_TX_SESSIONS_NUM         (32)
 #define J1939_TP_MGR_MAX_PACKETS_PER_CTS (8)
 #define J1939_MAX_DATA_SZ                (1785)
+#define J1939_MAX_HANDLES_NUM            (1)

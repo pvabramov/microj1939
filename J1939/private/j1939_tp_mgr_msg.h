@@ -8,8 +8,7 @@
 #ifndef J1939_TP_MGR_INC_H
 #define J1939_TP_MGR_INC_H
 
-#include "j1939_private.h"
-
+#include "j1939_private_types.h"
 
 
 #ifdef __cplusplus
@@ -145,13 +144,13 @@ static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t
  * 
  * @return 
  */
-static inline int __send_TPDT(uint8_t src_addr, uint8_t dst_addr, const j1939_tp_dt *const tp_dt) {
+static inline int __send_TPDT(uint8_t index, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_dt *const tp_dt) {
     j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPDT,
                                                       J1939_TP_PRIORITY,
                                                       src_addr, dst_addr,
                                                       J1939_STD_PGN_TPDT_DLC,
                                                       tp_dt);
-    return __j1939_send_lock(&primitive);
+    return __j1939_send_lock(index, &primitive);
 }
 
 
@@ -164,13 +163,13 @@ static inline int __send_TPDT(uint8_t src_addr, uint8_t dst_addr, const j1939_tp
  * 
  * @return 
  */
-static inline int __send_TPCM(uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm_control) {
+static inline int __send_TPCM(uint8_t index, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm_control) {
     j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPCM,
                                                       J1939_TP_PRIORITY,
                                                       src_addr, dst_addr,
                                                       J1939_STD_PGN_TPCM_DLC,
                                                       tp_cm_control);
-    return __j1939_send_lock(&primitive);
+    return __j1939_send_lock(index, &primitive);
 }
 
 
@@ -183,9 +182,9 @@ static inline int __send_TPCM(uint8_t src_addr, uint8_t dst_addr, const j1939_tp
  * @param pkt_num
  * @param pkt_next
  */
-static inline int __send_CTS(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t pkt_num, uint8_t pkt_next) {
+static inline int __send_CTS(uint8_t index, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t pkt_num, uint8_t pkt_next) {
     j1939_tp_cm_control payload = __new_tp_cm_CTS(pkt_num, pkt_next, PGN);
-    return __send_TPCM(src_addr, dst_addr, &payload);
+    return __send_TPCM(index, src_addr, dst_addr, &payload);
 }
 
 
@@ -198,9 +197,9 @@ static inline int __send_CTS(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, u
  * @param PGN
  * @param reason
  */
-static inline int __send_Conn_Abort(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason) {
+static inline int __send_Conn_Abort(uint8_t index, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason) {
     j1939_tp_cm_control payload = __new_tp_cm_Conn_Abort(reason, PGN);
-    return __send_TPCM(src_addr, dst_addr, &payload);
+    return __send_TPCM(index, src_addr, dst_addr, &payload);
 }
 
 
@@ -214,9 +213,9 @@ static inline int __send_Conn_Abort(uint8_t src_addr, uint8_t dst_addr, uint32_t
  * @param total_msg_sz
  * @param total_pkt_num
  */
-static inline int __send_EoMA(uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint16_t total_msg_sz, uint8_t total_pkt_num) {
+static inline int __send_EoMA(uint8_t index, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint16_t total_msg_sz, uint8_t total_pkt_num) {
     j1939_tp_cm_control payload = __new_tp_cm_EoMA(total_msg_sz, total_pkt_num, PGN);
-    return __send_TPCM(src_addr, dst_addr, &payload);
+    return __send_TPCM(index, src_addr, dst_addr, &payload);
 }
 
 

@@ -22,7 +22,7 @@ extern void j1939_bsp_unlock(int level);
 extern uint32_t j1939_bsp_get_time();
 extern void j1939_bsp_mdelay(uint32_t ms);
 
-extern int j1939_bsp_CAN_send(const j1939_primitive *const primitive);
+extern int j1939_bsp_CAN_send(uint8_t index, const j1939_primitive *const primitive);
 
 
 #ifdef __cplusplus
@@ -30,4 +30,3 @@ extern int j1939_bsp_CAN_send(const j1939_primitive *const primitive);
 #endif
 
 #endif /* J1939_BSP_H */
-

@@ -5,8 +5,11 @@
 #include <J1939/j1939.h>
 #include <J1939/j1939_bsp.h>
 
+#define CAN_INDEX       0
+
 
 typedef struct unittest_j1939_rx_msg {
+    uint8_t index;
     uint32_t PGN;
     uint8_t SA;
     uint8_t DA;
@@ -19,12 +22,12 @@ typedef struct unittest_j1939_rx_msg {
 typedef void (*callback_on_delay)(void);
 
 
-int unittest_helpers_setup(void);
+int unittest_helpers_setup(uint8_t index);
 void unittest_helpers_cleanup(void);
 
 int unittest_get_output(j1939_primitive *f);
 
-int unittest_post_input(uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...);
+int unittest_post_input(uint8_t index, uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...);
 int unittest_get_input(unittest_j1939_rx_msg *m);
 
 uint32_t unittest_get_time(void);

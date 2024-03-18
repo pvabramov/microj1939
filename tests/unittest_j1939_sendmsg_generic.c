@@ -25,12 +25,12 @@ TEST_GROUP(j1939_sendmsg_generic);
 
 
 TEST_SETUP(j1939_sendmsg_generic) {
-    TEST_ASSERT_EQUAL(0, unittest_helpers_setup());
+    TEST_ASSERT_EQUAL(0, unittest_helpers_setup(CAN_INDEX));
 
     /* need to be configured each time for one test */
-    j1939_configure(CA_ADDR, &CA_name);
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
@@ -45,7 +45,7 @@ TEST_TEAR_DOWN(j1939_sendmsg_generic) {
 TEST(j1939_sendmsg_generic, send_frame_data_len_0) {
     j1939_primitive jframe;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xAF00, 20, 0, NULL));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xAF00, 20, 0, NULL));
 
     unittest_get_output(&jframe);
 
@@ -62,7 +62,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_1) {
 
     data[0] = 0x31;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB000, 21, 1, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB000, 21, 1, data));
 
     unittest_get_output(&jframe);
 
@@ -81,7 +81,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_2) {
     data[0] = 0x31;
     data[1] = 0x32;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB100, 22, 2, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB100, 22, 2, data));
 
     unittest_get_output(&jframe);
 
@@ -102,7 +102,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_3) {
     data[1] = 0x32;
     data[2] = 0x33;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB200, 23, 3, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB200, 23, 3, data));
 
     unittest_get_output(&jframe);
 
@@ -125,7 +125,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_4) {
     data[2] = 0x33;
     data[3] = 0x34;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB300, 24, 4, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB300, 24, 4, data));
 
     unittest_get_output(&jframe);
 
@@ -150,7 +150,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_5) {
     data[3] = 0x34;
     data[4] = 0x35;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB400, 25, 5, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB400, 25, 5, data));
 
     unittest_get_output(&jframe);
 
@@ -177,7 +177,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_6) {
     data[4] = 0x35;
     data[5] = 0x36;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB500, 26, 6, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB500, 26, 6, data));
 
     unittest_get_output(&jframe);
 
@@ -206,7 +206,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_7) {
     data[5] = 0x36;
     data[6] = 0x37;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB600, 27, 7, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB600, 27, 7, data));
 
     unittest_get_output(&jframe);
 
@@ -237,7 +237,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_8) {
     data[6] = 0x37;
     data[7] = 0x38;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg(0xB700, 28, 8, data));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg(CAN_INDEX, 0xB700, 28, 8, data));
 
     unittest_get_output(&jframe);
 
@@ -259,7 +259,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_8) {
 TEST(j1939_sendmsg_generic, send_frame_data_len_0_with_priority) {
     j1939_primitive jframe;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xAF00, 20, 0, NULL, 1));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xAF00, 20, 0, NULL, 1));
 
     unittest_get_output(&jframe);
 
@@ -276,7 +276,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_1_with_priority) {
 
     data[0] = 0x31;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB000, 21, 1, data, 2));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB000, 21, 1, data, 2));
 
     unittest_get_output(&jframe);
 
@@ -295,7 +295,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_2_with_priority) {
     data[0] = 0x31;
     data[1] = 0x32;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB100, 22, 2, data, 3));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB100, 22, 2, data, 3));
 
     unittest_get_output(&jframe);
 
@@ -316,7 +316,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_3_with_priority) {
     data[1] = 0x32;
     data[2] = 0x33;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB200, 23, 3, data, 4));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB200, 23, 3, data, 4));
 
     unittest_get_output(&jframe);
 
@@ -339,7 +339,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_4_with_priority) {
     data[2] = 0x33;
     data[3] = 0x34;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB300, 24, 4, data, 5));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB300, 24, 4, data, 5));
 
     unittest_get_output(&jframe);
 
@@ -364,7 +364,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_5_with_priority) {
     data[3] = 0x34;
     data[4] = 0x35;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB400, 25, 5, data, 7));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB400, 25, 5, data, 7));
 
     unittest_get_output(&jframe);
 
@@ -391,7 +391,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_6_with_priority) {
     data[4] = 0x35;
     data[5] = 0x36;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB500, 26, 6, data, 6));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB500, 26, 6, data, 6));
 
     unittest_get_output(&jframe);
 
@@ -420,7 +420,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_7_with_priority) {
     data[5] = 0x36;
     data[6] = 0x37;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB600, 27, 7, data, 3));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB600, 27, 7, data, 3));
 
     unittest_get_output(&jframe);
 
@@ -451,7 +451,7 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_8_with_priority) {
     data[6] = 0x37;
     data[7] = 0x38;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB700, 28, 8, data, 0));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB700, 28, 8, data, 0));
 
     unittest_get_output(&jframe);
 
@@ -476,7 +476,7 @@ TEST(j1939_sendmsg_generic, send_frame_with_out_of_priority) {
 
     data[0] = 0x88;
 
-    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(0xB700, 28, 8, data, 8));
+    TEST_ASSERT_EQUAL(0, j1939_sendmsg_p(CAN_INDEX, 0xB700, 28, 8, data, 8));
 
     unittest_get_output(&jframe);
 

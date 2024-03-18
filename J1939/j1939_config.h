@@ -50,4 +50,8 @@
 #   define J1939_MAX_DATA_SZ                (1785)
 #endif
 
+#ifndef J1939_MAX_HANDLES_NUM
+#   define J1939_MAX_HANDLES_NUM                (1)
+#endif
+
 #endif /* J1939_CONFIG_H_ */
