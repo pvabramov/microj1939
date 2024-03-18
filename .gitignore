@@ -2,4 +2,6 @@
 .o/
 .d/
 *.a
+*.o
+tests/unittest
 j1939_conf.h
