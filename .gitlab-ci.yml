@@ -2,8 +2,14 @@ stages:
     - build
     - test
     - coverage
+
+.base:
+    image: gcc:10-bullseye
+    tags:
+        - "docker"
     
 .building_artifacts: &building_artifacts
+    extends: .base
     artifacts:
         paths:
             - .o/
@@ -12,12 +18,14 @@ stages:
         expire_in: 5 minutes
 
 .testing_artifacts: &testing_artifacts
+    extends: .base
     artifacts:
         paths:
             - .o/
         expire_in: 5 minutes
         
 .coverage_artifacts: &coverage_artifacts
+    extends: .base
     artifacts:
         paths:
             - coverage_report
@@ -39,6 +47,8 @@ testing/unittest:
 
 generate/coverage:
     stage: coverage
+    before_script:
+        - apt update && apt install -y lcov
     script:
         - make coverage
     coverage: '/^\s*lines......: (\d+.\d+\%)/'

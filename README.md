@@ -1,6 +1,3 @@
-[![pipeline status](http://10.4.28.18/fw/CAN_J1939/badges/master/pipeline.svg)](http://10.4.28.18/fw/CAN_J1939/commits/master)
-[![coverage report](http://10.4.28.18/fw/CAN_J1939/badges/master/coverage.svg)](http://10.4.28.18/fw/CAN_J1939/commits/master)
-
 Проект реализации протокола SAE J1939
 =====================================
 
