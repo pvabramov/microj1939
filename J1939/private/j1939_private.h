@@ -12,6 +12,11 @@
 
 #include "j1939_private_types.h"
 
+/* Optimization barrier */
+#ifndef barrier
+/* The "volatile" is due to gcc bugs */
+#define barrier() __asm__ __volatile__("": : :"memory")
+#endif
 
 #ifdef __cplusplus
 extern "C" {

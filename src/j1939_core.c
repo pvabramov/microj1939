@@ -173,6 +173,10 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
 
     memset(handle, 0, sizeof(j1939_handle));
 
+    handle->state = NOT_STARTED;
+
+    barrier();
+
     handle->callbacks = *callbacks;
 
     j1939_rx_tx_error_fifo_init(&handle->tx_error_fifo);
@@ -184,7 +188,6 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
     handle->address = J1939_NULL_ADDRESS;
     handle->preferred_address = J1939_NULL_ADDRESS;
 
-    handle->state = NOT_STARTED;
     handle->already_rx = 0;
     handle->already_tx = 0;
 
@@ -209,6 +212,8 @@ void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_na
     handle->address = J1939_NULL_ADDRESS;
     handle->preferred_address = preferred_address;
 
+    barrier();
+
     handle->state = INITIALIZED;
 }
 
@@ -231,10 +236,9 @@ uint8_t j1939_get_address(uint8_t index) {
  * @return
  */
 int j1939_claim_address(uint8_t index, uint8_t address) {
-    int level;
     j1939_handle *const handle = &__j1939_handles[index];
 
-    if (address == 254) {
+    if (address == J1939_NULL_ADDRESS) {
         return -1;
     }
 
@@ -245,23 +249,23 @@ int j1939_claim_address(uint8_t index, uint8_t address) {
 
     handle->state = ATEMPT_TO_CLAIM_ADDRESS;
 
+    barrier();
+
     /* tell everybody for attempting to claim an address */
     __send_claim_address(index, handle->preferred_address);
 
     /* wait for 250 ms */
     j1939_bsp_mdelay(250);
 
-    level = j1939_bsp_lock();
-
     if (handle->state == CANNOT_CLAIM_ADDRESS) {
-        j1939_bsp_unlock(level);
         return -2;
     }
 
     handle->address = handle->preferred_address;
-    handle->state = ACTIVE;
 
-    j1939_bsp_unlock(level);
+    barrier();
+
+    handle->state = ACTIVE;
 
     return 0;
 }
@@ -365,6 +369,8 @@ static int j1939_process_tx(uint8_t index) {
 
     handle->already_tx = 1;
 
+    barrier();
+
     for (tx_downcount = j1939_tx_fifo_size(&handle->tx_fifo); tx_downcount > 0; --tx_downcount) {
         j1939_primitive primitive;
 
@@ -378,6 +384,8 @@ static int j1939_process_tx(uint8_t index) {
             break;
         }
     }
+
+    barrier();
 
     handle->already_tx = 0;
 
@@ -401,6 +409,8 @@ static int j1939_process_rx(uint8_t index) {
     }
 
     handle->already_rx = 1;
+
+    barrier();
 
     max_rx_per_tick = j1939_rx_fifo_size(&handle->rx_fifo);
 
@@ -441,6 +451,8 @@ static int j1939_process_rx(uint8_t index) {
             j1939_tp_mgr_close_session(index, &handle->tp_mgr_ctx, rx_info.sid);
         }
     }
+
+    barrier();
 
     handle->already_rx = 0;
 
@@ -571,7 +583,7 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
     }
 
     their_CA_name = (j1939_CA_name*) (&frame->payload[0]);
-    cannot_claim = (handle->CA_name.name > their_CA_name->name);
+    cannot_claim = (handle->CA_name.name >= their_CA_name->name);
 
     if (cannot_claim) {
         new_state = CANNOT_CLAIM_ADDRESS;
@@ -584,8 +596,11 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
         address = handle->preferred_address;
     }
 
-    handle->state = new_state;
     handle->address = address;
+
+    barrier();
+
+    handle->state = new_state;
 
     // FIXME: random send_claim_address on "Cannot Claim Address"
     __send_claim_address(index, address);

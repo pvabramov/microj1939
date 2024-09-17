@@ -975,6 +975,8 @@ int j1939_tp_mgr_open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_c
         return -EIO;
     }
 
+    barrier();
+
     session->state = (session->mode == J1939_TP_MODE_BAM) ?
                      J1939_TP_STATE_TRANSMIT :
                      J1939_TP_STATE_WAIT_CTS;
