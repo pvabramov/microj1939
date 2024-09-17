@@ -490,18 +490,17 @@ static int j1939_notify_errors(uint8_t index, j1939_rx_tx_error_fifo *const fifo
  */
 static inline int __j1939_process(uint8_t index, uint32_t the_time) {
     j1939_handle *const handle = &__j1939_handles[index];
-    static int oneshot = 0;
-    static uint32_t last_time;
     uint32_t t_delta;
     int activities;
 
-    if (!oneshot) {
-        last_time = the_time;
-        oneshot = 1;
+    if (!handle->oneshot) {
+        handle->last_time = the_time;
+        handle->oneshot = 1;
+        t_delta = 0;
+    } else {
+        t_delta = the_time - handle->last_time;
+        handle->last_time = the_time;
     }
-
-    t_delta = the_time - last_time;
-    last_time = the_time;
 
     if (0 == t_delta) {
         return -1;
