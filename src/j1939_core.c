@@ -242,30 +242,23 @@ int j1939_claim_address(uint8_t index, uint8_t address) {
         return -1;
     }
 
+    if (handle->state != INITIALIZED && handle->state != CANNOT_CLAIM_ADDRESS) {
+        return -2;
+    }
+
     /* set a preferred address for communication with Network Management */
     if (address != J1939_GLOBAL_ADDRESS) {
         handle->preferred_address = address;
     }
 
-    handle->state = ATEMPT_TO_CLAIM_ADDRESS;
+    handle->claim_timer = 250;
 
     barrier();
+
+    handle->state = ATEMPT_TO_CLAIM_ADDRESS;
 
     /* tell everybody for attempting to claim an address */
     __send_claim_address(index, handle->preferred_address);
-
-    /* wait for 250 ms */
-    j1939_bsp_mdelay(250);
-
-    if (handle->state == CANNOT_CLAIM_ADDRESS) {
-        return -2;
-    }
-
-    handle->address = handle->preferred_address;
-
-    barrier();
-
-    handle->state = ACTIVE;
 
     return 0;
 }
@@ -508,30 +501,54 @@ static inline int __j1939_process(uint8_t index, uint32_t the_time) {
     if (!handle->oneshot) {
         handle->last_time = the_time;
         handle->oneshot = 1;
-        t_delta = 0;
-    } else {
-        t_delta = the_time - handle->last_time;
-        handle->last_time = the_time;
     }
+
+    t_delta = the_time - handle->last_time;
 
     if (0 == t_delta) {
         return -1;
     }
 
+    handle->last_time = the_time;
     activities = 0;
 
-    /* Error notifications */
-    activities += j1939_notify_errors(index, &handle->rx_error_fifo, handle->callbacks.rx_error_handler);
-    activities += j1939_notify_errors(index, &handle->tx_error_fifo, handle->callbacks.tx_error_handler);
+    j1939_state state = handle->state;
 
-    /* TP management processing */
-    activities += j1939_tp_mgr_process(index, &handle->tp_mgr_ctx, t_delta);
+    if (state == ATEMPT_TO_CLAIM_ADDRESS) {
+        if (handle->claim_timer > 0) {
+            activities = 1;
+            handle->claim_timer -= t_delta;
+            if (handle->claim_timer <= 0) {
+                handle->address = handle->preferred_address;
 
-    /* Transmition processing */
-    activities += j1939_process_tx(index);
+                barrier();
 
-    /* Receiving processing */
-    activities += j1939_process_rx(index);
+                handle->state = ACTIVE;
+            }
+        }
+    } else if (state == CANNOT_CLAIM_ADDRESS) {
+        if (handle->random_timer > 0) {
+            activities = 1;
+            handle->random_timer -= t_delta;
+            if (handle->random_timer <= 0) {
+                // "Cannot Claim Address" message specified in 4.2.2.2 of J1939-81
+                __send_claim_address(index, J1939_NULL_ADDRESS);
+            }
+        }
+    } else if (state == ACTIVE) {
+        /* Error notifications */
+        activities += j1939_notify_errors(index, &handle->rx_error_fifo, handle->callbacks.rx_error_handler);
+        activities += j1939_notify_errors(index, &handle->tx_error_fifo, handle->callbacks.tx_error_handler);
+
+        /* TP management processing */
+        activities += j1939_tp_mgr_process(index, &handle->tp_mgr_ctx, t_delta);
+
+        /* Transmition processing */
+        activities += j1939_process_tx(index);
+
+        /* Receiving processing */
+        activities += j1939_process_rx(index);
+    }
 
     if (activities > 0) {
         handle->preidle_timer = PREIDLE_TIMEOUT;
@@ -566,46 +583,41 @@ int j1939_process(uint8_t index) {
  */
 static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * const frame, uint32_t time) {
     j1939_handle *const handle = &__j1939_handles[index];
-    /* PDU1 format */
-    const int is_ACLM_PGN = j1939_PGN_code_get(frame->PGN) == J1939_STD_PGN_ACLM;
-    const int is_our_addr =
-        (frame->src_address != J1939_NULL_ADDRESS) &&
-        (frame->src_address == handle->preferred_address);
-    const j1939_CA_name *their_CA_name;
-    int cannot_claim;
-    j1939_state new_state;
-    int address;
 
     (void)time;
 
-    if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
-        return 0;
+    if (handle->state == ATEMPT_TO_CLAIM_ADDRESS || handle->state == ACTIVE) {
+        /* PDU1 format */
+        const int is_ACLM_PGN = j1939_PGN_code_get(frame->PGN) == J1939_STD_PGN_ACLM;
+        const int is_our_addr =
+            (frame->src_address != J1939_NULL_ADDRESS) &&
+            (frame->src_address == handle->preferred_address);
+        const j1939_CA_name *their_CA_name;
+        int cannot_claim;
+
+        if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
+            return 0;
+        }
+
+        their_CA_name = (j1939_CA_name*) (&frame->payload[0]);
+        cannot_claim = (handle->CA_name.name >= their_CA_name->name);
+
+        if (cannot_claim) {
+            handle->address = J1939_NULL_ADDRESS;
+            // FIXME: random send_claim_address on "Cannot Claim Address"
+            handle->random_timer = 5;
+            /* reset TP MGR in prior of Cannot Claim Address */
+            handle->tp_mgr_ctx.reset = 1;
+
+            barrier();
+
+            handle->state = CANNOT_CLAIM_ADDRESS;
+        }
+
+        return 1;
     }
 
-    their_CA_name = (j1939_CA_name*) (&frame->payload[0]);
-    cannot_claim = (handle->CA_name.name >= their_CA_name->name);
-
-    if (cannot_claim) {
-        new_state = CANNOT_CLAIM_ADDRESS;
-        address = (J1939_NULL_ADDRESS); // "Cannot Claim Address" message specified in 4.2.2.2 of J1939-81
-
-        /* reset TP MGR in prior of Cannot Claim Address */
-        handle->tp_mgr_ctx.reset = 1;
-    } else {
-        new_state = ACTIVE;
-        address = handle->preferred_address;
-    }
-
-    handle->address = address;
-
-    barrier();
-
-    handle->state = new_state;
-
-    // FIXME: random send_claim_address on "Cannot Claim Address"
-    __send_claim_address(index, address);
-
-    return 1;
+    return 0;
 }
 
 

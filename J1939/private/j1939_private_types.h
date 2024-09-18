@@ -350,7 +350,7 @@ typedef struct j1939_handle {
     volatile int already_rx;
 
     volatile uint8_t address;
-    uint8_t preferred_address;
+    volatile uint8_t preferred_address;
 
     j1939_CA_name CA_name;
 
@@ -362,6 +362,8 @@ typedef struct j1939_handle {
 
     j1939_callbacks callbacks;
     int preidle_timer;
+    int claim_timer;
+    int random_timer;
 } j1939_handle;
 
 
