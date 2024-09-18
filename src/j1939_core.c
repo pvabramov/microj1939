@@ -602,6 +602,17 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
         their_CA_name = (j1939_CA_name*) (&frame->payload[0]);
         cannot_claim = (handle->CA_name.name >= their_CA_name->name);
 
+        /*
+        SAE J1939-81-2017
+
+        4.5.3.3 Response to Address Claims of Own Address
+
+        A CA shall retransmit an address claim if it receives an address claim with a source address that matches its own and if
+        its own NAME is of a lower value (higher priority) than the NAME in the claim it received. If the CA's NAME is of a higher
+        value (lower priority) than the NAME in the claim it received, the CA shall not continue to use that address. (It may send a
+        Cannot Claim Address message or it may attempt to claim a different address.)
+        */
+
         if (cannot_claim) {
             handle->address = J1939_NULL_ADDRESS;
             // FIXME: random send_claim_address on "Cannot Claim Address"
@@ -612,6 +623,9 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
             barrier();
 
             handle->state = CANNOT_CLAIM_ADDRESS;
+        } else {
+            // do the reclaimation of the address
+            __send_claim_address(index, handle->address);
         }
 
         return 1;
