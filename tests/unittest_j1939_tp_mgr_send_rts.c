@@ -44,6 +44,14 @@ TEST_SETUP(j1939_tp_mgr_send_rts) {
 
     /* process one IDLE tick */
     j1939_process(CAN_INDEX);
+
+    /* 250 ms in order to claim address */
+    unittest_add_time(250);
+
+    /* we have waited for 250 ms to claim address */
+    j1939_process(CAN_INDEX);
+
+    /* next tick */
     unittest_add_time(20);
 }
 
