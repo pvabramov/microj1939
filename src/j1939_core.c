@@ -725,7 +725,9 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
     j1939_handle *const handle = &__j1939_handles[index];
     uint8_t dst_addr;
 
-    if (handle->state == NOT_STARTED || handle->state == BUS_OFF) {
+    const j1939_state state = handle->state;
+
+    if (state == NOT_STARTED || state == BUS_OFF) {
         return 0;
     }
 
@@ -749,7 +751,7 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
      * Receiving messages on bus
      */
 
-    if (handle->state != ACTIVE) {
+    if (state != ACTIVE) {
         return 0;
     }
 
