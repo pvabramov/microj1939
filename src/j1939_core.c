@@ -660,17 +660,37 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
 
     switch (requested_PGN) {
         case J1939_STD_PGN_ACLM:
-            /*
-             * The address claim message is an exception to the requirements on request messages specified in SAE J1939­21.
-             * (SAE J1939­21 defines that a request message which is directed to a specific address be responded to with the
-             * destination set to the requester.)
-             */
-            // FIXME: random send_claim_address if CANNOT_CLAIM_ADDRESS state has been set
-            __send_claim_address(index, (handle->state == INITIALIZED) ? handle->preferred_address : handle->address);
+            if (dst_addr == J1939_GLOBAL_ADDRESS) {
+                /*
+                    SAE J1939-81-2017
+
+                    4.5.3.1 Response to a Request for Address Claimed Sent to the Global Address
+
+                    A CA shall always respond to a Request for Address Claimed directed to the global address with either an Address
+                    Claimed message or if the CA has not been successful in claiming an address, a Cannot Claim Address message.
+                */
+                if (handle->state == CANNOT_CLAIM_ADDRESS) {
+                    // FIXME: random send_claim_address if CANNOT_CLAIM_ADDRESS state has been set
+                    handle->random_timer = 10;
+                } else {
+                    __send_claim_address(index, handle->preferred_address);
+                }
+            } else if (handle->state == ACTIVE) {
+                /*
+                    SAE J1939-81-2017
+
+                    4.5.3.2 Response to a Request for Address Claimed Sent to a Specific Address
+
+                    A CA shall always respond to a Request for Address Claimed where the destination address of the request is the CA's
+                    address. The response to the request, the Address Claimed message, shall be sent to the global address (255).
+                */
+                __send_claim_address(index, handle->address);
+            }
             break;
 
         default:
-            if ((handle->state == ACTIVE) && (handle->callbacks.request_handler != NULL)) {
+            if (handle->state == ACTIVE) {
+                if (handle->callbacks.request_handler != NULL) {
                 __j1939_receive_notify(index, J1939_RX_INFO_TYPE_REQUEST,
                         requested_PGN,
                         frame->src_address,
@@ -678,12 +698,13 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
                         frame->dlc,
                         request,
                         time);
-            } else {
-                /*
-                * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
-                */
-                if (dst_addr != J1939_GLOBAL_ADDRESS) {
-                    __send_ACK(index, J1939_ACK_NEGATIVE, 0xFF, frame->src_address, request->PGN);
+                } else {
+                    /*
+                    * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
+                    */
+                    if (dst_addr != J1939_GLOBAL_ADDRESS) {
+                        __send_ACK(index, J1939_ACK_NEGATIVE, 0xFF, frame->src_address, request->PGN);
+                    }
                 }
             }
             break;
@@ -715,11 +736,6 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
      */
     if (__rx_handle_PGN_claim_address(index, frame, time)) {
         return 1;
-    }
-
-    /* we are still attempting to claim an address, so dont handle any requests */
-    if (handle->state == ATEMPT_TO_CLAIM_ADDRESS) {
-        return 0;
     }
 
     /*
