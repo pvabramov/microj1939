@@ -98,13 +98,14 @@ static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_
  * 
  * @return 
  */
-static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint32_t PGN) {
+static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint8_t role, uint32_t PGN) {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-braces"
     j1939_tp_cm_control payload = {
         .control = J1939_TP_CM_Conn_Abort,
         .Conn_Abort.reason = reason,
-        .Conn_Abort.__reserved__ = { 0xFF, 0xFF, 0xFF }
+        .Conn_Abort.role = 0xFC | (role & 0x3),
+        .Conn_Abort.__reserved__ = { 0xFF, 0xFF }
     };
     PACK_PGN(PGN, payload.PGN);
 #pragma GCC diagnostic pop
@@ -198,8 +199,8 @@ static inline int __send_CTS(uint8_t index, uint8_t src_addr, uint8_t dst_addr, 
  * @param PGN
  * @param reason
  */
-static inline int __send_Conn_Abort(uint8_t index, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason) {
-    j1939_tp_cm_control payload = __new_tp_cm_Conn_Abort(reason, PGN);
+static inline int __send_Conn_Abort(uint8_t index, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason, uint8_t role) {
+    j1939_tp_cm_control payload = __new_tp_cm_Conn_Abort(reason, role, PGN);
     return __send_TPCM(index, src_addr, dst_addr, &payload);
 }
 

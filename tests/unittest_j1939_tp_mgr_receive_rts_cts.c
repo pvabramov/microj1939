@@ -470,11 +470,9 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_wrong_seq_number) {
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(255,                          jframe.payload[0]);         /* Control byte = Conn_Abort */
-    TEST_ASSERT_EQUAL(2,                            jframe.payload[1]);         /* Connection Abort reason
-                                                                                   SAE J1939-21:
-                                                                                       System resources were needed for another
-                                                                                       task so this connection managed session was
-                                                                                       terminated. */
+    TEST_ASSERT_EQUAL(7,                            jframe.payload[1]);         /* Connection Abort reason
+                                                                                   SAE J1939-21: Bad sequence number */
+    TEST_ASSERT_EQUAL(0xFD,                         jframe.payload[2]);         /* Role = 01 (responder) */
     TEST_ASSERT_EQUAL(0x00,                         jframe.payload[5]);         /* PGN bytes */
     TEST_ASSERT_EQUAL(0xAD,                         jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,                         jframe.payload[7]);
@@ -544,6 +542,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_already_managed_session) 
                                                                                    SAE J1939-21:
                                                                                        Already in one or more connection
                                                                                        managed sessions and cannot support another. */
+    TEST_ASSERT_EQUAL(0xFD,                         jframe.payload[2]);         /* Role = 01 (responder) */
     TEST_ASSERT_EQUAL(0x00,                         jframe.payload[5]);         /* PGN bytes */
     TEST_ASSERT_EQUAL(0xAE,                         jframe.payload[6]);
     TEST_ASSERT_EQUAL(0x00,                         jframe.payload[7]);

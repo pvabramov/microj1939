@@ -409,7 +409,7 @@ static void __tp_mgr_rx_handle_RTS_control(uint8_t index, j1939_tp_mgr_ctx *cons
         }
 
         /* terminate connection */
-        __send_Conn_Abort(index, DA, SA, tp_cm_PGN, reason); 
+        __send_Conn_Abort(index, DA, SA, tp_cm_PGN, reason, J1939_CONN_ABORT_ROLE_RESPONDER);
         __j1939_rx_error_notify(index, rx_tx_error, tp_cm_PGN, SA, 0);
     } else {
         const j1939_tp_session *const session = &tp_mgr_ctx->sessions[sid];
@@ -599,7 +599,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
     /* have we lost a packet? */
     if (session->pkt_next != tp_dt->seq_num) {
         /* if so, abort the session */
-        __send_Conn_Abort(index, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES);
+        __send_Conn_Abort(index, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_BAD_SEQUENCE, J1939_CONN_ABORT_ROLE_RESPONDER);
         __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_LOST_PACKET);
         return;
     }
@@ -621,7 +621,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
                                             session->time);
         if (status < 0) {
             /* if we cannot append a message just abort transmition */
-            __send_Conn_Abort(index, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES);
+            __send_Conn_Abort(index, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_RESPONDER);
             __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
         } else {
             /* acknowledge receiving a message */
@@ -791,8 +791,11 @@ static int __tp_mgr_process_timeout_check(uint8_t index, uint8_t self_addr, j193
 
     if (is_timedout) {
         if (session->mode == J1939_TP_MODE_RTS) {
-            uint8_t dst_addr = (session->dir == J1939_TP_DIR_IN) ? session->src_addr : session->dst_addr;
-            __send_Conn_Abort(index, self_addr, dst_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT);
+            if (session->dir == J1939_TP_DIR_IN) {
+                __send_Conn_Abort(index, self_addr, session->src_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT, J1939_CONN_ABORT_ROLE_RESPONDER);
+            } else {
+                __send_Conn_Abort(index, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT, J1939_CONN_ABORT_ROLE_ORIGINATOR);
+            }
         }
         __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_TIMEDOUT);
     }
@@ -840,8 +843,9 @@ static int __tp_mgr_process_transmition(uint8_t index, uint8_t self_addr, j1939_
     level = j1939_bsp_lock();
 
     if (__send_TPDT(index, self_addr, session->dst_addr, &tp_dt) < 0) {
+        // TODO: recover from this, by example, resend on next tick
         if (session->mode == J1939_TP_MODE_RTS) {
-            __send_Conn_Abort(index, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES);
+            __send_Conn_Abort(index, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_ORIGINATOR);
         }
         __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
         j1939_bsp_unlock(level);

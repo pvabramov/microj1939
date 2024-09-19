@@ -126,12 +126,30 @@ typedef enum j1939_tp_cm_format {
  * @brief
  * 
  * J1939-21 (2006), table 7, Connection Abort Reason
+ * J1939-21 (2022), table 6, Connection Abort Reason
  */
 typedef enum j1939_tp_cm_conn_abort_reason {
     J1939_CONN_ABORT_REASON_EXISTS          = 1,
     J1939_CONN_ABORT_REASON_NO_RESOURCES    = 2,
     J1939_CONN_ABORT_REASON_TIMEDOUT        = 3,
+    J1939_CONN_ABORT_REASON_CTS_IN_PROGRESS = 4,
+    J1939_CONN_ABORT_REASON_RETRASMIT_LIMIT_REACHED = 5,
+    J1939_CONN_ABORT_REASON_UNEXPECTED_PACKET = 6,
+    J1939_CONN_ABORT_REASON_BAD_SEQUENCE = 7,
+    J1939_CONN_ABORT_REASON_DUP_SEQUENCE = 8,
+    J1939_CONN_ABORT_REASON_BIG_MESSAGE = 9,
+    J1939_CONN_ABORT_REASON_UNKNOWN = 250,
 } j1939_tp_cm_conn_abort_reason;
+
+
+/**
+ * J1939-21 (2022), figure 14, Format of messages for transport protocol
+ */
+typedef enum j1939_tp_cm_conn_abort_role {
+    J1939_CONN_ABORT_ROLE_ORIGINATOR = 0,
+    J1939_CONN_ABORT_ROLE_RESPONDER = 1,
+    J1939_CONN_ABORT_ROLE_NOT_IMPLEMENTED = 3,
+} j1939_tp_cm_conn_abort_role;
 
 
 /**
@@ -169,7 +187,8 @@ typedef struct __attribute__((__packed__)) j1939_tp_cm_EoMA_control {
  */
 typedef struct __attribute__((__packed__)) j1939_tp_cm_Conn_Abort_control {
     uint8_t reason;
-    uint8_t __reserved__[3];
+    uint8_t role;
+    uint8_t __reserved__[2];
 } j1939_tp_cm_Conn_Abort_control;
 
 
