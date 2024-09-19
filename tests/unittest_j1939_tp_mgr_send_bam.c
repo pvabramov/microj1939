@@ -70,7 +70,8 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(32,               jframe.payload[0]); /* Control byte = Broadcast Announce Message */
@@ -92,7 +93,8 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -112,7 +114,8 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -132,7 +135,8 @@ TEST(j1939_tp_mgr_send_bam, send_BAM_message) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
@@ -162,7 +166,8 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(32,               jframe.payload[0]); /* Control byte = Broadcast Announce Message */
@@ -185,7 +190,8 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -205,7 +211,8 @@ TEST(j1939_tp_mgr_send_bam, sendmsg_returns_error_on_already_managed_BAM_transmi
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -234,7 +241,8 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(32,               jframe.payload[0]); /* Control byte = Broadcast Announce Message */
@@ -262,7 +270,8 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -285,7 +294,8 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -303,7 +313,8 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
     /* controller should send TP_CM with BAM control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(32,               jframe.payload[0]); /* Control byte = Broadcast Announce Message */
@@ -325,7 +336,8 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -345,7 +357,8 @@ TEST(j1939_tp_mgr_send_bam, send_two_BAM_messages_in_sequence) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 255,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(255,              jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */

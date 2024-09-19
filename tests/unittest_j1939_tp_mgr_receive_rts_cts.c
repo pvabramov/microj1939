@@ -84,7 +84,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
     /* on RTS receiving controller should send CTS to establish connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x45,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x45,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -108,7 +109,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
     /* on TP_DT receiving controller should send CTS to make acknowledge */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x45,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x45,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -132,7 +134,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
     /* on TP_DT receiving controller should send CTS to make acknowledge */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x45,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x45,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -156,7 +159,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
     /* on the last TP_DT receiving controller should send EndOfMsgAck to close connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x45,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x45,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(19,                           jframe.payload[0]);         /* Control byte = EndOfMsgAck */
@@ -174,6 +178,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_one_packet_per_CTS) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0xAD00,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(CA_ADDR,  rx_msg.DA);
     TEST_ASSERT_EQUAL(0x45,     rx_msg.SA);
     TEST_ASSERT_EQUAL(15,       rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -219,7 +224,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
     /* on RTS receiving controller should send CTS to establish connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x33,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);          /* TP_CM */
+    TEST_ASSERT_EQUAL(0x33,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -247,7 +253,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
     /* on TP_DT receiving controller should send CTS to make acknowledge */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x33,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x33,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -271,7 +278,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
     /* on the last TP_DT receiving controller should send EndOfMsgAck to close connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x33,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x33,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(19,                           jframe.payload[0]);         /* Control byte = EndOfMsgAck */
@@ -289,6 +297,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_two_packets_per_CTS) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0xAD00,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(CA_ADDR,  rx_msg.DA);
     TEST_ASSERT_EQUAL(0x33,     rx_msg.SA);
     TEST_ASSERT_EQUAL(15,       rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -333,7 +342,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_any_packets_per_CTS) {
     /* on RTS receiving controller should send CTS to establish connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x33,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x33,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -364,7 +374,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_any_packets_per_CTS) {
     /* on the last TP_DT receiving controller should send EndOfMsgAck to close connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x33,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x33,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(19,                           jframe.payload[0]);         /* Control byte = EndOfMsgAck */
@@ -382,6 +393,7 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_RTS_message_any_packets_per_CTS) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0xAD00,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(CA_ADDR,  rx_msg.DA);
     TEST_ASSERT_EQUAL(0x33,     rx_msg.SA);
     TEST_ASSERT_EQUAL(15,       rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -425,7 +437,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_wrong_seq_number) {
     /* on RTS receiving controller should send CTS to establish connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x91,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x91,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -452,7 +465,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_wrong_seq_number) {
     /* on wrong seq.number receiving controller should send Conn_Abort to close connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x91,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x91,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(255,                          jframe.payload[0]);         /* Control byte = Conn_Abort */
@@ -492,7 +506,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_already_managed_session) 
     /* on RTS receiving controller should send CTS to establish connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x91,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x91,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */
@@ -520,7 +535,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, connection_abort_on_already_managed_session) 
     /* on another RTS receiving controller should send Conn_Abort to not establish the second session from same source */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x91,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x91,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(255,                          jframe.payload[0]);         /* Control byte = Conn_Abort */
@@ -553,7 +569,8 @@ TEST(j1939_tp_mgr_receive_rts_cts, receive_connection_abort) {
     /* on RTS receiving controller should send CTS to establish connection */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 0x91,              jframe.PGN.value);          /* TP_CM */
+    TEST_ASSERT_EQUAL(236 << 8,                     jframe.PGN);                /* TP_CM */
+    TEST_ASSERT_EQUAL(0x91,                         jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                      jframe.src_address);
     TEST_ASSERT_EQUAL(8,                            jframe.dlc);
     TEST_ASSERT_EQUAL(17,                           jframe.payload[0]);         /* Control byte = CTS */

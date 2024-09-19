@@ -23,8 +23,8 @@ typedef enum j1939_ack_control {
 /**
  * @brief
  */
-typedef struct j1939_payload_request {
-    PGN_format PGN;
+typedef struct __attribute__((__packed__)) j1939_payload_request {
+    uint8_t PGN[3];
 } j1939_payload_request;
 
 
@@ -36,7 +36,7 @@ typedef struct __attribute__((__packed__)) j1939_payload_ack {
     uint8_t group_function;
     uint8_t __reserved__[2]; // should be 0xFF
     uint8_t address;
-    PGN_format PGN;
+    uint8_t PGN[3];
 } j1939_payload_ack;
     
 
@@ -195,7 +195,7 @@ typedef struct __attribute__((__packed__)) j1939_tp_cm_control {
         j1939_tp_cm_Conn_Abort_control  Conn_Abort;
         j1939_tp_cm_BAM_control         BAM;
     };
-    PGN_format PGN;
+    uint8_t PGN[3];
 } j1939_tp_cm_control;
 
 

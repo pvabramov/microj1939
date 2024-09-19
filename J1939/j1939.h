@@ -19,15 +19,16 @@ extern "C" {
 #include "j1939_std_pgn.h"
 #include "j1939_types.h"
 
+
 /**
- * @brief Cast integer value to PGN_format type
- *
- * @param x Value to cast
- * @return PGN_format
+ * @brief
+ * 
+ * @param PGN
+ * 
+ * @return 
  */
-static inline PGN_format TREAT_AS_PGN(uint32_t x) {
-    PGN_format PGN = { x };
-    return PGN;
+static inline int j1939_is_PDU1(uint32_t PGN) {
+    return (PGN & J1939_PGN_PDU_FORMAT_MASK) < J1939_PGN_PDU_FORMAT_SEP;
 }
 
 
@@ -38,60 +39,8 @@ static inline PGN_format TREAT_AS_PGN(uint32_t x) {
  * 
  * @return 
  */
-static inline int j1939_is_PDU1(PGN_format PGN) {
-    return PGN.pdu_format < 240;
-}
-
-
-/**
- * @brief
- * 
- * @param PGN
- * 
- * @return 
- */
-static inline int j1939_is_PDU2(PGN_format PGN) {
-    return PGN.pdu_format >= 240;
-}
-
-
-/**
- * @brief
- * 
- * @param PGN
- */
-static inline void j1939_PGN_code_set(PGN_format *const PGN, uint32_t value) {
-    PGN->value = value;
-    PGN->__zeros__ = 0;
-    PGN->__padding__ = 0;
-}
-
-
-/**
- * @brief
- * 
- * @param PGN
- * @return 
- */
-static inline uint32_t j1939_PGN_code_get(PGN_format PGN) {
-    PGN.__zeros__ = 0;
-    PGN.__padding__ = 0;
-    
-    // The PDU Format is 239 or less and the PDU Specific field is set to 0
-    if (j1939_is_PDU1(PGN)) {
-        PGN.pdu_specific = 0;
-    }
-    
-    return PGN.value;
-}
-
-
-static inline uint8_t j1939_PGN_da_get(PGN_format PGN) {
-    if (j1939_is_PDU1(PGN)) {
-        return PGN.dest_address;
-    }
-
-    return J1939_GLOBAL_ADDRESS;
+static inline int j1939_is_PDU2(uint32_t PGN) {
+    return (PGN & J1939_PGN_PDU_FORMAT_MASK) >= J1939_PGN_PDU_FORMAT_SEP;
 }
 
 

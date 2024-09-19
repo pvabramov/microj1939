@@ -70,7 +70,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
     /* controller should send TP_CM with RTS control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 57,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(57,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(16,               jframe.payload[0]); /* Control byte = Request_To_Send (RTS) */
@@ -107,7 +108,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 57,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(57,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -143,7 +145,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 57,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(57,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -173,7 +176,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 57,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(57,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -203,7 +207,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_one_frame_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 57,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(57,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
@@ -241,7 +246,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
     /* controller should send TP_CM with RTS control byte */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(16,               jframe.payload[0]); /* Control byte = Request_To_Send (RTS) */
@@ -278,7 +284,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -298,7 +305,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -328,7 +336,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
@@ -357,7 +366,8 @@ TEST(j1939_tp_mgr_send_rts, send_RTS_message_two_frames_per_CTS) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
@@ -398,7 +408,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     /* controller should send TP_CM with RTS control byte for the first destination */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(16,               jframe.payload[0]); /* Control byte = Request_To_Send (RTS) */
@@ -413,7 +424,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
     /* controller should send TP_CM with RTS control byte for the first destination */
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(236 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(236 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(45,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(16,               jframe.payload[0]); /* Control byte = Request_To_Send (RTS) */
@@ -448,7 +460,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -469,7 +482,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -499,7 +513,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 17,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(17,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */
@@ -517,7 +532,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(45,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(1,                jframe.payload[0]); /* Sequence Number */
@@ -538,7 +554,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(45,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(2,                jframe.payload[0]); /* Sequence Number */
@@ -559,7 +576,8 @@ TEST(j1939_tp_mgr_send_rts, send_two_simultaneously_RTS_messages) {
 
     TEST_ASSERT_EQUAL(0, unittest_get_output(&jframe));
 
-    TEST_ASSERT_EQUAL(235 << 8 | 45,    jframe.PGN.value);
+    TEST_ASSERT_EQUAL(235 << 8,         jframe.PGN);
+    TEST_ASSERT_EQUAL(45,               jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,          jframe.src_address);
     TEST_ASSERT_EQUAL(8,                jframe.dlc);
     TEST_ASSERT_EQUAL(3,                jframe.payload[0]); /* Sequence Number */

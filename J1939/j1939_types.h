@@ -13,6 +13,12 @@ extern "C" {
 #define J1939_TP_PRIORITY               7
 #define J1939_MAX_PRIORITY              7
 
+#define J1939_PGN_PDU1_MASK             0x3FF00U    // PDU1 mask
+#define J1939_PGN_PDU2_MASK             0x3FFFFU    // PDU2 mask
+
+#define J1939_PGN_PDU_FORMAT_MASK       0x0FF00U    // PDU format mask
+#define J1939_PGN_PDU_FORMAT_SEP        0x0F000U    // PDU format separator
+
 
 /**
  * @brief
@@ -32,29 +38,6 @@ typedef union {
     };
     uint64_t name;
 } j1939_CA_name;
-
-
-/**
- * @brief J1939 PGN format
- */
-typedef union PGN_format {
-    uint32_t value;
-    struct {
-        // [0]
-        union {
-            uint8_t pdu_specific; // PS
-            uint8_t dest_address; // DA
-        };
-        // [1]
-        uint8_t pdu_format; // PF
-        // [2]
-        uint8_t dp : 1;
-        uint8_t edp : 1;
-        uint8_t __zeros__ : 6;
-        // [3]
-        uint8_t __padding__;
-    };
-} PGN_format;
 
 
 /**
@@ -102,10 +85,11 @@ typedef struct j1939_callbacks {
  * @brief J1939 frame
  */
 typedef struct j1939_primitive {
-    PGN_format PGN;
-    uint8_t priority;
-    uint8_t src_address; // SA
+    uint32_t PGN;
     uint16_t dlc;
+    uint8_t dest_address; // DA
+    uint8_t src_address; // SA
+    uint8_t priority;
     uint8_t payload[8];
 } j1939_primitive;
 

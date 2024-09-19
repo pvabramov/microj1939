@@ -47,7 +47,8 @@ TEST(j1939_claim_address, claim_address_message_sending) {
     /* check for output */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(CA_ADDR, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -114,7 +115,8 @@ TEST(j1939_claim_address, abort_address_assigment) {
     /* check for "Cannot Claim Address" message */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <cannot claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(254 /* null address */, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -157,7 +159,8 @@ TEST(j1939_claim_address, address_loosing) {
     /* check for "Cannot Claim Address" message */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <cannot claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(254 /* null address */, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -199,7 +202,8 @@ TEST(j1939_claim_address, address_protecting) {
     /* check for "Claim Address" message from self */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(CA_ADDR, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -238,7 +242,8 @@ TEST(j1939_claim_address, response_on_request_claim_address) {
     /* check for "Claim Address" message from self */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(CA_ADDR, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -278,7 +283,8 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_cl
     /* check for "Claim Address" message from self */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(CA_ADDR, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -306,7 +312,8 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_no
     /* check for "Claim Address" message from self */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(8, jframe.dlc);
     TEST_ASSERT_EQUAL(CA_ADDR, jframe.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
@@ -352,7 +359,8 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
     /* check for "Cannot Claim Address" message */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe0), "No <cannot claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe0.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe0.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe0.dest_address);
     TEST_ASSERT_EQUAL(8, jframe0.dlc);
     TEST_ASSERT_EQUAL(254 /* null address */, jframe0.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe0.payload));
@@ -366,7 +374,8 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
     /* check for "Cannot Claim Address" message from self */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe1), "No <cannot claim address> message");
 
-    TEST_ASSERT_EQUAL(60928U | 255 /* global address */, jframe1.PGN.value);
+    TEST_ASSERT_EQUAL(60928U, jframe1.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe1.dest_address);
     TEST_ASSERT_EQUAL(8, jframe1.dlc);
     TEST_ASSERT_EQUAL(254U, jframe1.src_address);
     TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe1.payload));

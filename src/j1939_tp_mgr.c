@@ -264,7 +264,7 @@ void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_di
     session->src_addr               = src_address;
     session->dir                    = dir;
     session->mode                   = J1939_TP_MODE_BAM;
-    session->PGN                    = j1939_PGN_code_get(tp_cm->PGN);
+    session->PGN                    = UNPACK_PGN(tp_cm->PGN);
     session->msg_sz                 = tp_cm->BAM.total_msg_sz;
     session->total_pkt_num          = tp_cm->BAM.total_pkt_num;
     session->pkt_max                = tp_cm->BAM.total_pkt_num;
@@ -288,7 +288,7 @@ void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_di
     session->src_addr               = src_address;
     session->dir                    = dir;
     session->mode                   = J1939_TP_MODE_RTS;
-    session->PGN                    = j1939_PGN_code_get(tp_cm->PGN);
+    session->PGN                    = UNPACK_PGN(tp_cm->PGN);
     session->msg_sz                 = tp_cm->RTS.total_msg_sz;
     session->total_pkt_num          = tp_cm->RTS.total_pkt_num;
     session->pkt_max                = U8_MIN(tp_cm->RTS.max_pkt_num, U8_MIN(J1939_TP_MGR_MAX_PACKETS_PER_CTS, tp_cm->RTS.total_pkt_num));
@@ -393,7 +393,7 @@ static int __open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, 
  * @param tp_cm
  */
 static void __tp_mgr_rx_handle_RTS_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
-    const uint32_t tp_cm_PGN = j1939_PGN_code_get(tp_cm->PGN);
+    const uint32_t tp_cm_PGN = UNPACK_PGN(tp_cm->PGN);
     int sid;
 
     if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm, time)) < 0) {
@@ -438,7 +438,7 @@ static void __tp_mgr_rx_handle_BAM_control(uint8_t index, j1939_tp_mgr_ctx *cons
 
     /* opens BAM session */
     if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm, time)) < 0) {
-        const uint32_t tp_cm_PGN = j1939_PGN_code_get(tp_cm->PGN);
+        const uint32_t tp_cm_PGN = UNPACK_PGN(tp_cm->PGN);
         /* no error check, just notify */
         __j1939_rx_error_notify(index, ((sid == -EISCONN) ? J1939_RX_TX_ERROR_EXISTS : J1939_RX_TX_ERROR_FAILED),
             tp_cm_PGN, SA, 0);
@@ -503,7 +503,7 @@ static void __tp_mgr_rx_handle_EoMA_control(uint8_t index, j1939_tp_mgr_ctx *con
  * @param tp_cm
  */
 static void __tp_mgr_rx_handle_Conn_Abort_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
-    const uint32_t tp_cm_PGN = j1939_PGN_code_get(tp_cm->PGN);
+    const uint32_t tp_cm_PGN = UNPACK_PGN(tp_cm->PGN);
     j1939_tp_session *session;
 
     (void)DA;
@@ -655,7 +655,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
  * @param frame
  */
 int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame, uint32_t time) {
-    const uint32_t PGN = j1939_PGN_code_get(frame->PGN);
+    const uint32_t PGN = frame->PGN;
     uint8_t SA;
     uint8_t DA;
     int is_TP_CM = (PGN == J1939_STD_PGN_TPCM) && (frame->dlc == J1939_STD_PGN_TPCM_DLC);
@@ -667,7 +667,7 @@ int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, c
     }
 
     SA = frame->src_address;
-    DA = frame->PGN.dest_address;
+    DA = frame->dest_address;
 
     /* don't handle frame if dest.address is not global or is not mine */
     if (DA != J1939_GLOBAL_ADDRESS && DA != j1939_get_address(index)) {

@@ -46,6 +46,24 @@ static inline uint16_t U16_MIN(uint16_t a, uint16_t b) {
 
 
 /**
+ * Unpacks PGN data from payload to scalar.
+ */
+static inline uint32_t UNPACK_PGN(const uint8_t PGN[3]) {
+    return ((uint32_t)PGN[2] << 16) | ((uint32_t)PGN[1] << 8) | (uint32_t)PGN[0];
+}
+
+
+/**
+ * Packs PGN scalar into payload.
+ */
+static inline void PACK_PGN(uint32_t PGN, uint8_t OUT[3]) {
+    OUT[0] = (uint8_t)PGN;
+    OUT[1] = (uint8_t)(PGN >> 8);
+    OUT[2] = (uint8_t)(PGN >> 16);
+}
+
+
+/**
  * @brief
  * 
  * @param PGN
@@ -58,16 +76,16 @@ static inline uint16_t U16_MIN(uint16_t a, uint16_t b) {
  */
 static inline j1939_primitive j1939_primitive_build(uint32_t PGN, uint8_t priority, uint8_t SA, uint8_t DA, uint8_t DLC, const void *const payload) {
     struct j1939_primitive msg = {
+        .PGN = PGN,
         .priority = (priority > J1939_MAX_PRIORITY) ? J1939_MAX_PRIORITY : priority,
+        .dest_address = DA,
         .src_address = SA,
         .dlc = U8_MIN(DLC, 8),
     };
     
-    j1939_PGN_code_set(&msg.PGN, PGN);
-    
-    /* PDU1 format takes PS as dest.address */
-    if (j1939_is_PDU1(msg.PGN)) {
-        msg.PGN.dest_address = DA;
+    /* PDU2 format is broadcast message */
+    if (j1939_is_PDU2(msg.PGN)) {
+        msg.dest_address = J1939_GLOBAL_ADDRESS;
     }
     
     memset(msg.payload, 0xFF, sizeof(msg.payload));

@@ -150,7 +150,8 @@ int unittest_post_input(uint8_t index, uint32_t PGN, uint8_t DA, uint8_t SA, uin
     va_end(va);
 
     frame.dlc           = len;
-    frame.PGN.value     = j1939_is_PDU1(TREAT_AS_PGN(PGN)) ? PGN | DA : PGN;
+    frame.PGN           = PGN;
+    frame.dest_address  = j1939_is_PDU2(PGN) ? J1939_GLOBAL_ADDRESS : DA;
     frame.src_address   = SA;
     frame.priority      = 7;
 

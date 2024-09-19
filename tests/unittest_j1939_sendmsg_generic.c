@@ -61,7 +61,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_0) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xAF14,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xAF00,   jframe.PGN);
+    TEST_ASSERT_EQUAL(20,       jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(0,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -78,7 +79,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_1) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB015,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB000,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x15,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(1,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -97,7 +99,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_2) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB116,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB100,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x16,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(2,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -118,7 +121,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_3) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB217,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB200,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x17,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(3,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -141,7 +145,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_4) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB318,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB300,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x18,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(4,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -166,7 +171,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_5) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB419,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB400,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x19,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(5,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -193,7 +199,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_6) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB51A,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB500,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1A,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(6,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -222,7 +229,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_7) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB61B,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB600,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1B,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(7,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -253,7 +261,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_8) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB71C,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB700,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1C,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(8,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -275,7 +284,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_0_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xAF14,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xAF00,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x14,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(0,        jframe.dlc);
     TEST_ASSERT_EQUAL(1,        jframe.priority);
@@ -292,7 +302,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_1_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB015,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB000,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x15,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(1,        jframe.dlc);
     TEST_ASSERT_EQUAL(2,        jframe.priority);
@@ -311,7 +322,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_2_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB116,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB100,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x16,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(2,        jframe.dlc);
     TEST_ASSERT_EQUAL(3,        jframe.priority);
@@ -332,7 +344,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_3_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB217,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB200,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x17,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(3,        jframe.dlc);
     TEST_ASSERT_EQUAL(4,        jframe.priority);
@@ -355,7 +368,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_4_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB318,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB300,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x18,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(4,        jframe.dlc);
     TEST_ASSERT_EQUAL(5,        jframe.priority);
@@ -380,7 +394,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_5_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB419,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB400,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x19,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(5,        jframe.dlc);
     TEST_ASSERT_EQUAL(7,        jframe.priority);
@@ -407,7 +422,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_6_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB51A,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB500,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1A,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(6,        jframe.dlc);
     TEST_ASSERT_EQUAL(6,        jframe.priority);
@@ -436,7 +452,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_7_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB61B,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB600,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1B,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(7,        jframe.dlc);
     TEST_ASSERT_EQUAL(3,        jframe.priority);
@@ -467,7 +484,8 @@ TEST(j1939_sendmsg_generic, send_frame_data_len_8_with_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB71C,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB700,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1C,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(8,        jframe.dlc);
     TEST_ASSERT_EQUAL(0,        jframe.priority);
@@ -492,7 +510,8 @@ TEST(j1939_sendmsg_generic, send_frame_with_out_of_priority) {
 
     unittest_get_output(&jframe);
 
-    TEST_ASSERT_EQUAL(0xB71C,   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xB700,   jframe.PGN);
+    TEST_ASSERT_EQUAL(0x1C,     jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,  jframe.src_address);
     TEST_ASSERT_EQUAL(8,        jframe.dlc);
     /* the max priority is 7, so it should be saturated to 7 */

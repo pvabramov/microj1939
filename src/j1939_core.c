@@ -144,14 +144,15 @@ static inline void __send_claim_address(uint8_t index, uint8_t address) {
  * @param originator_sa
  * @param PGN
  */
-static inline void __send_ACK(uint8_t index, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, PGN_format PGN) {
-    const j1939_payload_ack ack_body = {
+static inline void __send_ACK(uint8_t index, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN) {
+    j1939_payload_ack ack_body = {
         .__reserved__ = { 0xFF, 0xFF},
         .control = ack_type,
         .group_function = gf,
-        .address = originator,
-        .PGN = PGN,
+        .address = originator
     };
+
+    PACK_PGN(PGN, ack_body.PGN);
 
     /*
      * The Acknowledgment PGN response uses a global destination address even though the PGN that
@@ -432,7 +433,7 @@ static int j1939_process_rx(uint8_t index) {
             }
 
             if ((status != J1939_REQ_HANDLED) && (rx_info.dst_addr != J1939_GLOBAL_ADDRESS)) {
-                __send_ACK(index, (j1939_ack_control)status, 0xFF, rx_info.src_addr, TREAT_AS_PGN(rx_info.PGN));
+                __send_ACK(index, (j1939_ack_control)status, 0xFF, rx_info.src_addr, rx_info.PGN);
             }
 
         } else if (rx_info.type == J1939_RX_INFO_TYPE_MULTIPACKET && rx_info.sid != 255) {
@@ -588,7 +589,7 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
 
     if (handle->state == ATEMPT_TO_CLAIM_ADDRESS || handle->state == ACTIVE) {
         /* PDU1 format */
-        const int is_ACLM_PGN = j1939_PGN_code_get(frame->PGN) == J1939_STD_PGN_ACLM;
+        const int is_ACLM_PGN = frame->PGN == J1939_STD_PGN_ACLM;
         const int is_our_addr =
             (frame->src_address != J1939_NULL_ADDRESS) &&
             (frame->src_address == handle->preferred_address);
@@ -645,8 +646,8 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
 static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const frame, uint32_t time) {
     j1939_handle *const handle = &__j1939_handles[index];
     /* PDU1 format */
-    const int is_RQST_PGN = j1939_PGN_code_get(frame->PGN) == J1939_STD_PGN_RQST;
-    const uint8_t dst_addr = j1939_PGN_da_get(frame->PGN);
+    const int is_RQST_PGN = frame->PGN == J1939_STD_PGN_RQST;
+    const uint8_t dst_addr = frame->dest_address;
     const int is_our_addr = (dst_addr != J1939_NULL_ADDRESS) && ((dst_addr == handle->address) || (dst_addr == J1939_GLOBAL_ADDRESS));
     const j1939_payload_request *request;
     uint32_t requested_PGN;
@@ -656,7 +657,7 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
     }
 
     request = ((j1939_payload_request*) & frame->payload[0]);
-    requested_PGN = j1939_PGN_code_get(request->PGN);
+    requested_PGN = UNPACK_PGN(request->PGN);
 
     switch (requested_PGN) {
         case J1939_STD_PGN_ACLM:
@@ -703,7 +704,7 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
                     * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
                     */
                     if (dst_addr != J1939_GLOBAL_ADDRESS) {
-                        __send_ACK(index, J1939_ACK_NEGATIVE, 0xFF, frame->src_address, request->PGN);
+                        __send_ACK(index, J1939_ACK_NEGATIVE, 0xFF, frame->src_address, requested_PGN);
                     }
                 }
             }
@@ -759,7 +760,7 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
         return 1;
     }
 
-    dst_addr = j1939_PGN_da_get(frame->PGN);
+    dst_addr = frame->dest_address;
 
     if ((dst_addr != handle->address) && (dst_addr != J1939_GLOBAL_ADDRESS)) {
         return 0;
@@ -768,7 +769,7 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
     /* append receiving data into fifo */
     __j1939_receive_notify(index,
                            J1939_RX_INFO_TYPE_FRAME,
-                           j1939_PGN_code_get(frame->PGN),
+                           frame->PGN,
                            frame->src_address,
                            dst_addr,
                            frame->dlc,

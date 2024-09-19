@@ -75,7 +75,8 @@ TEST(j1939_handle_PGN_request, Claim_Address_specific_request) {
      *     may have been to a specific destination address (see J1939-81).
      */
 
-    TEST_ASSERT_EQUAL(0xEEFF,                   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xEE00,                   jframe.PGN);
+    TEST_ASSERT_EQUAL(255,                      jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                  jframe.src_address);
     TEST_ASSERT_EQUAL(8,                        jframe.dlc);
     TEST_ASSERT_EQUAL_HEX64(CA_name.name,       *(uint64_t*)jframe.payload);
@@ -96,7 +97,8 @@ TEST(j1939_handle_PGN_request, Claim_Address_global_request) {
      *     may have been to a specific destination address (see J1939-81).
      */
 
-    TEST_ASSERT_EQUAL(0xEEFF,                   jframe.PGN.value);
+    TEST_ASSERT_EQUAL(0xEE00,                   jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                  jframe.src_address);
     TEST_ASSERT_EQUAL(8,                        jframe.dlc);
     TEST_ASSERT_EQUAL_HEX64(CA_name.name,       *(uint64_t*)jframe.payload);
@@ -117,7 +119,8 @@ TEST(j1939_handle_PGN_request, NACK_on_unsupported_PGN_specific_request) {
      *     causes Acknowledgment was sent to a specific destination address.
      */
 
-    TEST_ASSERT_EQUAL(232 << 8 | 255,           jframe.PGN.value);
+    TEST_ASSERT_EQUAL(232 << 8,                 jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
     TEST_ASSERT_EQUAL(CA_ADDR,                  jframe.src_address);
     TEST_ASSERT_EQUAL(8,                        jframe.dlc);
     TEST_ASSERT_EQUAL(1,                        jframe.payload[0]);     /* Control byte = 1, Negative Acknowledgment (NACK) */
