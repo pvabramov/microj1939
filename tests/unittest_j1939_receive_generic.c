@@ -91,6 +91,7 @@ TEST(j1939_receive_generic, receive_PDU1_message_data_len_0) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0x2F00,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(CA_ADDR,  rx_msg.DA);
     TEST_ASSERT_EQUAL(0x20,     rx_msg.SA);
     TEST_ASSERT_EQUAL(0,        rx_msg.len);
     TEST_ASSERT_EQUAL(270,      rx_msg.time);
@@ -107,6 +108,7 @@ TEST(j1939_receive_generic, receive_PDU1_message_data_len_5) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0x5600,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(CA_ADDR,  rx_msg.DA);
     TEST_ASSERT_EQUAL(0x66,     rx_msg.SA);
     TEST_ASSERT_EQUAL(5,        rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -128,6 +130,7 @@ TEST(j1939_receive_generic, receive_PDU1_message_to_all_data_len_7) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0x7100,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(255,      rx_msg.DA);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.SA);
     TEST_ASSERT_EQUAL(7,        rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -151,6 +154,7 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_1) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0xF021,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(255,      rx_msg.DA);
     TEST_ASSERT_EQUAL(0x20,     rx_msg.SA);
     TEST_ASSERT_EQUAL(1,        rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -168,6 +172,7 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_3) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0xFF10,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(255,      rx_msg.DA);
     TEST_ASSERT_EQUAL(0x70,     rx_msg.SA);
     TEST_ASSERT_EQUAL(3,        rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -187,6 +192,7 @@ TEST(j1939_receive_generic, receive_PDU2_message_data_len_8) {
     TEST_ASSERT(unittest_get_input(&rx_msg) > 0);
 
     TEST_ASSERT_EQUAL(0xF433,   rx_msg.PGN);
+    TEST_ASSERT_EQUAL(255,      rx_msg.DA);
     TEST_ASSERT_EQUAL(0x90,     rx_msg.SA);
     TEST_ASSERT_EQUAL(8,        rx_msg.len);
     TEST_ASSERT_EQUAL(0x31,     rx_msg.data[0]);
@@ -206,7 +212,7 @@ TEST(j1939_receive_generic, receive_message_in_time) {
 
     unittest_add_time(120);
 
-    unittest_post_input(CAN_INDEX, 0xF021, 254, 0x20, 1, 0x31);
+    unittest_post_input(CAN_INDEX, 0xF021, 255, 0x20, 1, 0x31);
 
     /* process tick */
     j1939_process(CAN_INDEX);
