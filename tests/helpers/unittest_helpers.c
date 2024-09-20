@@ -20,15 +20,24 @@
 
 
 static void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
+static int __user_j1939_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
+static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 
 
 callback_on_delay __on_delay = NULL;
 
+static int cannot_claim_status = 0;
+
 static uint32_t __the_time = 0;
 static int __sent_pipes[2] = { -1, -1 };
 static int __recv_pipes[2] = { -1, -1 };
+static int __claim_pipes[2] = { -1, -1 };
+static int __cannot_claim_pipes[2] = { -1, -1 };
+
 static const j1939_callbacks cb = {
     .rx_handler = __user_j1939_rx_handler,
+    .claim_handler = __user_j1939_claim_handler,
+    .cannot_claim_handler = __user_j1939_cannot_claim_handler
 };
 
 
@@ -44,7 +53,16 @@ int unittest_helpers_setup(uint8_t index) {
         return -1;
     }
 
+    if (pipe2(__claim_pipes, O_DIRECT | O_NONBLOCK) < 0) {
+        return -1;
+    }
+
+    if (pipe2(__cannot_claim_pipes, O_DIRECT | O_NONBLOCK) < 0) {
+        return -1;
+    }
+
     unittest_set_callback_on_delay(NULL);
+    unittest_set_cannot_claim_status(0);
 
     j1939_initialize(index, &cb);
     
@@ -52,30 +70,31 @@ int unittest_helpers_setup(uint8_t index) {
 }
 
 
+static inline void close_quietly(int *fd) {
+    if (fd == NULL) {
+        return;
+    }
+
+    if (*fd > 0) {
+        close(*fd);
+    }
+
+    *fd = -1;
+}
+
+
 void unittest_helpers_cleanup(void) {
-    if (__sent_pipes[PIPE_RD] > 0) {
-        close(__sent_pipes[PIPE_RD]);
-    }
+    close_quietly(&__sent_pipes[PIPE_RD]);
+    close_quietly(&__sent_pipes[PIPE_WR]);
 
-    __sent_pipes[PIPE_RD] = -1;
-
-    if (__sent_pipes[PIPE_WR] > 0) {
-        close(__sent_pipes[PIPE_WR]);
-    }
+    close_quietly(&__recv_pipes[PIPE_RD]);
+    close_quietly(&__recv_pipes[PIPE_WR]);
     
-    __sent_pipes[PIPE_WR] = -1;
-    
-    if (__recv_pipes[0] > 0) {
-        close(__recv_pipes[0]);
-    }
+    close_quietly(&__claim_pipes[PIPE_RD]);
+    close_quietly(&__claim_pipes[PIPE_WR]);
 
-    __recv_pipes[PIPE_RD] = -1;
-
-    if (__recv_pipes[1] > 0) {
-        close(__recv_pipes[1]);
-    }
-    
-    __recv_pipes[PIPE_WR] = -1;
+    close_quietly(&__cannot_claim_pipes[PIPE_RD]);
+    close_quietly(&__cannot_claim_pipes[PIPE_WR]);
 }
 
 
@@ -94,7 +113,7 @@ void unittest_add_time(uint32_t time) {
 }
 
 
-void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
+static void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time) {
     unittest_j1939_rx_msg msg;
 
     if (__recv_pipes[PIPE_WR] < 0 || index != CAN_INDEX)
@@ -109,6 +128,35 @@ void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, u
     msg.time = time;
 
     write(__recv_pipes[PIPE_WR], &msg, sizeof(unittest_j1939_rx_msg));
+}
+
+
+static int __user_j1939_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name) {
+    unittest_j1939_claim_msg msg;
+
+    msg.index = index;
+    msg.address = address;
+    msg.name = *name;
+
+    write(__claim_pipes[PIPE_WR], &msg, sizeof(msg));
+
+    return 0;
+}
+
+
+static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name) {
+    unittest_j1939_claim_msg msg;
+
+    msg.index = index;
+    msg.address = address;
+    msg.name = *name;
+
+    write(__cannot_claim_pipes[PIPE_WR], &msg, sizeof(msg));
+
+    int status = cannot_claim_status;
+    cannot_claim_status = 0;
+
+    return status;
 }
 
 
@@ -173,3 +221,46 @@ int unittest_get_input(unittest_j1939_rx_msg *m) {
     return sts;
 }
 
+int unittest_get_claim(unittest_j1939_claim_msg *msg) {
+    unittest_j1939_claim_msg out;
+
+    if (__claim_pipes[PIPE_RD] < 0) {
+        return -1;
+    }
+
+    int sts = read(__claim_pipes[PIPE_RD], &out, sizeof(out));
+    if (sts < 0) {
+        return sts;
+    }
+
+    if (msg) {
+        *msg = out;
+    }
+
+    return 0;
+}
+
+
+void unittest_set_cannot_claim_status(int status) {
+    cannot_claim_status = status;
+}
+
+
+int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg) {
+    unittest_j1939_claim_msg out;
+
+    if (__cannot_claim_pipes[PIPE_RD] < 0) {
+        return -1;
+    }
+
+    int sts = read(__cannot_claim_pipes[PIPE_RD], &out, sizeof(out));
+    if (sts < 0) {
+        return sts;
+    }
+
+    if (msg) {
+        *msg = out;
+    }
+
+    return 0;
+}

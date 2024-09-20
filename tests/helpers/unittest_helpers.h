@@ -19,6 +19,13 @@ typedef struct unittest_j1939_rx_msg {
 } unittest_j1939_rx_msg;
 
 
+typedef struct unittest_j1939_claim_msg {
+    uint8_t index;
+    uint8_t address;
+    j1939_CA_name name;
+} unittest_j1939_claim_msg;
+
+
 typedef void (*callback_on_delay)(void);
 
 
@@ -33,7 +40,11 @@ int unittest_get_input(unittest_j1939_rx_msg *m);
 uint32_t unittest_get_time(void);
 void unittest_add_time(uint32_t time);
 
+int unittest_get_claim(unittest_j1939_claim_msg *msg);
+
+void unittest_set_cannot_claim_status(int status);
+int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg);
+
 void unittest_set_callback_on_delay(callback_on_delay cb);
 
 #endif /* UNITTEST_HELPERS_H_ */
-
