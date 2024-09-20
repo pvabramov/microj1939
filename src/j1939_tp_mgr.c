@@ -151,9 +151,14 @@ int __detach_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
 
     session->state = J1939_TP_STATE_RESERVED;
 
+    barrier();
+
     __clean_tables(tp_mgr_ctx, session);
 
     session->transmition_timeout = J1939_TP_TO_INF;
+
+    barrier();
+
     session->state = J1939_TP_STATE_READY;
 
     return 0;
@@ -180,6 +185,9 @@ int __close_tp_session_with_error(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_
     }
 
     session->state = J1939_TP_STATE_RESERVED;
+
+    barrier();
+
     session->transmition_timeout = J1939_TP_TO_INF;
 
     /* Error notification */
@@ -190,6 +198,9 @@ int __close_tp_session_with_error(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_
     }
 
     __clean_tables(tp_mgr_ctx, session);
+
+    barrier();
+
     session->state = J1939_TP_STATE_FREE;
 
     return 0;
@@ -334,6 +345,8 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
         __tp_session_setup_RTS(session, J1939_TP_DIR_IN, src_addr, dst_addr, tp_cm, time);
         tp_mgr_ctx->rts_rx_tab[src_addr] = sid;
     }
+
+    barrier();
 
     session->state = J1939_TP_STATE_TRANSMIT;
 
