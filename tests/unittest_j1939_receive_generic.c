@@ -228,6 +228,46 @@ TEST(j1939_receive_generic, receive_message_in_time) {
 }
 
 
+TEST(j1939_receive_generic, no_receive_messages_after_cannot_claim_address) {
+    j1939_primitive jframe;
+
+    unittest_post_input(CAN_INDEX, 0xF021, 255, 0x20, 1, 0x31);
+    unittest_post_input(CAN_INDEX, 0xF021, 255, 0x20, 1, 0x32);
+    unittest_post_input(CAN_INDEX, 0xF021, 255, 0x20, 1, 0x33);
+    unittest_post_input(CAN_INDEX, 0xF021, 255, 0x20, 1, 0x34);
+    /* send "Claim Address" by another node that has same address and has more priority */
+    unittest_post_input(CAN_INDEX, 60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    /* process tick */
+    j1939_process(CAN_INDEX);
+
+    /* we should lost the address */
+    TEST_ASSERT_EQUAL(254, j1939_get_address(CAN_INDEX));
+
+    /* and send Cannot Claim Address message */
+    TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <cannot claim address> message");
+
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
+    TEST_ASSERT_EQUAL(8, jframe.dlc);
+    TEST_ASSERT_EQUAL(254 /* null address */, jframe.src_address);
+    TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
+
+    /* reclaim address */
+    j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
+    j1939_claim_address(CAN_INDEX);
+
+    unittest_add_time(250);
+    j1939_process(CAN_INDEX);
+
+    /* now we should reclaim address */
+    TEST_ASSERT_EQUAL(CA_ADDR, j1939_get_address(CAN_INDEX));
+
+    /* we should not get any messages */
+    TEST_ASSERT(unittest_get_input(&rx_msg) < 0);
+}
+
+
 TEST_GROUP_RUNNER(j1939_receive_generic) {
     RUN_TEST_CASE(j1939_receive_generic, no_receive);
     RUN_TEST_CASE(j1939_receive_generic, no_receive_PDU1_message_to_another_node);
@@ -238,4 +278,5 @@ TEST_GROUP_RUNNER(j1939_receive_generic) {
     RUN_TEST_CASE(j1939_receive_generic, receive_PDU2_message_data_len_3);
     RUN_TEST_CASE(j1939_receive_generic, receive_PDU2_message_data_len_8);
     RUN_TEST_CASE(j1939_receive_generic, receive_message_in_time);
+    RUN_TEST_CASE(j1939_receive_generic, no_receive_messages_after_cannot_claim_address);
 }
