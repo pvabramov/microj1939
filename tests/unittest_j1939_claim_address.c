@@ -382,6 +382,93 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
 }
 
 
+TEST(j1939_claim_address, try_to_claim_another_address_on_cannot_claim_address) {
+    j1939_primitive jframe;
+    unittest_j1939_claim_msg cannot_claim;
+    unittest_j1939_claim_msg claim;
+
+    /* try to claim address, it should be ok */
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
+
+    /* skip "Claim Address" message */
+    unittest_get_output(NULL);
+
+    /* process protocol for the first time */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(250);
+
+    /* now we should get our address */
+    j1939_process(CAN_INDEX);
+
+    /* claim_handler should be called */
+    TEST_ASSERT_EQUAL(0, unittest_get_claim(NULL));
+
+    /* some time has passed */
+    unittest_add_time(10);
+
+    /* check our address, it should be like we've pointed in j1939_configure() */
+    TEST_ASSERT_EQUAL(CA_ADDR, j1939_get_address(CAN_INDEX));
+
+    /* dont send Cannot Claim Address, we will revoke the new address later */
+    unittest_set_cannot_claim_status(1);
+
+    /* send "Claim Address" by another node that has same address and has more priority */
+    unittest_post_input(CAN_INDEX, 60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    /* process the protocol */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(10);
+
+    /* now we should lose our address */
+    TEST_ASSERT_EQUAL(254U, j1939_get_address(CAN_INDEX));
+
+    /* cannot_claim_handler should be called */
+    TEST_ASSERT_EQUAL(0, unittest_get_cannot_claim(&cannot_claim));
+
+    TEST_ASSERT_EQUAL(CAN_INDEX, cannot_claim.index);
+    TEST_ASSERT_EQUAL(CA_ADDR, cannot_claim.address);
+    TEST_ASSERT_EQUAL_HEX(CA_name.name, cannot_claim.name.name);
+
+    // cannot_claim_handler callback body {{{
+    // claim new address
+    j1939_configure(CAN_INDEX, CA_ADDR + 1, &CA_name);
+    j1939_claim_address(CAN_INDEX);
+    // }}}
+
+    /* check for "Claim Address" message */
+    TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
+
+    TEST_ASSERT_EQUAL(60928U, jframe.PGN);
+    TEST_ASSERT_EQUAL(255 /* global address */, jframe.dest_address);
+    TEST_ASSERT_EQUAL(8, jframe.dlc);
+    TEST_ASSERT_EQUAL(CA_ADDR + 1, jframe.src_address);
+    TEST_ASSERT_EQUAL_HEX(CA_name.name, (*(uint64_t*)jframe.payload));
+
+    /* process the protocol */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(240);
+
+    /* now we should get new address */
+    j1939_process(CAN_INDEX);
+
+    /* check our address, it should be like we've pointed in j1939_claim_address() */
+    TEST_ASSERT_EQUAL(CA_ADDR + 1, j1939_get_address(CAN_INDEX));
+
+    /* claim_handler should be called */
+    TEST_ASSERT_EQUAL(0, unittest_get_claim(&claim));
+
+    TEST_ASSERT_EQUAL(CAN_INDEX, claim.index);
+    TEST_ASSERT_EQUAL(CA_ADDR + 1, claim.address);
+    TEST_ASSERT_EQUAL_HEX(CA_name.name, claim.name.name);
+}
+
+
 TEST_GROUP_RUNNER(j1939_claim_address) {
     RUN_TEST_CASE(j1939_claim_address, claim_address_message_sending);
     RUN_TEST_CASE(j1939_claim_address, successful_address_assigment);
@@ -392,4 +479,5 @@ TEST_GROUP_RUNNER(j1939_claim_address) {
     RUN_TEST_CASE(j1939_claim_address, response_on_request_claim_address_to_global_address_claimed);
     RUN_TEST_CASE(j1939_claim_address, response_on_request_claim_address_to_global_address_noclaimeaddress);
     RUN_TEST_CASE(j1939_claim_address, response_on_request_claim_address_to_global_address_cannotclaimeaddress);
+    RUN_TEST_CASE(j1939_claim_address, try_to_claim_another_address_on_cannot_claim_address);
 }
