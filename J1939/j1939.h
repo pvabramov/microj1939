@@ -44,7 +44,9 @@ static inline int j1939_is_PDU2(uint32_t PGN) {
 }
 
 
+// must be called in main thread
 void j1939_initialize(uint8_t index, const j1939_callbacks *const callbacks);
+// must be called in logic thread, no thread safe
 void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name *const CA_name);
 
 uint8_t j1939_get_address(uint8_t index);
@@ -58,8 +60,12 @@ int j1939_sendraw(uint8_t index, const j1939_primitive *const primitive);
 
 // int j1939_write_request(...);
 
+// must be called in process thread or logic thread
 int j1939_process(uint8_t index);
+
+// must be called in receiving thread (IRQ) or logic thread
 int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, uint32_t time);
+// must be called in transmiting thread (IRQ) or logic thread
 int j1939_handle_transmiting(uint8_t index);
 
 
@@ -68,4 +74,3 @@ int j1939_handle_transmiting(uint8_t index);
 #endif
 
 #endif /* J1939_MESSAGE_H */
-
