@@ -101,6 +101,10 @@ extern int __j1939_receive_notify(uint8_t index, uint32_t type, uint32_t PGN, ui
 extern int __j1939_tx_error_notify(uint8_t index, j1939_rx_tx_errno error, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz);
 extern int __j1939_rx_error_notify(uint8_t index, j1939_rx_tx_errno error, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz);
 
+static inline uint8_t __get_address(uint8_t index) {
+    return __j1939_handles[index].address;
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -353,7 +353,7 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
 static int __open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm) {
     int sid;
     j1939_tp_session *session;
-    uint8_t self_addr = j1939_get_address(index);
+    uint8_t self_addr = __get_address(index);
 
     if (!tp_mgr_ctx || !tp_cm ||
          (self_addr == J1939_NULL_ADDRESS) || (dst_addr == J1939_NULL_ADDRESS) ||
@@ -670,7 +670,7 @@ int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, c
     DA = frame->dest_address;
 
     /* don't handle frame if dest.address is not global or is not mine */
-    if (DA != J1939_GLOBAL_ADDRESS && DA != j1939_get_address(index)) {
+    if (DA != J1939_GLOBAL_ADDRESS && DA != __get_address(index)) {
         return 1;
     }
 
@@ -893,7 +893,7 @@ static int __tp_mgr_process_transmition(uint8_t index, uint8_t self_addr, j1939_
 int j1939_tp_mgr_process(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) {
     register int i;
     int level;
-    uint8_t CA_addr = j1939_get_address(index);
+    uint8_t CA_addr = __get_address(index);
     int activities;
 
     if (tp_mgr_ctx->reset) {
