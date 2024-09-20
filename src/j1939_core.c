@@ -204,7 +204,7 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
 void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name * const CA_name) {
     j1939_handle *const handle = &__j1939_handles[index];
 
-    if (!CA_name || handle->state != NOT_STARTED) {
+    if (!CA_name || (handle->state != NOT_STARTED && handle->state != CANNOT_CLAIM_ADDRESS)) {
         return;
     }
 
@@ -236,23 +236,18 @@ uint8_t j1939_get_address(uint8_t index) {
  *
  * @return
  */
-int j1939_claim_address(uint8_t index, uint8_t address) {
+int j1939_claim_address(uint8_t index) {
     j1939_handle *const handle = &__j1939_handles[index];
 
-    if (address == J1939_NULL_ADDRESS) {
-        return -1;
-    }
-
-    if (handle->state != INITIALIZED && handle->state != CANNOT_CLAIM_ADDRESS) {
+    if (handle->state != INITIALIZED) {
         return -2;
     }
 
-    /* set a preferred address for communication with Network Management */
-    if (address != J1939_GLOBAL_ADDRESS) {
-        handle->preferred_address = address;
-    }
+    /* run callbacks only one time */
+    handle->claim_handler = handle->callbacks.claim_handler;
+    handle->cannot_claim_handler = handle->callbacks.cannot_claim_handler;
 
-    handle->claim_timer = 250;
+    handle->claim_timer = 250; /* claim address timeout */
 
     barrier();
 
@@ -525,9 +520,30 @@ static inline int __j1939_process(uint8_t index, uint32_t the_time) {
                 barrier();
 
                 handle->state = ACTIVE;
+
+                if (handle->claim_handler != NULL) {
+                    handle->claim_handler(index, handle->address, &handle->CA_name);
+                    handle->claim_handler = NULL;
+                }
             }
         }
     } else if (state == CANNOT_CLAIM_ADDRESS) {
+        int handle_status;
+
+        if (handle->cannot_claim_handler != NULL) {
+            handle_status = handle->cannot_claim_handler(index, handle->preferred_address, &handle->CA_name);
+            handle->cannot_claim_handler = NULL;
+        } else {
+            handle_status = 0;
+        }
+
+        if (handle_status) {
+            // cannot claim handler has been handled so dont send "Cannot Claim Address" message
+            handle->random_timer = 0;
+        }
+
+        handle->preferred_address = J1939_NULL_ADDRESS;
+
         if (handle->random_timer > 0) {
             activities = 1;
             handle->random_timer -= t_delta;
@@ -662,6 +678,7 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
     switch (requested_PGN) {
         case J1939_STD_PGN_ACLM:
             if (dst_addr == J1939_GLOBAL_ADDRESS) {
+                const uint8_t preferred_address = handle->preferred_address;
                 /*
                     SAE J1939-81-2017
 
@@ -673,8 +690,8 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
                 if (handle->state == CANNOT_CLAIM_ADDRESS) {
                     // FIXME: random send_claim_address if CANNOT_CLAIM_ADDRESS state has been set
                     handle->random_timer = 10;
-                } else {
-                    __send_claim_address(index, handle->preferred_address);
+                } else if (preferred_address != J1939_NULL_ADDRESS) {
+                    __send_claim_address(index, preferred_address);
                 }
             } else if (handle->state == ACTIVE) {
                 /*

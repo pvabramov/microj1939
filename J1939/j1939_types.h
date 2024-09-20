@@ -69,6 +69,8 @@ typedef void (*j1939_callback_rx_handler)(uint8_t index, uint32_t PGN, uint8_t s
 typedef void (*j1939_callback_rx_tx_error_handler)(uint8_t index, j1939_rx_tx_errno error, uint32_t PGN, uint8_t address, uint16_t msg_sz);
 ///
 typedef j1939_request_status (*j1939_callback_request_handler)(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint32_t time);
+///
+typedef int (*j1939_callback_claim_handler)(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 
 /**
  * @brief
@@ -76,6 +78,8 @@ typedef j1939_request_status (*j1939_callback_request_handler)(uint8_t index, ui
 typedef struct j1939_callbacks {
     j1939_callback_rx_handler rx_handler;
     j1939_callback_request_handler request_handler;
+    j1939_callback_claim_handler claim_handler; // result is ignored
+    j1939_callback_claim_handler cannot_claim_handler;
     j1939_callback_rx_tx_error_handler rx_error_handler;
     j1939_callback_rx_tx_error_handler tx_error_handler;
 } j1939_callbacks;

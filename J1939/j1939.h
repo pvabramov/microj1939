@@ -48,7 +48,9 @@ void j1939_initialize(uint8_t index, const j1939_callbacks *const callbacks);
 void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name *const CA_name);
 
 uint8_t j1939_get_address(uint8_t index);
-int j1939_claim_address(uint8_t index, uint8_t address);
+
+// must be called in logic thread, no thread safe
+int j1939_claim_address(uint8_t index);
 
 int j1939_sendmsg_p(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload, uint8_t priority);
 int j1939_sendmsg(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload);

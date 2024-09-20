@@ -379,6 +379,9 @@ typedef struct j1939_handle {
     j1939_rx_tx_error_fifo rx_error_fifo;
     j1939_rx_tx_error_fifo tx_error_fifo;
 
+    volatile j1939_callback_claim_handler claim_handler;
+    volatile j1939_callback_claim_handler cannot_claim_handler;
+
     j1939_callbacks callbacks;
     int preidle_timer;
     int claim_timer;
