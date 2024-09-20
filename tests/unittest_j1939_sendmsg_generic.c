@@ -30,7 +30,7 @@ TEST_SETUP(j1939_sendmsg_generic) {
     /* need to be configured each time for one test */
     j1939_configure(CAN_INDEX, CA_ADDR, &CA_name);
 
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);

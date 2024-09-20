@@ -40,7 +40,7 @@ TEST(j1939_claim_address, claim_address_message_sending) {
     j1939_primitive jframe;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* j1939 sends "Claim Address" frame into CAN */
 
@@ -57,7 +57,7 @@ TEST(j1939_claim_address, claim_address_message_sending) {
 
 TEST(j1939_claim_address, successful_address_assigment) {
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* check for output */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(NULL), "No <claim address> message");
@@ -92,7 +92,7 @@ TEST(j1939_claim_address, abort_address_assigment) {
     j1939_primitive jframe;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* skip our "Claim Address" message */
     unittest_get_output(NULL);
@@ -127,7 +127,7 @@ TEST(j1939_claim_address, address_loosing) {
     j1939_primitive jframe;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -170,7 +170,7 @@ TEST(j1939_claim_address, address_protecting) {
     j1939_primitive jframe;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -213,7 +213,7 @@ TEST(j1939_claim_address, response_on_request_claim_address) {
     j1939_primitive jframe;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -254,7 +254,7 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_cl
     j1939_primitive jframe;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -324,7 +324,7 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
     j1939_primitive jframe0, jframe1;
 
     /* try to claim address, it should be ok */
-    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX, CA_ADDR));
+    TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
