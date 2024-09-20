@@ -15,12 +15,13 @@ void j1939_bsp_unlock(int level) {
 
 
 uint32_t j1939_bsp_get_time() {
+    // get the time in milliseconds
     return 0;
 }
 
 
 void j1939_bsp_mdelay(uint32_t ms) {
-
+    // unused anymore
 }
 
 
