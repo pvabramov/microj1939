@@ -207,8 +207,10 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
  */
 void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name * const CA_name) {
     j1939_handle *const handle = &__j1939_handles[index];
+    const int level = j1939_bsp_lock();
 
     if (!CA_name || (handle->state != NOT_STARTED && handle->state != CANNOT_CLAIM_ADDRESS)) {
+        j1939_bsp_unlock(level);
         return;
     }
 
@@ -218,9 +220,9 @@ void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_na
     handle->preferred_address = preferred_address;
 
     handle->claim_status = UNKNOWN;
-    barrier();
-
     handle->state = INITIALIZED;
+
+    j1939_bsp_unlock(level);
 }
 
 
