@@ -10,9 +10,12 @@
 #include <J1939/private/j1939_tp_mgr.h>
 #include <J1939/private/j1939_tx_rx_fifo.h>
 #include <J1939/private/j1939_private.h>
+#include <J1939/private/j1939_rand.h>
 
 
 #define PREIDLE_TIMEOUT 2000
+
+#define CLAIM_RANDOM    jrandr(3, 153)
 
 
 /**
@@ -633,7 +636,7 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
         if (cannot_claim) {
             handle->address = J1939_NULL_ADDRESS;
             // FIXME: random send_claim_address on "Cannot Claim Address"
-            handle->random_timer = 5;
+            handle->random_timer = CLAIM_RANDOM;
             /* reset TP MGR in prior of Cannot Claim Address */
             handle->tp_mgr_ctx.reset = 1;
 
@@ -689,7 +692,7 @@ static int __rx_handle_PGN_request(uint8_t index, const j1939_primitive * const 
                 */
                 if (handle->state == CANNOT_CLAIM_ADDRESS) {
                     // FIXME: random send_claim_address if CANNOT_CLAIM_ADDRESS state has been set
-                    handle->random_timer = 10;
+                    handle->random_timer = CLAIM_RANDOM;
                 } else if (preferred_address != J1939_NULL_ADDRESS) {
                     __send_claim_address(index, preferred_address);
                 }
