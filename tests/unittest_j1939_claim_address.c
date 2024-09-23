@@ -43,6 +43,7 @@ TEST(j1939_claim_address, claim_address_message_sending) {
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
     /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
 
     /* check for output */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");
@@ -59,6 +60,12 @@ TEST(j1939_claim_address, successful_address_assigment) {
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(10);
+
     /* check for output */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(NULL), "No <claim address> message");
 
@@ -70,9 +77,6 @@ TEST(j1939_claim_address, successful_address_assigment) {
 
     /* we need to process the protocol */
     j1939_process(CAN_INDEX);
-
-    /* some time has passed */
-    unittest_add_time(10);
 
     /* check our address, it should be the null address yet */
     TEST_ASSERT_EQUAL(254U, j1939_get_address(CAN_INDEX));
@@ -94,17 +98,23 @@ TEST(j1939_claim_address, abort_address_assigment) {
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(10);
+
     /* skip our "Claim Address" message */
     unittest_get_output(NULL);
 
     /* process protocol for the first time */
     j1939_process(CAN_INDEX);
 
-    /* some time has passed */
-    unittest_add_time(100);
-
     /* send "Claim Address" by another node that has same address and has more priority */
     unittest_post_input(CAN_INDEX, 60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    /* set a max. random Cannot Claim Address */
+    unittest_add_time(153);
 
     /* now we should get null address */
     j1939_process(CAN_INDEX);
@@ -129,6 +139,12 @@ TEST(j1939_claim_address, address_loosing) {
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(10);
+
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
 
@@ -141,14 +157,14 @@ TEST(j1939_claim_address, address_loosing) {
     /* now we should get our address */
     j1939_process(CAN_INDEX);
 
-    /* some time has passed */
-    unittest_add_time(10);
-
     /* check our address, it should be like we've pointed in j1939_claim_address() */
     TEST_ASSERT_EQUAL(CA_ADDR, j1939_get_address(CAN_INDEX));
 
     /* send "Claim Address" by another node that has same address and has more priority */
     unittest_post_input(CAN_INDEX, 60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    /* set a max. random Cannot Claim Address */
+    unittest_add_time(153);
 
     /* process the protocol */
     j1939_process(CAN_INDEX);
@@ -171,6 +187,12 @@ TEST(j1939_claim_address, address_protecting) {
 
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
+
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(10);
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -215,6 +237,9 @@ TEST(j1939_claim_address, response_on_request_claim_address) {
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
 
@@ -255,6 +280,9 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_cl
 
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
+
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -326,6 +354,9 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
 
@@ -338,20 +369,17 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
     /* now we should get our address */
     j1939_process(CAN_INDEX);
 
-    /* some time has passed */
-    unittest_add_time(10);
-
     /* check our address, it should be like we've pointed in j1939_claim_address() */
     TEST_ASSERT_EQUAL(CA_ADDR, j1939_get_address(CAN_INDEX));
 
     /* send "Claim Address" by another node that has same address and has more priority */
     unittest_post_input(CAN_INDEX, 60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
 
+    /* set a max. random Cannot Claim Address */
+    unittest_add_time(153);
+
     /* process the protocol */
     j1939_process(CAN_INDEX);
-
-    /* some time has passed */
-    unittest_add_time(10);
 
     /* now we should lose our address */
     TEST_ASSERT_EQUAL(254U, j1939_get_address(CAN_INDEX));
@@ -367,6 +395,9 @@ TEST(j1939_claim_address, response_on_request_claim_address_to_global_address_ca
 
     /* send "Request PGN" : "Claim Address" */
     unittest_post_input(CAN_INDEX, 59904U, 255 /* global address */, 20, 3, 0x00, 0xEE, 0x00);
+
+    /* set a max. random Cannot Claim Address */
+    unittest_add_time(153);
 
     /* process the protocol */
     j1939_process(CAN_INDEX);
@@ -389,6 +420,9 @@ TEST(j1939_claim_address, try_to_claim_another_address_on_cannot_claim_address) 
 
     /* try to claim address, it should be ok */
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
+
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
 
     /* skip "Claim Address" message */
     unittest_get_output(NULL);
@@ -438,6 +472,12 @@ TEST(j1939_claim_address, try_to_claim_another_address_on_cannot_claim_address) 
     j1939_configure(CAN_INDEX, CA_ADDR + 1, &CA_name);
     j1939_claim_address(CAN_INDEX);
     // }}}
+
+    /* j1939 sends "Claim Address" frame into CAN */
+    j1939_process(CAN_INDEX);
+
+    /* some time has passed */
+    unittest_add_time(10);
 
     /* check for "Claim Address" message */
     TEST_ASSERT_EQUAL_MESSAGE(0, unittest_get_output(&jframe), "No <claim address> message");

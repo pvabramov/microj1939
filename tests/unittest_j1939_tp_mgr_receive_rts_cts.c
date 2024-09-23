@@ -41,11 +41,11 @@ TEST_SETUP(j1939_tp_mgr_receive_rts_cts) {
 
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* process one tick */
+    j1939_process(CAN_INDEX);
+
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
-
-    /* process one IDLE tick */
-    j1939_process(CAN_INDEX);
 
     /* 250 ms in order to claim address */
     unittest_add_time(250);

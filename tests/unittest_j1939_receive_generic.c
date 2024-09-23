@@ -40,11 +40,11 @@ TEST_SETUP(j1939_receive_generic) {
 
     TEST_ASSERT_EQUAL(0, j1939_claim_address(CAN_INDEX));
 
+    /* process one tick */
+    j1939_process(CAN_INDEX);
+
     /* empty read of "Claim Address" */
     unittest_get_output(NULL);
-
-    /* process one IDLE tick */
-    j1939_process(CAN_INDEX);
 
     /* 250 ms in order to claim address */
     unittest_add_time(250);
@@ -237,6 +237,12 @@ TEST(j1939_receive_generic, no_receive_messages_after_cannot_claim_address) {
     unittest_post_input(CAN_INDEX, 0xF021, 255, 0x20, 1, 0x34);
     /* send "Claim Address" by another node that has same address and has more priority */
     unittest_post_input(CAN_INDEX, 60928U, 255U, CA_ADDR, 8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    /* process tick */
+    j1939_process(CAN_INDEX);
+
+    /* set a max. random Cannot Claim Address */
+    unittest_add_time(153);
 
     /* process tick */
     j1939_process(CAN_INDEX);
