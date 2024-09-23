@@ -3,10 +3,11 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "j1939_tx_rx_errno.h"
+#include "j1939_network.h"
 
+#include "j1939_std_addr.h"
+#include "j1939_std_pgn.h"
 
 #define J1939_CONTROL_PRIORITY          3
 #define J1939_GENERIC_PRIORITY          6
@@ -19,6 +20,9 @@ extern "C" {
 #define J1939_PGN_PDU_FORMAT_MASK       0x0FF00U    // PDU format mask
 #define J1939_PGN_PDU_FORMAT_SEP        0x0F000U    // PDU format separator
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief
@@ -39,31 +43,9 @@ typedef union {
     uint64_t name;
 } j1939_CA_name;
 
-
 /**
  * @brief
  */
-typedef enum j1939_rx_tx_errno {
-    J1939_RX_TX_ERROR_SUCCESS = 0,
-    J1939_RX_TX_ERROR_FAILED = 1,
-    J1939_RX_TX_ERROR_EXISTS,
-    J1939_RX_TX_ERROR_ABORTED,
-    J1939_RX_TX_ERROR_LOST_PACKET,
-    J1939_RX_TX_ERROR_TIMEDOUT,
-} j1939_rx_tx_errno;
-
-
-/**
- * @brief
- */
-typedef enum j1939_request_status {
-    J1939_REQ_HANDLED = 0,
-    J1939_REQ_NOT_SUPPORTED = 1,
-    J1939_REQ_ACCESS_DENIED = 2,
-    J1939_REQ_BUSY = 3
-} j1939_request_status;
-
-
 typedef enum j1939_claim_status {
     FAILED = -1,
     SUCCESS = 0,
@@ -104,6 +86,29 @@ typedef struct j1939_primitive {
     uint8_t priority;
     uint8_t payload[8];
 } j1939_primitive;
+
+
+/**
+ * @brief
+ * 
+ * @param PGN
+ * 
+ * @return 
+ */
+static inline int j1939_is_PDU1(uint32_t PGN) {
+    return (PGN & J1939_PGN_PDU_FORMAT_MASK) < J1939_PGN_PDU_FORMAT_SEP;
+}
+
+/**
+ * @brief
+ * 
+ * @param PGN
+ * 
+ * @return 
+ */
+static inline int j1939_is_PDU2(uint32_t PGN) {
+    return (PGN & J1939_PGN_PDU_FORMAT_MASK) >= J1939_PGN_PDU_FORMAT_SEP;
+}
 
 #ifdef __cplusplus
 }

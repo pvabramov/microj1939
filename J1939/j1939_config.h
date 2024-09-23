@@ -3,6 +3,14 @@
 
 #include <j1939_conf.h>
 
+#ifndef J1939_CLAIM_ADDRESS_TIMEOUT
+#   define J1939_CLAIM_ADDRESS_TIMEOUT      (250)
+#endif
+
+#ifndef J1939_PREIDLE_TIMER
+#   define J1939_PREIDLE_TIMER              (2000)
+#endif
+
 ///
 #ifndef J1939_CAN_BAUDRATE
 #   define J1939_CAN_BAUDRATE               (250000)

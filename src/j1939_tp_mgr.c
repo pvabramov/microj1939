@@ -11,6 +11,7 @@
 #include <J1939/j1939_bsp.h>
 
 #include <J1939/private/j1939_private.h>
+#include <J1939/private/j1939_notify.h>
 #include <J1939/private/j1939_tp_mgr.h>
 #include <J1939/private/j1939_tp_mgr_msg.h>
 
@@ -172,7 +173,7 @@ int __detach_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
  * @param sid 
  * @return int 
  */
-int __close_tp_session_with_error(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid, j1939_rx_tx_errno error) {
+int __close_tp_session_with_error(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid, j1939_rx_tx_errno error) {
     j1939_tp_session *session;
 
     if ((uint32_t)(sid) >= J1939_TP_SESSIONS_NUM) {
@@ -192,9 +193,9 @@ int __close_tp_session_with_error(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_
 
     /* Error notification */
     if ((session->dir == J1939_TP_DIR_IN) && (error > J1939_RX_TX_ERROR_SUCCESS)) {
-        __j1939_rx_error_notify(index, error, session->PGN, session->src_addr, session->msg_sz);
+        __j1939_rx_error_notify(phandle, error, session->PGN, session->src_addr, session->msg_sz);
     } else if (session->dir == J1939_TP_DIR_OUT) {
-        __j1939_tx_error_notify(index, error, session->PGN, session->dst_addr, session->msg_sz);
+        __j1939_tx_error_notify(phandle, error, session->PGN, session->dst_addr, session->msg_sz);
     }
 
     __clean_tables(tp_mgr_ctx, session);
@@ -215,8 +216,8 @@ int __close_tp_session_with_error(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_
  *
  * @return
  */
-int __close_tp_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
-    return __close_tp_session_with_error(index, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_SUCCESS);
+int __close_tp_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
+    return __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_SUCCESS);
 }
 
 
@@ -363,10 +364,10 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
  *
  * @return
  */
-static int __open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm) {
+static int __open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm) {
     int sid;
     j1939_tp_session *session;
-    uint8_t self_addr = __get_address(index);
+    uint8_t self_addr = phandle->address;
 
     if (!tp_mgr_ctx || !tp_cm ||
          (self_addr == J1939_NULL_ADDRESS) || (dst_addr == J1939_NULL_ADDRESS) ||
@@ -405,7 +406,7 @@ static int __open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, 
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_RTS_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
+static void __tp_mgr_rx_handle_RTS_control(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     const uint32_t tp_cm_PGN = UNPACK_PGN(tp_cm->PGN);
     int sid;
 
@@ -422,13 +423,13 @@ static void __tp_mgr_rx_handle_RTS_control(uint8_t index, j1939_tp_mgr_ctx *cons
         }
 
         /* terminate connection */
-        __send_Conn_Abort(index, DA, SA, tp_cm_PGN, reason, J1939_CONN_ABORT_ROLE_RESPONDER);
-        __j1939_rx_error_notify(index, rx_tx_error, tp_cm_PGN, SA, 0);
+        __send_Conn_Abort(phandle, DA, SA, tp_cm_PGN, reason, J1939_CONN_ABORT_ROLE_RESPONDER);
+        __j1939_rx_error_notify(phandle, rx_tx_error, tp_cm_PGN, SA, 0);
     } else {
         const j1939_tp_session *const session = &tp_mgr_ctx->sessions[sid];
 
         /* establish connection */
-        __send_CTS(index,
+        __send_CTS(phandle,
                    DA,
                    SA,
                    tp_cm_PGN,
@@ -446,14 +447,14 @@ static void __tp_mgr_rx_handle_RTS_control(uint8_t index, j1939_tp_mgr_ctx *cons
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_BAM_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
+static void __tp_mgr_rx_handle_BAM_control(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     int sid;
 
     /* opens BAM session */
     if ((sid = __open_rx_session(tp_mgr_ctx, SA, DA, tp_cm, time)) < 0) {
         const uint32_t tp_cm_PGN = UNPACK_PGN(tp_cm->PGN);
         /* no error check, just notify */
-        __j1939_rx_error_notify(index, ((sid == -EISCONN) ? J1939_RX_TX_ERROR_EXISTS : J1939_RX_TX_ERROR_FAILED),
+        __j1939_rx_error_notify(phandle, ((sid == -EISCONN) ? J1939_RX_TX_ERROR_EXISTS : J1939_RX_TX_ERROR_FAILED),
             tp_cm_PGN, SA, 0);
     }
 }
@@ -467,10 +468,10 @@ static void __tp_mgr_rx_handle_BAM_control(uint8_t index, j1939_tp_mgr_ctx *cons
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_CTS_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
+static void __tp_mgr_rx_handle_CTS_control(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
 
-    (void)index;
+    (void)phandle;
     (void)DA;
 
     if (!session || !(session->state == J1939_TP_STATE_WAIT_CTS || session->state == J1939_TP_STATE_WAIT_EOMA)) {
@@ -493,7 +494,7 @@ static void __tp_mgr_rx_handle_CTS_control(uint8_t index, j1939_tp_mgr_ctx *cons
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_EoMA_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
+static void __tp_mgr_rx_handle_EoMA_control(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     j1939_tp_session *session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
 
     (void)DA;
@@ -503,7 +504,7 @@ static void __tp_mgr_rx_handle_EoMA_control(uint8_t index, j1939_tp_mgr_ctx *con
         return;
     }
 
-    __close_tp_session(index, tp_mgr_ctx, session->id);
+    __close_tp_session(phandle, tp_mgr_ctx, session->id);
 }
 
 
@@ -515,7 +516,7 @@ static void __tp_mgr_rx_handle_EoMA_control(uint8_t index, j1939_tp_mgr_ctx *con
  * @param DA
  * @param tp_cm
  */
-static void __tp_mgr_rx_handle_Conn_Abort_control(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
+static void __tp_mgr_rx_handle_Conn_Abort_control(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_cm_control *const tp_cm) {
     const uint32_t tp_cm_PGN = UNPACK_PGN(tp_cm->PGN);
     j1939_tp_session *session;
 
@@ -524,7 +525,7 @@ static void __tp_mgr_rx_handle_Conn_Abort_control(uint8_t index, j1939_tp_mgr_ct
     /* try to close in session */
     session = __look_at_rx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
     if (session && session->state != J1939_TP_STATE_TIMEDOUT && session->PGN == tp_cm_PGN) {
-        __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_ABORTED);
+        __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_ABORTED);
         return;
     }
 
@@ -532,7 +533,7 @@ static void __tp_mgr_rx_handle_Conn_Abort_control(uint8_t index, j1939_tp_mgr_ct
     session = __look_at_tx_table(tp_mgr_ctx, tp_mgr_ctx->xxx_tx_tab, SA);
     if (session && session->mode == J1939_TP_MODE_RTS) { /* originator can only close RTS */
         if (session->state != J1939_TP_STATE_TIMEDOUT && session->PGN == tp_cm_PGN) {
-            __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_ABORTED);
+            __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_ABORTED);
             return;
         }
     }
@@ -547,7 +548,7 @@ static void __tp_mgr_rx_handle_Conn_Abort_control(uint8_t index, j1939_tp_mgr_ct
  * @param DA
  * @param tp_dt
  */
-static void __tp_mgr_rx_handle_BAM_DT_transmition(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_dt *const tp_dt) {
+static void __tp_mgr_rx_handle_BAM_DT_transmition(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_dt *const tp_dt) {
     j1939_tp_session *const session = __look_at_rx_table(tp_mgr_ctx, tp_mgr_ctx->bam_rx_tab, SA);
 
     (void)DA;
@@ -559,7 +560,7 @@ static void __tp_mgr_rx_handle_BAM_DT_transmition(uint8_t index, j1939_tp_mgr_ct
     /* have we lost a packet? */
     if (session->pkt_next != tp_dt->seq_num) {
         /* if so, close the session */
-        __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_LOST_PACKET);
+        __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_LOST_PACKET);
         return;
     }
 
@@ -571,7 +572,7 @@ static void __tp_mgr_rx_handle_BAM_DT_transmition(uint8_t index, j1939_tp_mgr_ct
     /* is this a last packet? */
     if (session->pkt_next == session->total_pkt_num) {
         /* append received data into fifo */
-        int status = __j1939_receive_notify(index,
+        int status = __j1939_receive_notify(phandle,
                                             J1939_RX_INFO_TYPE_MULTIPACKET | session->id,
                                             session->PGN,
                                             session->src_addr,
@@ -581,7 +582,7 @@ static void __tp_mgr_rx_handle_BAM_DT_transmition(uint8_t index, j1939_tp_mgr_ct
                                             session->time);
         if (status < 0) {
             /* if we cannot append a message just close */
-            __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
+            __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
         } else {
             /* detach session to free broadcast connection with src addr */
             __detach_tp_session(tp_mgr_ctx, session->id);
@@ -602,7 +603,7 @@ static void __tp_mgr_rx_handle_BAM_DT_transmition(uint8_t index, j1939_tp_mgr_ct
  * @param DA
  * @param tp_dt
  */
-static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_dt *const tp_dt) {
+static void __tp_mgr_rx_handle_RTS_DT_transmition(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t SA, uint8_t DA, const j1939_tp_dt *const tp_dt) {
     j1939_tp_session *const session = __look_at_rx_table(tp_mgr_ctx, tp_mgr_ctx->rts_rx_tab, SA);
 
     if (!session || session->state != J1939_TP_STATE_TRANSMIT) {
@@ -612,8 +613,8 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
     /* have we lost a packet? */
     if (session->pkt_next != tp_dt->seq_num) {
         /* if so, abort the session */
-        __send_Conn_Abort(index, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_BAD_SEQUENCE, J1939_CONN_ABORT_ROLE_RESPONDER);
-        __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_LOST_PACKET);
+        __send_Conn_Abort(phandle, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_BAD_SEQUENCE, J1939_CONN_ABORT_ROLE_RESPONDER);
+        __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_LOST_PACKET);
         return;
     }
 
@@ -624,7 +625,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
 
     if (session->pkt_next == session->total_pkt_num) {
         /* append received data into fifo */
-        int status = __j1939_receive_notify(index,
+        int status = __j1939_receive_notify(phandle,
                                             J1939_RX_INFO_TYPE_MULTIPACKET | session->id,
                                             session->PGN,
                                             session->src_addr,
@@ -634,11 +635,11 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
                                             session->time);
         if (status < 0) {
             /* if we cannot append a message just abort transmition */
-            __send_Conn_Abort(index, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_RESPONDER);
-            __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
+            __send_Conn_Abort(phandle, DA, SA, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_RESPONDER);
+            __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
         } else {
             /* acknowledge receiving a message */
-            __send_EoMA(index, DA, SA, session->PGN, session->msg_sz, session->pkt_next);
+            __send_EoMA(phandle, DA, SA, session->PGN, session->msg_sz, session->pkt_next);
             __detach_tp_session(tp_mgr_ctx, session->id);
         }
     } else if (0 == (session->pkt_next % session->pkt_max)) {
@@ -652,7 +653,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
         session->pkt_next++;
 
         /* acknowledge to receive the next set of packets */
-        __send_CTS(index, DA, SA, session->PGN, session->pkt_max, session->pkt_next);
+        __send_CTS(phandle, DA, SA, session->PGN, session->pkt_max, session->pkt_next);
     } else {
         /* try receive the next packet */
         session->transmition_timeout = J1939_TP_TO_T1;
@@ -667,7 +668,7 @@ static void __tp_mgr_rx_handle_RTS_DT_transmition(uint8_t index, j1939_tp_mgr_ct
  * @param time_ms
  * @param frame
  */
-int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame, uint32_t time) {
+int j1939_tp_mgr_rx_handler(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, const j1939_primitive *const frame, uint32_t time) {
     const uint32_t PGN = frame->PGN;
     uint8_t SA;
     uint8_t DA;
@@ -683,7 +684,7 @@ int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, c
     DA = frame->dest_address;
 
     /* don't handle frame if dest.address is not global or is not mine */
-    if (DA != J1939_GLOBAL_ADDRESS && DA != __get_address(index)) {
+    if (DA != J1939_GLOBAL_ADDRESS && DA != phandle->address) {
         return 1;
     }
 
@@ -701,31 +702,31 @@ int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, c
         switch (tp_cm->control) {
             case J1939_TP_CM_RTS:
                 if (DA != J1939_GLOBAL_ADDRESS) {
-                    __tp_mgr_rx_handle_RTS_control(index, tp_mgr_ctx, SA, DA, tp_cm, time);
+                    __tp_mgr_rx_handle_RTS_control(phandle, tp_mgr_ctx, SA, DA, tp_cm, time);
                 }
                 break;
 
             case J1939_TP_CM_BAM:
                 if (DA == J1939_GLOBAL_ADDRESS) {
-                    __tp_mgr_rx_handle_BAM_control(index, tp_mgr_ctx, SA, DA, tp_cm, time);
+                    __tp_mgr_rx_handle_BAM_control(phandle, tp_mgr_ctx, SA, DA, tp_cm, time);
                 }
                 break;
 
             case J1939_TP_CM_CTS:
                 if (DA != J1939_GLOBAL_ADDRESS) {
-                    __tp_mgr_rx_handle_CTS_control(index, tp_mgr_ctx, SA, DA, tp_cm);
+                    __tp_mgr_rx_handle_CTS_control(phandle, tp_mgr_ctx, SA, DA, tp_cm);
                 }
                 break;
 
             case J1939_TP_CM_EndOfMsgACK:
                 if (DA != J1939_GLOBAL_ADDRESS) {
-                    __tp_mgr_rx_handle_EoMA_control(index, tp_mgr_ctx, SA, DA, tp_cm);
+                    __tp_mgr_rx_handle_EoMA_control(phandle, tp_mgr_ctx, SA, DA, tp_cm);
                 }
                 break;
 
             case J1939_TP_CM_Conn_Abort:
                 if (DA != J1939_GLOBAL_ADDRESS) {
-                    __tp_mgr_rx_handle_Conn_Abort_control(index, tp_mgr_ctx, SA, DA, tp_cm);
+                    __tp_mgr_rx_handle_Conn_Abort_control(phandle, tp_mgr_ctx, SA, DA, tp_cm);
                 }
                 break;
 
@@ -739,10 +740,10 @@ int j1939_tp_mgr_rx_handler(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, c
 
         if (DA == J1939_GLOBAL_ADDRESS) {
             /* handle BAM Data frames*/
-            __tp_mgr_rx_handle_BAM_DT_transmition(index, tp_mgr_ctx, SA, DA, tp_dt);
+            __tp_mgr_rx_handle_BAM_DT_transmition(phandle, tp_mgr_ctx, SA, DA, tp_dt);
         } else {
             /* handle RTS Data frames */
-            __tp_mgr_rx_handle_RTS_DT_transmition(index, tp_mgr_ctx, SA, DA, tp_dt);
+            __tp_mgr_rx_handle_RTS_DT_transmition(phandle, tp_mgr_ctx, SA, DA, tp_dt);
         }
     }
 
@@ -791,7 +792,7 @@ static int __tp_mgr_session_timeout_check(j1939_tp_session *const session, uint3
  *
  * @return
  */
-static int __tp_mgr_process_timeout_check(uint8_t index, uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session, uint32_t t_delta) {
+static int __tp_mgr_process_timeout_check(j1939_phandle phandle, uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session, uint32_t t_delta) {
     int is_timedout;
 
     if (session->state != J1939_TP_STATE_TRANSMIT &&
@@ -805,12 +806,12 @@ static int __tp_mgr_process_timeout_check(uint8_t index, uint8_t self_addr, j193
     if (is_timedout) {
         if (session->mode == J1939_TP_MODE_RTS) {
             if (session->dir == J1939_TP_DIR_IN) {
-                __send_Conn_Abort(index, self_addr, session->src_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT, J1939_CONN_ABORT_ROLE_RESPONDER);
+                __send_Conn_Abort(phandle, self_addr, session->src_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT, J1939_CONN_ABORT_ROLE_RESPONDER);
             } else {
-                __send_Conn_Abort(index, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT, J1939_CONN_ABORT_ROLE_ORIGINATOR);
+                __send_Conn_Abort(phandle, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_TIMEDOUT, J1939_CONN_ABORT_ROLE_ORIGINATOR);
             }
         }
-        __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_TIMEDOUT);
+        __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_TIMEDOUT);
     }
 
     return is_timedout;
@@ -826,7 +827,7 @@ static int __tp_mgr_process_timeout_check(uint8_t index, uint8_t self_addr, j193
  *
  * @return
  */
-static int __tp_mgr_process_transmition(uint8_t index, uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session) {
+static int __tp_mgr_process_transmition(j1939_phandle phandle, uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session) {
     j1939_tp_dt tp_dt;
     unsigned msg_start;
     unsigned msg_sz_min;
@@ -855,12 +856,12 @@ static int __tp_mgr_process_transmition(uint8_t index, uint8_t self_addr, j1939_
 
     level = j1939_bsp_lock();
 
-    if (__send_TPDT(index, self_addr, session->dst_addr, &tp_dt) < 0) {
+    if (__send_TPDT(phandle, self_addr, session->dst_addr, &tp_dt) < 0) {
         // TODO: recover from this, by example, resend on next tick
         if (session->mode == J1939_TP_MODE_RTS) {
-            __send_Conn_Abort(index, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_ORIGINATOR);
+            __send_Conn_Abort(phandle, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_ORIGINATOR);
         }
-        __close_tp_session_with_error(index, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
+        __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
         j1939_bsp_unlock(level);
         return 0;
     }
@@ -882,7 +883,7 @@ static int __tp_mgr_process_transmition(uint8_t index, uint8_t self_addr, j1939_
     } else /* BAM mode */ {
         if (session->pkt_next == session->total_pkt_num) {
             /* we have sent the last frame, close the session */
-            __close_tp_session(index, tp_mgr_ctx, session->id);
+            __close_tp_session(phandle, tp_mgr_ctx, session->id);
             is_active = 0;
         } else {
             /* transmit next packet */
@@ -903,10 +904,10 @@ static int __tp_mgr_process_transmition(uint8_t index, uint8_t self_addr, j1939_
  * @param tp_mgr_ctx
  * @param time_ms
  */
-int j1939_tp_mgr_process(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) {
+int j1939_tp_mgr_process(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) {
     register int i;
     int level;
-    uint8_t CA_addr = __get_address(index);
+    uint8_t CA_addr = phandle->address;
     int activities;
 
     if (tp_mgr_ctx->reset) {
@@ -926,14 +927,14 @@ int j1939_tp_mgr_process(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint
     for (i = 0; i < J1939_TP_SESSIONS_NUM; ++i) {
         j1939_tp_session *const session = &tp_mgr_ctx->sessions[i];
         activities += (session->state != J1939_TP_STATE_FREE);
-        __tp_mgr_process_timeout_check(index, CA_addr, tp_mgr_ctx, session, t_delta);
+        __tp_mgr_process_timeout_check(phandle, CA_addr, tp_mgr_ctx, session, t_delta);
     }
 
     /* process RTS & BAM transmition functionality */
     for (i = 0; i <= J1939_TP_TX_SESSIONS_NUM; ++i) {
         /* for "<=" operation see tx_sessions definition */
         j1939_tp_session *const session = &tp_mgr_ctx->tx_sessions[i];
-        activities += __tp_mgr_process_transmition(index, CA_addr, tp_mgr_ctx, session);
+        activities += __tp_mgr_process_transmition(phandle, CA_addr, tp_mgr_ctx, session);
     }
 
     return (activities > 0);
@@ -945,7 +946,7 @@ int j1939_tp_mgr_process(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint
  *
  * @return
  */
-int j1939_tp_mgr_open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload) {
+int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload) {
     int sid;
     j1939_tp_session *session;
     j1939_tp_cm_control tp_cm_control;
@@ -972,7 +973,7 @@ int j1939_tp_mgr_open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_c
     }
 
     level = j1939_bsp_lock();
-    sid = __open_tx_session(index, tp_mgr_ctx, dst_addr, &tp_cm_control);
+    sid = __open_tx_session(phandle, tp_mgr_ctx, dst_addr, &tp_cm_control);
     j1939_bsp_unlock(level);
 
     if (sid < 0) {
@@ -986,8 +987,8 @@ int j1939_tp_mgr_open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_c
 
     level = j1939_bsp_lock();
 
-    if (__send_TPCM(index, session->src_addr, session->dst_addr, &tp_cm_control) < 0) {
-        __close_tp_session_with_error(index, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
+    if (__send_TPCM(phandle, session->src_addr, session->dst_addr, &tp_cm_control) < 0) {
+        __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
         j1939_bsp_unlock(level);
         return -EIO;
     }
@@ -1012,9 +1013,9 @@ int j1939_tp_mgr_open_tx_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_c
  *
  * @return
  */
-int j1939_tp_mgr_close_session(uint8_t index, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
+int j1939_tp_mgr_close_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
     int level = j1939_bsp_lock();
-    int status = __close_tp_session(index, tp_mgr_ctx, sid);
+    int status = __close_tp_session(phandle, tp_mgr_ctx, sid);
     j1939_bsp_unlock(level);
     return status;
 }

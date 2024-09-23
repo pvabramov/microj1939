@@ -10,39 +10,11 @@
 
 #include <J1939/j1939_config.h>
 
+#include "j1939_types.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "j1939_std_addr.h"
-#include "j1939_std_pgn.h"
-#include "j1939_types.h"
-
-
-/**
- * @brief
- * 
- * @param PGN
- * 
- * @return 
- */
-static inline int j1939_is_PDU1(uint32_t PGN) {
-    return (PGN & J1939_PGN_PDU_FORMAT_MASK) < J1939_PGN_PDU_FORMAT_SEP;
-}
-
-
-/**
- * @brief
- * 
- * @param PGN
- * 
- * @return 
- */
-static inline int j1939_is_PDU2(uint32_t PGN) {
-    return (PGN & J1939_PGN_PDU_FORMAT_MASK) >= J1939_PGN_PDU_FORMAT_SEP;
-}
-
 
 // must be called in main thread
 void j1939_initialize(uint8_t index, const j1939_callbacks *const callbacks);
@@ -75,4 +47,4 @@ int j1939_handle_transmiting(uint8_t index);
 }
 #endif
 
-#endif /* J1939_MESSAGE_H */
+#endif /* J1939_H */
