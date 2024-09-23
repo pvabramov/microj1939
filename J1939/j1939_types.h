@@ -63,6 +63,14 @@ typedef enum j1939_request_status {
     J1939_REQ_BUSY = 3
 } j1939_request_status;
 
+
+typedef enum j1939_claim_status {
+    FAILED = -1,
+    SUCCESS = 0,
+    PROCESSING = 1,
+    UNKNOWN
+} j1939_claim_status;
+
 ///
 typedef void (*j1939_callback_rx_handler)(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 ///

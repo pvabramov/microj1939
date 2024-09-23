@@ -177,6 +177,7 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
 
     memset(handle, 0, sizeof(j1939_handle));
 
+    handle->claim_status = UNKNOWN;
     handle->state = NOT_STARTED;
 
     barrier();
@@ -216,6 +217,7 @@ void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_na
     handle->address = J1939_NULL_ADDRESS;
     handle->preferred_address = preferred_address;
 
+    handle->claim_status = UNKNOWN;
     barrier();
 
     handle->state = INITIALIZED;
@@ -254,6 +256,7 @@ int j1939_claim_address(uint8_t index) {
 
     barrier();
 
+    handle->claim_status = PROCESSING;
     handle->state = ATEMPT_TO_CLAIM_ADDRESS;
 
     /* tell everybody for attempting to claim an address */
@@ -522,6 +525,7 @@ static inline int __j1939_process(uint8_t index, uint32_t the_time) {
 
                 barrier();
 
+                handle->claim_status = SUCCESS;
                 handle->state = ACTIVE;
 
                 if (handle->claim_handler != NULL) {
@@ -551,6 +555,7 @@ static inline int __j1939_process(uint8_t index, uint32_t the_time) {
             activities = 1;
             handle->random_timer -= t_delta;
             if (handle->random_timer <= 0) {
+                handle->claim_status = FAILED;
                 // "Cannot Claim Address" message specified in 4.2.2.2 of J1939-81
                 __send_claim_address(index, J1939_NULL_ADDRESS);
             }
@@ -580,6 +585,11 @@ static inline int __j1939_process(uint8_t index, uint32_t the_time) {
     }
 
     return (handle->preidle_timer > 0);
+}
+
+
+j1939_claim_status j1939_get_claim_status(uint8_t index) {
+    return __j1939_handles[index].claim_status;
 }
 
 
@@ -634,6 +644,7 @@ static int __rx_handle_PGN_claim_address(uint8_t index, const j1939_primitive * 
         */
 
         if (cannot_claim) {
+            handle->claim_status = PROCESSING;
             handle->address = J1939_NULL_ADDRESS;
             // FIXME: random send_claim_address on "Cannot Claim Address"
             handle->random_timer = CLAIM_RANDOM;

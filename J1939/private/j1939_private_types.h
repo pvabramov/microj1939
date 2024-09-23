@@ -364,6 +364,7 @@ typedef struct j1939_handle {
     int oneshot;
     uint32_t last_time;
 
+    volatile j1939_claim_status claim_status;
     volatile j1939_state state;
     volatile int already_tx;
     volatile int already_rx;
