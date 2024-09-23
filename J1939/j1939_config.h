@@ -54,4 +54,8 @@
 #   define J1939_MAX_HANDLES_NUM                (1)
 #endif
 
+#ifndef J1939_RAND_SEED
+#   define J1939_RAND_SEED                  (0x4517fe1b)
+#endif
+
 #endif /* J1939_CONFIG_H_ */
