@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-void jsrand(int32_t seed);
+void jsrand(uint32_t seed);
 
 int32_t jrand(void);
 int32_t jrandr(int32_t min, int32_t max);
