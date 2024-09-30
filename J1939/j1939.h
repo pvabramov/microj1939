@@ -11,6 +11,7 @@
 #include <J1939/j1939_config.h>
 
 #include "j1939_types.h"
+#include "j1939_utils.h"
 
 #ifdef __cplusplus
 extern "C" {

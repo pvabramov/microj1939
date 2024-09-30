@@ -14,11 +14,9 @@
 #define J1939_TP_PRIORITY               7
 #define J1939_MAX_PRIORITY              7
 
-#define J1939_PGN_PDU1_MASK             0x3FF00U    // PDU1 mask
-#define J1939_PGN_PDU2_MASK             0x3FFFFU    // PDU2 mask
+#define J1939_MAX_DL                    8U
+#define J1939_PADDING_DATA              0xFFU
 
-#define J1939_PGN_PDU_FORMAT_MASK       0x0FF00U    // PDU format mask
-#define J1939_PGN_PDU_FORMAT_SEP        0x0F000U    // PDU format separator
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,28 +85,6 @@ typedef struct j1939_primitive {
     uint8_t payload[8];
 } j1939_primitive;
 
-
-/**
- * @brief
- * 
- * @param PGN
- * 
- * @return 
- */
-static inline int j1939_is_PDU1(uint32_t PGN) {
-    return (PGN & J1939_PGN_PDU_FORMAT_MASK) < J1939_PGN_PDU_FORMAT_SEP;
-}
-
-/**
- * @brief
- * 
- * @param PGN
- * 
- * @return 
- */
-static inline int j1939_is_PDU2(uint32_t PGN) {
-    return (PGN & J1939_PGN_PDU_FORMAT_MASK) >= J1939_PGN_PDU_FORMAT_SEP;
-}
 
 #ifdef __cplusplus
 }

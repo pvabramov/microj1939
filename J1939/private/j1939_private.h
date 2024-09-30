@@ -10,6 +10,7 @@
 
 #include <string.h>
 
+#include <J1939/j1939_utils.h>
 #include "j1939_private_types.h"
 
 /* Optimization barrier */
@@ -63,42 +64,7 @@ static inline void PACK_PGN(uint32_t PGN, uint8_t OUT[3]) {
 }
 
 
-/**
- * @brief
- * 
- * @param PGN
- * @param priority
- * @param SA
- * @param DLC
- * @param payload
- * 
- * @return 
- */
-static inline j1939_primitive j1939_primitive_build(uint32_t PGN, uint8_t priority, uint8_t SA, uint8_t DA, uint8_t DLC, const void *const payload) {
-    struct j1939_primitive msg = {
-        .PGN = PGN,
-        .priority = (priority > J1939_MAX_PRIORITY) ? J1939_MAX_PRIORITY : priority,
-        .dest_address = DA,
-        .src_address = SA,
-        .dlc = U8_MIN(DLC, 8),
-    };
-    
-    /* PDU2 format is broadcast message */
-    if (j1939_is_PDU2(msg.PGN)) {
-        msg.dest_address = J1939_GLOBAL_ADDRESS;
-    }
-    
-    memset(msg.payload, 0xFF, sizeof(msg.payload));
-    memcpy(msg.payload, payload, msg.dlc);
-    
-    return msg;
-}
-
 extern j1939_handle __j1939_handles[];
-
-static inline uint8_t __get_address(uint8_t index) {
-    return __j1939_handles[index].address;
-}
 
 #ifdef __cplusplus
 }

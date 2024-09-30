@@ -8,6 +8,7 @@ int main(int argc, const char **argv) {
 
 
 void runAllTests(void) {
+    RUN_TEST_GROUP(j1939_utils);
     RUN_TEST_GROUP(j1939_claim_address);
     RUN_TEST_GROUP(j1939_handle_PGN_request);
     RUN_TEST_GROUP(j1939_sendmsg_generic);
