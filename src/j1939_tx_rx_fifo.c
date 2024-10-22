@@ -50,16 +50,10 @@ int j1939_rx_fifo_write(j1939_rx_fifo *const fifo, const j1939_rx_info *const rx
         return -1;
     }
 
-    do {
-        int level = j1939_bsp_lock();
-
-        /* write */
-        fifo->items[fifo->head] = *rx_info;
-        /* mark written */
-        fifo->head = ring_wrap(J1939_RX_FIFO_SZ, fifo->head + 1);
-
-        j1939_bsp_unlock(level);
-    } while(0);
+    /* write */
+    fifo->items[fifo->head] = *rx_info;
+    /* mark written */
+    fifo->head = ring_wrap(J1939_RX_FIFO_SZ, fifo->head + 1);
 
     return 0;
 }
@@ -80,16 +74,10 @@ int j1939_rx_fifo_read(j1939_rx_fifo *const fifo, j1939_rx_info *const rx_info) 
         return -1;
     }
 
-    do {
-        int level = j1939_bsp_lock();
-
-        /* read */
-        *rx_info = fifo->items[fifo->tail];
-        /* mark read */
-        fifo->tail = ring_wrap(J1939_RX_FIFO_SZ, fifo->tail + 1);
-
-        j1939_bsp_unlock(level);
-    } while (0);
+    /* read */
+    *rx_info = fifo->items[fifo->tail];
+    /* mark read */
+    fifo->tail = ring_wrap(J1939_RX_FIFO_SZ, fifo->tail + 1);
 
     return 0;
 }
@@ -132,16 +120,10 @@ int j1939_tx_fifo_write(j1939_tx_fifo *const fifo, const j1939_primitive *const 
         return -1;
     }
 
-    do {
-        int level = j1939_bsp_lock();
-
-        /* write */
-        fifo->items[fifo->head] = *primitive;
-        /* mark written */
-        fifo->head = ring_wrap(J1939_TX_FIFO_SZ, fifo->head + 1);
-
-        j1939_bsp_unlock(level);
-    } while (0);
+    /* write */
+    fifo->items[fifo->head] = *primitive;
+    /* mark written */
+    fifo->head = ring_wrap(J1939_TX_FIFO_SZ, fifo->head + 1);
 
     return 0;
 }
@@ -162,16 +144,10 @@ int j1939_tx_fifo_read(j1939_tx_fifo *const fifo, j1939_primitive *const primiti
         return -1;
     }
 
-    do {
-        int level = j1939_bsp_lock();
-
-        /* read */
-        *primitive = fifo->items[fifo->tail];
-        /* mark read */
-        fifo->tail = ring_wrap(J1939_TX_FIFO_SZ, fifo->tail + 1);
-
-        j1939_bsp_unlock(level);
-    } while (0);
+    /* read */
+    *primitive = fifo->items[fifo->tail];
+    /* mark read */
+    fifo->tail = ring_wrap(J1939_TX_FIFO_SZ, fifo->tail + 1);
 
     return 0;
 }
@@ -210,19 +186,14 @@ unsigned j1939_rx_tx_error_fifo_size(const j1939_rx_tx_error_fifo *const fifo) {
 int j1939_rx_tx_error_fifo_write(j1939_rx_tx_error_fifo *const fifo, const j1939_rx_tx_error_info *const info) {
     const unsigned avail = ring_space_avail(J1939_RX_TX_ERROR_FIFO_SZ, fifo->head, fifo->tail);
 
-    if (avail == 0)
+    if (avail == 0) {
         return -1;
+    }
 
-    do {
-        int level = j1939_bsp_lock();
-
-        /* write */
-        fifo->items[fifo->head] = *info;
-        /* mark written */
-        fifo->head = ring_wrap(J1939_RX_TX_ERROR_FIFO_SZ, fifo->head + 1);
-
-        j1939_bsp_unlock(level);
-    } while (0);
+    /* write */
+    fifo->items[fifo->head] = *info;
+    /* mark written */
+    fifo->head = ring_wrap(J1939_RX_TX_ERROR_FIFO_SZ, fifo->head + 1);
 
     return 0;
 }
@@ -239,19 +210,14 @@ int j1939_rx_tx_error_fifo_write(j1939_rx_tx_error_fifo *const fifo, const j1939
 int j1939_rx_tx_error_fifo_read(j1939_rx_tx_error_fifo *const fifo, j1939_rx_tx_error_info *const info) {
     const unsigned data_avail = ring_data_avail(J1939_RX_TX_ERROR_FIFO_SZ, fifo->head, fifo->tail);
 
-    if (data_avail == 0)
+    if (data_avail == 0) {
         return -1;
+    }
 
-    do {
-        int level = j1939_bsp_lock();
-
-        /* read */
-        *info = fifo->items[fifo->tail];
-        /* mark read */
-        fifo->tail = ring_wrap(J1939_RX_TX_ERROR_FIFO_SZ, fifo->tail + 1);
-
-        j1939_bsp_unlock(level);
-    } while (0);
+    /* read */
+    *info = fifo->items[fifo->tail];
+    /* mark read */
+    fifo->tail = ring_wrap(J1939_RX_TX_ERROR_FIFO_SZ, fifo->tail + 1);
 
     return 0;
 }
