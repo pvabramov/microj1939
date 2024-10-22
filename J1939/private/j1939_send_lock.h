@@ -1,6 +1,8 @@
 #ifndef J1939_SEND_LOCK_H_
 #define J1930_SEND_LOCK_H_
 
+#include <errno.h>
+
 #include <J1939/private/j1939_tx_rx_fifo.h>
 #include <J1939/private/j1939_private.h>
 
@@ -18,16 +20,28 @@ extern "C" {
  * @return
  */
 static inline int __j1939_send_lock(j1939_phandle phandle, const j1939_primitive * const primitive) {
-    int sts = 0;
-    int level = j1939_bsp_lock();
+    int error;
 
-    if (j1939_bsp_CAN_send(phandle->index, primitive) < 0) {
-        sts = j1939_tx_fifo_write(&phandle->tx_fifo, primitive);
+    CRITICAL_SECTION(phandle) {
+retry:  error = __j1939_canlink_send(phandle, primitive);
+
+        CRITICAL_SECTION_FLASH(phandle);
+
+        if (error < 0) {
+            if (error == -EINTR) {
+                goto retry;
+            } else if (error == -ENETDOWN) {
+                CRITICAL_SECTION_BREAK(phandle);
+            }
+
+            error = j1939_tx_fifo_write(&phandle->tx_fifo, primitive);
+            if (error < 0) {
+                error = -ENOBUFS;
+            }
+        }
     }
 
-    j1939_bsp_unlock(level);
-
-    return sts;
+    return error;
 }
 
 #ifdef __cplusplus

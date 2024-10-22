@@ -6,6 +6,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <pthread.h>
+
 #include <J1939/j1939.h>
 
 #include "unittest_helpers.h"
@@ -23,8 +25,10 @@ static void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_add
 static int __user_j1939_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 
-
-callback_on_delay __on_delay = NULL;
+uint32_t unittest_get_time(uint8_t index);
+int unittest_canlink_send(uint8_t index, const j1939_primitive *const primitive);
+int unittest_lock(uint8_t index);
+void unittest_unlock(uint8_t index, int level);
 
 static int cannot_claim_status = 0;
 
@@ -34,12 +38,25 @@ static int __recv_pipes[2] = { -1, -1 };
 static int __claim_pipes[2] = { -1, -1 };
 static int __cannot_claim_pipes[2] = { -1, -1 };
 
+static pthread_mutex_t __lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
+
+
 static const j1939_callbacks cb = {
     .rx_handler = __user_j1939_rx_handler,
     .claim_handler = __user_j1939_claim_handler,
     .cannot_claim_handler = __user_j1939_cannot_claim_handler
 };
 
+
+static const j1939_bsp bsp = {
+    .lock = unittest_lock,
+    .unlock = unittest_unlock,
+    .gettime = unittest_get_time,
+};
+
+static const j1939_canlink canlink = {
+    .send = unittest_canlink_send,
+};
 
 
 int unittest_helpers_setup(uint8_t index) {
@@ -61,10 +78,9 @@ int unittest_helpers_setup(uint8_t index) {
         return -1;
     }
 
-    unittest_set_callback_on_delay(NULL);
     unittest_set_cannot_claim_status(0);
 
-    j1939_initialize(index, &cb);
+    j1939_initialize(index, &canlink, &bsp, &cb);
     
     return 0;
 }
@@ -98,12 +114,19 @@ void unittest_helpers_cleanup(void) {
 }
 
 
-void unittest_set_callback_on_delay(callback_on_delay cb) {
-    __on_delay = cb;
+int unittest_lock(uint8_t index) {
+    pthread_mutex_lock(&__lock);
+    return 1;
 }
 
 
-uint32_t unittest_get_time(void) {
+void unittest_unlock(uint8_t index, int level) {
+    (void)level;
+    pthread_mutex_unlock(&__lock);
+}
+
+
+uint32_t unittest_get_time(uint8_t index) {
     return __the_time;
 }
 
@@ -160,11 +183,16 @@ static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, con
 }
 
 
-int j1939_bsp_CAN_send(uint8_t index, const j1939_primitive *const primitive) {
+int unittest_canlink_send(uint8_t index, const j1939_primitive *const primitive) {
     if (__sent_pipes[PIPE_WR] < 0 || index != CAN_INDEX)
         return -1;
         
-    return write(__sent_pipes[PIPE_WR], primitive, sizeof(j1939_primitive));
+    int error = write(__sent_pipes[PIPE_WR], primitive, sizeof(j1939_primitive));
+    if (error < 0) {
+        return error;
+    }
+
+    return 0;
 }
 
 

@@ -2,6 +2,7 @@
 #define J1939_PRIVATE_TYPES_H_
 
 #include <J1939/j1939_types.h>
+#include <J1939/j1939_bsp.h>
 
 #include "j1939_tx_rx_fifo_types.h"
 #include "j1939_tp_mgr_types.h"
@@ -34,6 +35,9 @@ typedef struct j1939_handle {
 
     int oneshot;
     uint32_t last_time;
+
+    j1939_canlink canlink;
+    j1939_bsp bsp;
 
     volatile j1939_claim_status claim_status;
     volatile j1939_state state;

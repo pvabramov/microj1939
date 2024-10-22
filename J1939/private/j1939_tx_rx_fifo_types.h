@@ -15,7 +15,7 @@ typedef enum j1939_rx_info_type {
     J1939_RX_INFO_TYPE_UNKNOWN      = 0,
     J1939_RX_INFO_TYPE_FRAME        = 1,
     J1939_RX_INFO_TYPE_REQUEST      = 2,
-    J1939_RX_INFO_TYPE_MULTIPACKET  = 0x40000000
+    J1939_RX_INFO_TYPE_MULTIPACKET  = 0x80
 } j1939_rx_info_type;
     
     
@@ -23,17 +23,17 @@ typedef enum j1939_rx_info_type {
  * @brief
  */
 typedef struct {
-    j1939_rx_info_type type;
-    uint32_t PGN;
+    uint32_t time;
+    uint8_t type;
+    uint8_t sid;
     uint8_t src_addr;
     uint8_t dst_addr;
-    uint8_t sid;
+    uint32_t PGN;
     uint16_t msg_sz;
     union {
         uint8_t payload[8];
         const void *payload_ptr;
     };
-    uint32_t time;
 } j1939_rx_info;
 
 
@@ -41,10 +41,10 @@ typedef struct {
  * @brief
  */
 typedef struct {
-    j1939_rx_tx_errno error;
     uint32_t PGN;
     uint16_t msg_sz;
     uint8_t addr; // SA or DA
+    uint8_t error;
 } j1939_rx_tx_error_info;
 
 

@@ -11,6 +11,7 @@
 #include <J1939/j1939_config.h>
 
 #include "j1939_types.h"
+#include "j1939_bsp.h"
 #include "j1939_utils.h"
 
 #ifdef __cplusplus
@@ -18,9 +19,9 @@ extern "C" {
 #endif
 
 // must be called in main thread
-void j1939_initialize(uint8_t index, const j1939_callbacks *const callbacks);
+int j1939_initialize(uint8_t index, const j1939_canlink *const canlink, const j1939_bsp *const bsp, const j1939_callbacks *const callbacks);
 // must be called in logic thread, no thread safe
-void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name *const CA_name);
+int j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name *const CA_name);
 
 uint8_t j1939_get_address(uint8_t index);
 

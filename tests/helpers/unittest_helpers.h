@@ -26,9 +26,6 @@ typedef struct unittest_j1939_claim_msg {
 } unittest_j1939_claim_msg;
 
 
-typedef void (*callback_on_delay)(void);
-
-
 int unittest_helpers_setup(uint8_t index);
 void unittest_helpers_cleanup(void);
 
@@ -37,14 +34,12 @@ int unittest_get_output(j1939_primitive *f);
 int unittest_post_input(uint8_t index, uint32_t PGN, uint8_t DA, uint8_t SA, uint8_t len, ...);
 int unittest_get_input(unittest_j1939_rx_msg *m);
 
-uint32_t unittest_get_time(void);
+uint32_t unittest_get_time(uint8_t index);
 void unittest_add_time(uint32_t time);
 
 int unittest_get_claim(unittest_j1939_claim_msg *msg);
 
 void unittest_set_cannot_claim_status(int status);
 int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg);
-
-void unittest_set_callback_on_delay(callback_on_delay cb);
 
 #endif /* UNITTEST_HELPERS_H_ */

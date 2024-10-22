@@ -19,6 +19,31 @@
 #define barrier() __asm__ __volatile__("": : :"memory")
 #endif
 
+#ifndef CRITICAL_SECTION
+#define CRITICAL_SECTION(phandle) \
+    for (int __critical_section_level = __j1939_lock(phandle), __critical_section_exit = 1; \
+        __critical_section_exit; \
+        __critical_section_exit = __j1939_unlock(phandle, __critical_section_level))
+#endif
+
+#ifndef CRITICAL_SECTION_EXIT
+#define CRITICAL_SECTION_EXIT(phandle, ret) \
+    do { __critical_section_exit = __j1939_unlock(phandle, __critical_section_level); return (ret); } while (0)
+#endif
+
+#ifndef CRITICAL_SECTION_BREAK
+#define CRITICAL_SECTION_BREAK(phandle) continue
+#endif
+
+#ifndef CRITICAL_SECTION_FLASH
+#define CRITICAL_SECTION_FLASH(phandle) \
+    do { \
+        __j1939_unlock(phandle, __critical_section_level); \
+        __critical_section_level = __j1939_lock(phandle); \
+    } while (0)
+#endif
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -61,6 +86,50 @@ static inline void PACK_PGN(uint32_t PGN, uint8_t OUT[3]) {
     OUT[0] = (uint8_t)PGN;
     OUT[1] = (uint8_t)(PGN >> 8);
     OUT[2] = (uint8_t)(PGN >> 16);
+}
+
+
+/**
+ *
+ */
+static inline int __j1939_lock(j1939_phandle phandle) {
+    if (phandle->bsp.lock) {
+        return phandle->bsp.lock(phandle->index);
+    }
+    return 0;
+}
+
+
+/**
+ *
+ */
+static inline int __j1939_unlock(j1939_phandle phandle, int level) {
+    if (phandle->bsp.unlock) {
+        phandle->bsp.unlock(phandle->index, level);
+    }
+    return 0;
+}
+
+
+/**
+ *
+ */
+static inline uint32_t __j1939_gettime(j1939_phandle phandle) {
+    if (phandle->bsp.gettime) {
+        return phandle->bsp.gettime(phandle->index);
+    }
+    return -1U;
+}
+
+
+/**
+ *
+ */
+static inline int __j1939_canlink_send(j1939_phandle phandle, const j1939_primitive *const primitive) {
+    if (phandle->canlink.send) {
+        return phandle->canlink.send(phandle->index, primitive);
+    }
+    return -1;
 }
 
 

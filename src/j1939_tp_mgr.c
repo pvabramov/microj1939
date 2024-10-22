@@ -674,7 +674,6 @@ int j1939_tp_mgr_rx_handler(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mg
     uint8_t DA;
     int is_TP_CM = (PGN == J1939_STD_PGN_TPCM) && (frame->dlc == J1939_STD_PGN_TPCM_DLC);
     int is_TP_DT = (PGN == J1939_STD_PGN_TPDT) && (frame->dlc == J1939_STD_PGN_TPDT_DLC);
-    int level;
 
     if (!is_TP_CM && !is_TP_DT) {
         return 0;
@@ -692,8 +691,6 @@ int j1939_tp_mgr_rx_handler(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mg
     if (is_TP_DT && (tp_mgr_ctx->bam_rx_tab[SA] == J1939_TP_MGR_NO_ID && tp_mgr_ctx->rts_rx_tab[SA] == J1939_TP_MGR_NO_ID)) {
         return 1;
     }
-
-    level = j1939_bsp_lock();
 
     if (is_TP_CM) {
         /* handle TP Connection Management frame */
@@ -731,8 +728,7 @@ int j1939_tp_mgr_rx_handler(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mg
                 break;
 
             default:
-                j1939_bsp_unlock(level);
-                return 1;
+                break;
         }
     } else {
         /* handle TP Data frame */
@@ -747,8 +743,6 @@ int j1939_tp_mgr_rx_handler(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mg
         }
     }
 
-    j1939_bsp_unlock(level);
-
     return 1;
 }
 
@@ -761,22 +755,23 @@ int j1939_tp_mgr_rx_handler(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mg
  *
  * @return
  */
-static int __tp_mgr_session_timeout_check(j1939_tp_session *const session, uint32_t t_delta) {
+static int __tp_mgr_session_timeout_check(j1939_phandle phandle, j1939_tp_session *const session, uint32_t t_delta) {
     int sts;
-    int level = j1939_bsp_lock();
 
-    if (session->transmition_timeout != J1939_TP_TO_INF) {
-        session->transmition_timeout -= t_delta;
+    CRITICAL_SECTION(phandle) {
+
+        if (session->transmition_timeout != J1939_TP_TO_INF) {
+            session->transmition_timeout -= t_delta;
+        }
+
+        if (session->transmition_timeout < 0) {
+            session->state = J1939_TP_STATE_TIMEDOUT;
+            sts = 1;
+        } else {
+            sts = 0;
+        }
+
     }
-
-    if (session->transmition_timeout < 0) {
-        session->state = J1939_TP_STATE_TIMEDOUT;
-        sts = 1;
-    } else {
-        sts = 0;
-    }
-
-    j1939_bsp_unlock(level);
 
     return sts;
 }
@@ -801,7 +796,7 @@ static int __tp_mgr_process_timeout_check(j1939_phandle phandle, uint8_t self_ad
         return 0;
     }
 
-    is_timedout = __tp_mgr_session_timeout_check(session, t_delta);
+    is_timedout = __tp_mgr_session_timeout_check(phandle, session, t_delta);
 
     if (is_timedout) {
         if (session->mode == J1939_TP_MODE_RTS) {
@@ -831,7 +826,6 @@ static int __tp_mgr_process_transmition(j1939_phandle phandle, uint8_t self_addr
     j1939_tp_dt tp_dt;
     unsigned msg_start;
     unsigned msg_sz_min;
-    int level;
     int is_active;
 
     if (session->state != J1939_TP_STATE_TRANSMIT || session->dir != J1939_TP_DIR_OUT) {
@@ -854,45 +848,43 @@ static int __tp_mgr_process_transmition(j1939_phandle phandle, uint8_t self_addr
     memcpy(tp_dt.payload, &session->buffer[msg_start], msg_sz_min);
     tp_dt.seq_num = session->pkt_next;
 
-    level = j1939_bsp_lock();
+    CRITICAL_SECTION(phandle) {
+        if (__send_TPDT(phandle, self_addr, session->dst_addr, &tp_dt) < 0) {
+            // TODO: recover from this, by example, resend on next tick
+            if (session->mode == J1939_TP_MODE_RTS) {
+                __send_Conn_Abort(phandle, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_ORIGINATOR);
+            }
+            __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
 
-    if (__send_TPDT(phandle, self_addr, session->dst_addr, &tp_dt) < 0) {
-        // TODO: recover from this, by example, resend on next tick
+            CRITICAL_SECTION_EXIT(phandle, 0);
+        }
+
+        is_active = 1;
+
         if (session->mode == J1939_TP_MODE_RTS) {
-            __send_Conn_Abort(phandle, self_addr, session->dst_addr, session->PGN, J1939_CONN_ABORT_REASON_NO_RESOURCES, J1939_CONN_ABORT_ROLE_ORIGINATOR);
-        }
-        __close_tp_session_with_error(phandle, tp_mgr_ctx, session->id, J1939_RX_TX_ERROR_FAILED);
-        j1939_bsp_unlock(level);
-        return 0;
-    }
-
-    is_active = 1;
-
-    if (session->mode == J1939_TP_MODE_RTS) {
-        if ((--session->pkt_max == 0) && (session->pkt_next < session->total_pkt_num)) {
-            session->transmition_timeout = J1939_TP_TO_T3;
-            session->state = J1939_TP_STATE_WAIT_CTS;
-        } else if (session->pkt_next == session->total_pkt_num) {
-            session->transmition_timeout = J1939_TP_TO_T3;
-            session->state = J1939_TP_STATE_WAIT_EOMA;
-        } else {
-            /* transmit next packet */
-            session->transmition_timeout = J1939_TP_TO_INF;
-            session->pkt_next++;
-        }
-    } else /* BAM mode */ {
-        if (session->pkt_next == session->total_pkt_num) {
-            /* we have sent the last frame, close the session */
-            __close_tp_session(phandle, tp_mgr_ctx, session->id);
-            is_active = 0;
-        } else {
-            /* transmit next packet */
-            session->transmition_timeout = J1939_TP_TO_INF;
-            session->pkt_next++;
+            if ((--session->pkt_max == 0) && (session->pkt_next < session->total_pkt_num)) {
+                session->transmition_timeout = J1939_TP_TO_T3;
+                session->state = J1939_TP_STATE_WAIT_CTS;
+            } else if (session->pkt_next == session->total_pkt_num) {
+                session->transmition_timeout = J1939_TP_TO_T3;
+                session->state = J1939_TP_STATE_WAIT_EOMA;
+            } else {
+                /* transmit next packet */
+                session->transmition_timeout = J1939_TP_TO_INF;
+                session->pkt_next++;
+            }
+        } else /* BAM mode */ {
+            if (session->pkt_next == session->total_pkt_num) {
+                /* we have sent the last frame, close the session */
+                __close_tp_session(phandle, tp_mgr_ctx, session->id);
+                is_active = 0;
+            } else {
+                /* transmit next packet */
+                session->transmition_timeout = J1939_TP_TO_INF;
+                session->pkt_next++;
+            }
         }
     }
-
-    j1939_bsp_unlock(level);
 
     return is_active;
 }
@@ -906,14 +898,13 @@ static int __tp_mgr_process_transmition(j1939_phandle phandle, uint8_t self_addr
  */
 int j1939_tp_mgr_process(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t t_delta) {
     register int i;
-    int level;
     uint8_t CA_addr = phandle->address;
     int activities;
 
     if (tp_mgr_ctx->reset) {
-        level = j1939_bsp_lock();
-        j1939_tp_mgr_init(tp_mgr_ctx);
-        j1939_bsp_unlock(level);
+        CRITICAL_SECTION(phandle) {
+            j1939_tp_mgr_init(tp_mgr_ctx);
+        }
         return 1;
     }
 
@@ -950,7 +941,6 @@ int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const 
     int sid;
     j1939_tp_session *session;
     j1939_tp_cm_control tp_cm_control;
-    int level;
     unsigned pkt_num;
 
     if (dst_addr == J1939_NULL_ADDRESS || msg_sz > J1939_MAX_DATA_SZ) {
@@ -972,9 +962,9 @@ int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const 
                                         PGN);
     }
 
-    level = j1939_bsp_lock();
-    sid = __open_tx_session(phandle, tp_mgr_ctx, dst_addr, &tp_cm_control);
-    j1939_bsp_unlock(level);
+    CRITICAL_SECTION(phandle) {
+        sid = __open_tx_session(phandle, tp_mgr_ctx, dst_addr, &tp_cm_control);
+    }
 
     if (sid < 0) {
         return -ENOMEM;
@@ -985,21 +975,19 @@ int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const 
     /* copy data to dedicated buffer */
     memcpy(session->buffer, payload, msg_sz * sizeof(uint8_t));
 
-    level = j1939_bsp_lock();
+    CRITICAL_SECTION(phandle) {
 
-    if (__send_TPCM(phandle, session->src_addr, session->dst_addr, &tp_cm_control) < 0) {
-        __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
-        j1939_bsp_unlock(level);
-        return -EIO;
+        if (__send_TPCM(phandle, session->src_addr, session->dst_addr, &tp_cm_control) < 0) {
+            __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
+            CRITICAL_SECTION_EXIT(phandle, -EIO);
+        }
+
+        barrier();
+
+        session->state = (session->mode == J1939_TP_MODE_BAM) ?
+                        J1939_TP_STATE_TRANSMIT :
+                        J1939_TP_STATE_WAIT_CTS;
     }
-
-    barrier();
-
-    session->state = (session->mode == J1939_TP_MODE_BAM) ?
-                     J1939_TP_STATE_TRANSMIT :
-                     J1939_TP_STATE_WAIT_CTS;
-
-    j1939_bsp_unlock(level);
 
     return 0;
 }
@@ -1014,8 +1002,11 @@ int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const 
  * @return
  */
 int j1939_tp_mgr_close_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
-    int level = j1939_bsp_lock();
-    int status = __close_tp_session(phandle, tp_mgr_ctx, sid);
-    j1939_bsp_unlock(level);
+    int status;
+
+    CRITICAL_SECTION(phandle) {
+        status = __close_tp_session(phandle, tp_mgr_ctx, sid);
+    }
+
     return status;
 }

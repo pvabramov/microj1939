@@ -4,6 +4,9 @@
  * @brief
  */
 
+#include <stdlib.h>
+#include <errno.h>
+
 #include <J1939/j1939_config.h>
 
 #include <J1939/j1939.h>
@@ -26,7 +29,32 @@ j1939_handle __j1939_handles[J1939_MAX_HANDLES_NUM];
 /**
  * @brief
  */
-void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
+int j1939_initialize(uint8_t index, const j1939_canlink *const canlink, const j1939_bsp *const bsp, const j1939_callbacks *const callbacks) {
+
+    if (index >= J1939_MAX_HANDLES_NUM) {
+        return -EINVAL;
+    }
+
+    if (canlink == NULL) {
+        return -EINVAL;
+    }
+
+    if (canlink->send == NULL) {
+        return -EINVAL;
+    }
+
+    if (bsp == NULL) {
+        return -EINVAL;
+    }
+
+    if (bsp->gettime == NULL) {
+        return -EINVAL;
+    }
+
+    if (callbacks == NULL) {
+        return -EINVAL;
+    }
+
     j1939_handle *const handle = &__j1939_handles[index];
 
     memset(handle, 0, sizeof(j1939_handle));
@@ -38,7 +66,9 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
 
     barrier();
 
-    handle->callbacks = *callbacks;
+    handle->canlink     = *canlink;
+    handle->bsp         = *bsp;
+    handle->callbacks   = *callbacks;
 
     j1939_rx_tx_error_fifo_init(&handle->tx_error_fifo);
     j1939_rx_tx_error_fifo_init(&handle->rx_error_fifo);
@@ -53,6 +83,8 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
     handle->already_tx = 0;
 
     handle->preidle_timer = J1939_PREIDLE_TIMER;
+
+    return 0;
 }
 
 
@@ -61,16 +93,16 @@ void j1939_initialize(uint8_t index, const j1939_callbacks * const callbacks) {
  *
  * @param drv_conf
  */
-void j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name * const CA_name) {
+int j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name * const CA_name) {
     j1939_handle *const handle = &__j1939_handles[index];
-    const int level = j1939_bsp_lock();
 
-    if (j1939_network_setup(handle, preferred_address, CA_name) < 0) {
-        j1939_bsp_unlock(level);
-        return;
+    CRITICAL_SECTION(handle) {
+        if (j1939_network_setup(handle, preferred_address, CA_name) < 0) {
+            CRITICAL_SECTION_EXIT(handle, -1);
+        }
     }
 
-    j1939_bsp_unlock(level);
+    return 0;
 }
 
 
@@ -115,7 +147,7 @@ int j1939_sendmsg_p(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_
         return -1;
     }
 
-    if (msg_sz <= 8) {
+    if (msg_sz <= J1939_MAX_DL) {
         j1939_primitive primitive =
             j1939_primitive_build(PGN,
                                   priority,
@@ -324,58 +356,59 @@ static int __process_errors(j1939_phandle phandle, j1939_rx_tx_error_fifo *const
  * @return
  */
 static inline int __j1939_process(uint8_t index, uint32_t the_time) {
-    j1939_handle *const handle = &__j1939_handles[index];
+    j1939_phandle phandle = &__j1939_handles[index];
     uint32_t t_delta;
     int activities;
 
-    if (!handle->oneshot) {
-        handle->oneshot = 1;
-        handle->last_time = the_time;
+    if (!phandle->oneshot) {
+        phandle->oneshot = 1;
+        phandle->last_time = the_time;
         t_delta = 0;
     } else {
-        t_delta = the_time - handle->last_time;
-        handle->last_time = the_time;
+        t_delta = the_time - phandle->last_time;
+        phandle->last_time = the_time;
 
         if (0 == t_delta) {
             return -1;
         }
     }
 
-    j1939_state state = handle->state;
+    j1939_state state = phandle->state;
 
     /* Network Management (J1939-81) */
-    activities = j1939_network_process(handle, t_delta);
+    activities = j1939_network_process(phandle, t_delta);
 
     if (state == ACTIVE) {
         /* Error notifications */
-        activities += __process_errors(handle, &handle->rx_error_fifo, handle->callbacks.rx_error_handler);
-        activities += __process_errors(handle, &handle->tx_error_fifo, handle->callbacks.tx_error_handler);
+        activities += __process_errors(phandle, &phandle->rx_error_fifo, phandle->callbacks.rx_error_handler);
+        activities += __process_errors(phandle, &phandle->tx_error_fifo, phandle->callbacks.tx_error_handler);
 
         /* TP management processing */
-        activities += j1939_tp_mgr_process(handle, &handle->tp_mgr_ctx, t_delta);
+        activities += j1939_tp_mgr_process(phandle, &phandle->tp_mgr_ctx, t_delta);
 
         /* Transmition processing */
-        activities += __process_tx(handle);
+        activities += __process_tx(phandle);
 
         /* Receiving processing */
-        activities += __process_rx(handle);
+        activities += __process_rx(phandle);
     }
 
     if (activities > 0) {
-        handle->preidle_timer = J1939_PREIDLE_TIMER;
+        phandle->preidle_timer = J1939_PREIDLE_TIMER;
     } else {
-        handle->preidle_timer -= t_delta;
-        if (handle->preidle_timer < 0) {
-            handle->preidle_timer = 0;
+        phandle->preidle_timer -= t_delta;
+        if (phandle->preidle_timer < 0) {
+            phandle->preidle_timer = 0;
         }
     }
 
-    return (handle->preidle_timer > 0);
+    return (phandle->preidle_timer > 0);
 }
 
 
 j1939_claim_status j1939_get_claim_status(uint8_t index) {
-    return __j1939_handles[index].claim_status;
+    j1939_phandle phandle = &__j1939_handles[index];
+    return phandle->claim_status;
 }
 
 
@@ -385,8 +418,11 @@ j1939_claim_status j1939_get_claim_status(uint8_t index) {
  * @return
  */
 int j1939_process(uint8_t index) {
-    const uint32_t the_time = j1939_bsp_get_time();
-    return __j1939_process(index, the_time);
+    j1939_phandle phandle = &__j1939_handles[index];
+    return __j1939_process(
+        index,
+        __j1939_gettime(phandle)
+    );
 }
 
 
@@ -398,17 +434,17 @@ int j1939_process(uint8_t index) {
  * @return
  */
 int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, uint32_t time) {
-    j1939_handle *const handle = &__j1939_handles[index];
+    j1939_phandle phandle = &__j1939_handles[index];
     uint8_t dst_addr;
 
-    const j1939_state state = handle->state;
+    const j1939_state state = phandle->state;
 
     if (state == NOT_STARTED || state == BUS_OFF) {
         return 0;
     }
 
     /* Network Management (J1939-81) */
-    if (j1939_network_rx_handler(handle, frame, time)) {
+    if (j1939_network_rx_handler(phandle, frame, time)) {
         return 1;
     }
 
@@ -420,18 +456,18 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
         return 0;
     }
 
-    if (j1939_tp_mgr_rx_handler(handle, &handle->tp_mgr_ctx, frame, time)) {
+    if (j1939_tp_mgr_rx_handler(phandle, &phandle->tp_mgr_ctx, frame, time)) {
         return 1;
     }
 
     dst_addr = frame->dest_address;
 
-    if ((dst_addr != handle->address) && (dst_addr != J1939_GLOBAL_ADDRESS)) {
+    if ((dst_addr != phandle->address) && (dst_addr != J1939_GLOBAL_ADDRESS)) {
         return 0;
     }
 
     /* append receiving data into fifo */
-    __j1939_receive_notify(handle,
+    __j1939_receive_notify(phandle,
                            J1939_RX_INFO_TYPE_FRAME,
                            frame->PGN,
                            frame->src_address,
