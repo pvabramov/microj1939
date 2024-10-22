@@ -45,10 +45,10 @@ typedef union {
  * @brief
  */
 typedef enum j1939_claim_status {
-    FAILED = -1,
-    SUCCESS = 0,
-    PROCESSING = 1,
-    UNKNOWN
+    CLAIM_ADDRESS_FAILED = -1,
+    CLAIM_ADDRESS_SUCCESS = 0,
+    CLAIM_ADDRESS_PROCESSING = 1,
+    CLAIM_ADDRESS_UNKNOWN
 } j1939_claim_status;
 
 ///

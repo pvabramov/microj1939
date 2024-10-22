@@ -23,7 +23,7 @@ int j1939_network_setup(j1939_phandle phandle, uint8_t preferred_address, const 
         return -1;
     }
 
-    phandle->claim_status = UNKNOWN;
+    phandle->claim_status = CLAIM_ADDRESS_UNKNOWN;
 
     barrier();
 
@@ -46,7 +46,7 @@ int j1939_network_claim_address(j1939_phandle phandle) {
         return -1;
     }
 
-    phandle->claim_status = PROCESSING;
+    phandle->claim_status = CLAIM_ADDRESS_PROCESSING;
 
     barrier();
 
@@ -100,7 +100,7 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
 
                 barrier();
 
-                phandle->claim_status = SUCCESS;
+                phandle->claim_status = CLAIM_ADDRESS_SUCCESS;
                 phandle->state = ACTIVE;
 
                 barrier();
@@ -136,7 +136,7 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
             phandle->random_timer -= t_delta;
 
             if (phandle->random_timer <= 0) {
-                phandle->claim_status = FAILED;
+                phandle->claim_status = CLAIM_ADDRESS_FAILED;
 
                 barrier();
 
@@ -211,7 +211,7 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
         */
 
         if (cannot_claim) {
-            phandle->claim_status = PROCESSING;
+            phandle->claim_status = CLAIM_ADDRESS_PROCESSING;
             phandle->address = J1939_NULL_ADDRESS;
             phandle->random_timer = CLAIM_RANDOM;
             /* reset TP MGR in prior of Cannot Claim Address */

@@ -61,7 +61,7 @@ int j1939_initialize(uint8_t index, const j1939_canlink *const canlink, const j1
 
     handle->index = index;
 
-    handle->claim_status = UNKNOWN;
+    handle->claim_status = CLAIM_ADDRESS_UNKNOWN;
     handle->state = NOT_STARTED;
 
     barrier();
