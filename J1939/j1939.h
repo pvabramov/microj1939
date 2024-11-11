@@ -10,6 +10,7 @@
 
 #include <J1939/j1939_config.h>
 
+#include "j1939_priority.h"
 #include "j1939_types.h"
 #include "j1939_bsp.h"
 #include "j1939_utils.h"
