@@ -189,16 +189,18 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
         const int is_our_addr =
             (frame->src_address != J1939_NULL_ADDRESS) &&
             (frame->src_address == phandle->preferred_address);
-        const j1939_CA_name *their_CA_name;
+
+        j1939_CA_name their_CA_name;
         int cannot_claim;
 
         if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
             return 0;
         }
 
-        their_CA_name = (j1939_CA_name*) (&frame->payload[0]);
-        cannot_claim = (phandle->CA_name.name >= their_CA_name->name);
+        their_CA_name.hname[0] = *((uint32_t*) (&frame->payload[0]));
+        their_CA_name.hname[1] = *((uint32_t*) (&frame->payload[4]));
 
+        cannot_claim = (phandle->CA_name.name >= their_CA_name.name);
         /*
         SAE J1939-81-2017
 
