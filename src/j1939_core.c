@@ -221,10 +221,6 @@ static int __process_tx(j1939_phandle phandle) {
     int is_active = 0;
     int tx_downcount;
 
-    if (phandle->state != ACTIVE) {
-        return 0;
-    }
-
     phandle->already_tx = 1;
 
     barrier();
@@ -260,10 +256,6 @@ static int __process_rx(j1939_phandle phandle) {
     int is_active = 0;
     int rx_upcount;
     int max_rx_per_tick;
-
-    if (phandle->state != ACTIVE) {
-        return 0;
-    }
 
     phandle->already_rx = 1;
 
@@ -323,10 +315,6 @@ static int __process_errors(j1939_phandle phandle, j1939_rx_tx_error_fifo *const
     int is_active = 0;
     int upcount;
     int max_per_tick;
-
-    if (phandle->state != ACTIVE) {
-        return 0;
-    }
 
     max_per_tick = j1939_rx_tx_error_fifo_size(fifo);
 
