@@ -191,13 +191,16 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
             (frame->src_address == phandle->preferred_address);
         const j1939_CA_name *their_CA_name;
         int cannot_claim;
+        int undefined_behavior;
 
         if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
             return 0;
         }
 
-        their_CA_name = (j1939_CA_name*) (&frame->payload[0]);
-        cannot_claim = (phandle->CA_name.name >= their_CA_name->name);
+        their_CA_name = (const j1939_CA_name*) frame->payload_64;
+
+        cannot_claim        = their_CA_name->name < phandle->CA_name.name;
+        undefined_behavior  = their_CA_name->name == phandle->CA_name.name;
 
         /*
         SAE J1939-81-2017
@@ -220,7 +223,7 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
             barrier();
 
             phandle->state = CANNOT_CLAIM_ADDRESS;
-        } else {
+        } else if (!undefined_behavior) {
             // do the reclaimation of the address
             __send_Claim_Address(phandle, phandle->address);
         }
