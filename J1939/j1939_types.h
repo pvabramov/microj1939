@@ -39,7 +39,6 @@ typedef union {
         uint8_t arbitrary_address_capable : 1;
     };
     uint64_t name;
-    uint32_t hname[2];
 } j1939_CA_name;
 
 /**
@@ -82,9 +81,10 @@ typedef struct j1939_primitive {
     uint16_t dlc;
     uint8_t dest_address; // DA
     uint8_t src_address; // SA
-    uint8_t payload[8];
     uint8_t priority;
+    uint8_t payload[8];
 } j1939_primitive;
+
 
 #ifdef __cplusplus
 }
