@@ -196,6 +196,10 @@ int j1939_handle_transmiting(uint8_t index) {
     j1939_handle *const handle = &__j1939_handles[index];
     j1939_primitive primitive;
 
+    if (handle->state != ACTIVE) {
+        return 0;
+    }
+
     if (handle->already_tx) {
         return 0;
     }
