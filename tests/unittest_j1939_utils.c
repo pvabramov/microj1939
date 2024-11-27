@@ -36,9 +36,14 @@ TEST(j1939_utils, canid_build_pdu2) {
     TEST_ASSERT_EQUAL(0x1CFA2114, j1939_canid_build_noflags(7, 0xFA21, 0xFF, 0x14));
 }
 
+TEST(j1939_utils, j1939_primitive_sizeof) {
+    TEST_ASSERT_EQUAL(16, sizeof(j1939_primitive));
+}
+
 TEST_GROUP_RUNNER(j1939_utils) {
     RUN_TEST_CASE(j1939_utils, canid_parsing_pdu1);
     RUN_TEST_CASE(j1939_utils, canid_parsing_pdu2);
     RUN_TEST_CASE(j1939_utils, canid_build_pdu1);
     RUN_TEST_CASE(j1939_utils, canid_build_pdu2);
+    RUN_TEST_CASE(j1939_utils, j1939_primitive_sizeof);
 }
