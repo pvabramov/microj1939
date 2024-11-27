@@ -77,12 +77,21 @@ typedef struct j1939_callbacks {
  * @brief J1939 frame
  */
 typedef struct j1939_primitive {
-    uint32_t PGN;
+    uint32_t PGN            : 24;
+    uint32_t __reserved__   : 5;
+    uint32_t priority       : 3;
+    uint8_t dest_address;   // DA
+    uint8_t src_address;    // SA
     uint16_t dlc;
-    uint8_t dest_address; // DA
-    uint8_t src_address; // SA
-    uint8_t priority;
-    uint8_t payload[8];
+    union {
+        // legacy name
+        uint8_t payload[8];
+
+        uint8_t     payload_8[8];
+        uint16_t    payload_16[4];
+        uint32_t    payload_32[2];
+        uint64_t    payload_64[1];
+    };
 } j1939_primitive;
 
 
