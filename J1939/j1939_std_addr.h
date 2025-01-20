@@ -51,10 +51,11 @@
 #define J1939_STD_ADDR_VIRTUAL_TERMINAL                         38 // in cab.
 #define J1939_STD_ADDR_MANAGEMENT_COMPUTER1                     39
 #define J1939_STD_ADDR_CAB_DISPLAY                              40
-// 41
+#define J1939_STD_ADDR_CAB_DISPLAY1                             J1939_STD_ADDR_CAB_DISPLAY
+#define J1939_STD_ADDR_RETARDER_EXHAUST1                        41
 #define J1939_STD_ADDR_HEADWAY_CONTROLLER                       42
 #define J1939_STD_ADDR_ON_BOARD_DIAGNOSTIC_UNIT                 43
-// 44
+#define J1939_STD_ADDR_RETARDER_EXHAUST2                        44
 #define J1939_STD_ADDR_ENDURANCE_BRAKING_SYSTEM                 45
 #define J1939_STD_ADDR_HYDRAULIC_PUMP_CONTROLLER                46
 #define J1939_STD_ADDR_SUSPENSION_SYSTEM_CONTROLLER1            47
@@ -71,12 +72,45 @@
 #define J1939_STD_ADDR_PASSENGER_OPERATOR_CLIMATE_CONTROL2      58
 #define J1939_STD_ADDR_TRANSMISSION_DISPLAY_PRIMARY             59
 #define J1939_STD_ADDR_TRANSMISSION_DISPLAY_SECONDARY           60
-#define J1939_STD_ADDR_SUSPENSION_SYSTEM_CONTROLLER2            61
-#define J1939_STD_ADDR_INFORMATION_SYSTEM_CONTROLLER1           62
-#define J1939_STD_ADDR_RAMP_CONTROL                             63
-// 64-127 Reserved for future assignment by SAE
+#define J1939_STD_ADDR_EXHAUST_EMISSION_CONTROLLER              61
+#define J1939_STD_ADDR_VEHICLE_DYNAMIC_STABILITY_CONTROLLER     62
+#define J1939_STD_ADDR_OIL_SENSOR                               63
+#define J1939_STD_ADDR_SUSPENSION_SYSTEM_CONTROLLER2            64
+#define J1939_STD_ADDR_INFORMATION_SYSTEM_CONTROLLER1           65
+#define J1939_STD_ADDR_RAMP_CONTROL                             66
+#define J1939_STD_ADDR_CLUTCH_OR_CONVERTER_UNIT                 67
+#define J1939_STD_ADDR_AUX_HEATER1                              68
+#define J1939_STD_ADDR_AUX_HEATER2                              69
+#define J1939_STD_ADDR_ENGINE_VALVE_CONTROLLER                  70
+#define J1939_STD_ADDR_CHASSIS_CONTROLLER1                      71
+#define J1939_STD_ADDR_CHASSIS_CONTROLLER2                      72
+#define J1939_STD_ADDR_PROPULSION_BATTERY_CHARGER               73
+#define J1939_STD_ADDR_COMM_UNIT_CELLUAR                        74
+#define J1939_STD_ADDR_COMM_UNIT_SATELLITE                      75
+#define J1939_STD_ADDR_COMM_UNIT_RADIO                          76
+#define J1939_STD_ADDR_STEERING_COLUMN_UNIT                     77
+#define J1939_STD_ADDR_FAN_DRIVER_CONTROLLER                    78
+#define J1939_STD_ADDR_SEAT_CONTROL2                            79
+#define J1939_STD_ADDR_PARKING_BRAKE_CONTROLLER                 80
+#define J1939_STD_ADDR_AFTERTREATMENT_SYSTEM_GAS_INTAKE1        81
+#define J1939_STD_ADDR_AFTERTREATMENT_SYSTEM_GAS_OUTLET1        82
+#define J1939_STD_ADDR_SAFETY_RESTRAINT_SYSTEM1                 83
+#define J1939_STD_ADDR_CAB_DISPLAY2                             84
+#define J1939_STD_ADDR_DIESEL_PARTICULATE_FILTER_CONTROLLER     85
+#define J1939_STD_ADDR_AFTERTREATMENT_SYSTEM_GAS_INTAKE2        86
+#define J1939_STD_ADDR_AFTERTREATMENT_SYSTEM_GAS_OUTLET2        87
+#define J1939_STD_ADDR_SAFETY_RESTRAINT_SYSTEM2                 88
+#define J1939_STD_ADDR_ATMOSPHERIC_SENSOR                       89
+#define J1939_STD_ADDR_POWERTRAIN_CONTROL_MODULE                90
+#define J1939_STD_ADDR_POWER_SYSTEMS_MANAGER                    91
+#define J1939_STD_ADDR_ENGINE_INJECTION_CONTROL_MODULE          92
+#define J1939_STD_ADDR_FIRE_PROTECTION_SYSTEM                   93
+#define J1939_STD_ADDR_DRIVER_IMPAIRMENT_DEVICE                 94
+#define J1939_STD_ADDR_SECC                                     95 // Supply Equipment Communication Controller (SECC)
+#define J1939_STD_ADDR_VACC                                     96 // Vehicle Adapter Communication Controller (VACC)
+// 97-127 Reserved for future assignment by SAE
 // 128-247 Industry Group Specific (see Tables B3 - B7, one per industry group)
-// 248 Reserved for future use
+#define J1939_STD_ADDR_FILE_SERVER_OR_PRINTER                   248
 #define J1939_STD_ADDR_OFF_BOARD_DIAGNOSTIC_SERVICE_TOOL1       249
 #define J1939_STD_ADDR_OFF_BOARD_DIAGNOSTIC_SERVICE_TOOL2       250
 #define J1939_STD_ADDR_ON_BOARD_DATA_LOGGER                     251
