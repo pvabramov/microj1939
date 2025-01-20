@@ -1,6 +1,6 @@
 /**
  * @file j1939.h
- * 
+ *
  * @brief
  */
 
@@ -19,8 +19,16 @@
 extern "C" {
 #endif
 
+
+typedef struct j1939_init_conf {
+    const j1939_canlink *canlink;
+    const j1939_bsp *bsp;
+    const j1939_callbacks *callbacks;
+} j1939_init_conf;
+
+
 // must be called in main thread
-int j1939_initialize(uint8_t index, const j1939_canlink *const canlink, const j1939_bsp *const bsp, const j1939_callbacks *const callbacks);
+int j1939_initialize(uint8_t index, const j1939_init_conf *const init_conf);
 // must be called in logic thread, no thread safe
 int j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name *const CA_name);
 

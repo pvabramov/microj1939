@@ -29,29 +29,33 @@ j1939_handle __j1939_handles[J1939_MAX_HANDLES_NUM];
 /**
  * @brief
  */
-int j1939_initialize(uint8_t index, const j1939_canlink *const canlink, const j1939_bsp *const bsp, const j1939_callbacks *const callbacks) {
+int j1939_initialize(uint8_t index, const j1939_init_conf *const init_conf) {
 
     if (index >= J1939_MAX_HANDLES_NUM) {
         return -EINVAL;
     }
 
-    if (canlink == NULL) {
+    if (init_conf == NULL) {
         return -EINVAL;
     }
 
-    if (canlink->send == NULL) {
+    if (init_conf->canlink == NULL) {
         return -EINVAL;
     }
 
-    if (bsp == NULL) {
+    if (init_conf->canlink->send == NULL) {
         return -EINVAL;
     }
 
-    if (bsp->gettime == NULL) {
+    if (init_conf->bsp == NULL) {
         return -EINVAL;
     }
 
-    if (callbacks == NULL) {
+    if (init_conf->bsp->gettime == NULL) {
+        return -EINVAL;
+    }
+
+    if (init_conf->callbacks == NULL) {
         return -EINVAL;
     }
 
@@ -66,9 +70,9 @@ int j1939_initialize(uint8_t index, const j1939_canlink *const canlink, const j1
 
     barrier();
 
-    handle->canlink     = *canlink;
-    handle->bsp         = *bsp;
-    handle->callbacks   = *callbacks;
+    handle->canlink     = *init_conf->canlink;
+    handle->bsp         = *init_conf->bsp;
+    handle->callbacks   = *init_conf->callbacks;
 
     j1939_rx_tx_error_fifo_init(&handle->tx_error_fifo);
     j1939_rx_tx_error_fifo_init(&handle->rx_error_fifo);
@@ -218,7 +222,7 @@ int j1939_handle_transmiting(uint8_t index) {
 
 /**
  * @brief
- * 
+ *
  * @return
  */
 static int __process_tx(j1939_phandle phandle) {
@@ -253,7 +257,7 @@ static int __process_tx(j1939_phandle phandle) {
 
 /**
  * @brief
- * 
+ *
  * @return
  */
 static int __process_rx(j1939_phandle phandle) {
@@ -342,9 +346,9 @@ static int __process_errors(j1939_phandle phandle, j1939_rx_tx_error_fifo *const
 
 /**
  * @brief
- * 
+ *
  * @param the_time
- * 
+ *
  * @return
  */
 static inline int __j1939_process(uint8_t index, uint32_t the_time) {
@@ -406,7 +410,7 @@ j1939_claim_status j1939_get_claim_status(uint8_t index) {
 
 /**
  * @brief
- * 
+ *
  * @return
  */
 int j1939_process(uint8_t index) {

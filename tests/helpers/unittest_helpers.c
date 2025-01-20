@@ -61,11 +61,11 @@ static const j1939_canlink canlink = {
 
 int unittest_helpers_setup(uint8_t index) {
     __the_time = 0;
-    
+
     if (pipe2(__sent_pipes, O_DIRECT | O_NONBLOCK) < 0) {
         return -1;
     }
-    
+
     if (pipe2(__recv_pipes, O_DIRECT | O_NONBLOCK) < 0) {
         return -1;
     }
@@ -80,9 +80,13 @@ int unittest_helpers_setup(uint8_t index) {
 
     unittest_set_cannot_claim_status(0);
 
-    j1939_initialize(index, &canlink, &bsp, &cb);
-    
-    return 0;
+    const j1939_init_conf init_conf = {
+        .canlink = &canlink,
+        .bsp = &bsp,
+        .callbacks = &cb,
+    };
+
+    return j1939_initialize(index, &init_conf);
 }
 
 
@@ -105,7 +109,7 @@ void unittest_helpers_cleanup(void) {
 
     close_quietly(&__recv_pipes[PIPE_RD]);
     close_quietly(&__recv_pipes[PIPE_WR]);
-    
+
     close_quietly(&__claim_pipes[PIPE_RD]);
     close_quietly(&__claim_pipes[PIPE_WR]);
 
@@ -186,7 +190,7 @@ static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, con
 int unittest_canlink_send(uint8_t index, const j1939_primitive *const primitive) {
     if (__sent_pipes[PIPE_WR] < 0 || index != CAN_INDEX)
         return -1;
-        
+
     int error = write(__sent_pipes[PIPE_WR], primitive, sizeof(j1939_primitive));
     if (error < 0) {
         return error;
@@ -198,16 +202,16 @@ int unittest_canlink_send(uint8_t index, const j1939_primitive *const primitive)
 
 int unittest_get_output(j1939_primitive *f) {
     j1939_primitive frame;
-    
+
     if (__sent_pipes[PIPE_RD] < 0)
         return -1;
-        
+
     if (read(__sent_pipes[PIPE_RD], &frame, sizeof(j1939_primitive)) < 0)
         return -2;
-    
+
     if (f)
         *f = frame;
-    
+
     return 0;
 }
 
