@@ -18,6 +18,7 @@
 #include <J1939/private/j1939_network.h>
 #include <J1939/private/j1939_tp_mgr.h>
 #include <J1939/private/j1939_send_lock.h>
+#include <J1939/private/j1939_rand.h>
 
 
 /**
@@ -58,6 +59,8 @@ int j1939_initialize(uint8_t index, const j1939_init_conf *const init_conf) {
     if (init_conf->callbacks == NULL) {
         return -EINVAL;
     }
+
+    jsrand(init_conf->rand_seed);
 
     j1939_handle *const handle = &__j1939_handles[index];
 

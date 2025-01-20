@@ -3,7 +3,7 @@
 
 #define RAND_LOCAL_MAX 2147483647L
 
-static volatile uint32_t __jrand_next = (uint32_t)J1939_RAND_SEED;
+static volatile uint32_t __jrand_next;
 
 /*
  * Redefinition of rand() and srand() standard C functions.
@@ -13,7 +13,7 @@ static volatile uint32_t __jrand_next = (uint32_t)J1939_RAND_SEED;
 
 void jsrand(uint32_t seed) {
     if (seed == 0) {
-        __jrand_next = 1;
+        __jrand_next = J1939_RAND_SEED;
     } else {
         __jrand_next = seed;
     }

@@ -26,6 +26,7 @@ typedef struct j1939_init_conf {
     const j1939_callbacks *callbacks;
 
     int slave_mode;         // the mode that doesn't send control messages but sends application messages only
+    uint32_t rand_seed;
 } j1939_init_conf;
 
 
