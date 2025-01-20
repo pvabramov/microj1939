@@ -51,7 +51,7 @@
 #define J1939_STD_ADDR_VIRTUAL_TERMINAL                         38 // in cab.
 #define J1939_STD_ADDR_MANAGEMENT_COMPUTER1                     39
 #define J1939_STD_ADDR_CAB_DISPLAY                              40
-#define J1939_STD_ADDR_CAB_DISPLAY_SPRAYING                     41
+// 41
 #define J1939_STD_ADDR_HEADWAY_CONTROLLER                       42
 #define J1939_STD_ADDR_ON_BOARD_DIAGNOSTIC_UNIT                 43
 // 44
