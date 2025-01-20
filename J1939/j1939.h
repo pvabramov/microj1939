@@ -24,6 +24,8 @@ typedef struct j1939_init_conf {
     const j1939_canlink *canlink;
     const j1939_bsp *bsp;
     const j1939_callbacks *callbacks;
+
+    int slave_mode;         // the mode that doesn't send control messages but sends application messages only
 } j1939_init_conf;
 
 

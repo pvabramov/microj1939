@@ -1,6 +1,6 @@
 /**
  * @file j1939_private.h
- * 
+ *
  * @brief
  */
 
@@ -12,6 +12,9 @@
 
 #include <J1939/j1939_utils.h>
 #include "j1939_private_types.h"
+
+
+#define IS_NORMAL_MODE(phandle)         (!(phandle)->slave_mode)
 
 /* Optimization barrier */
 #ifndef barrier
@@ -51,8 +54,8 @@ extern "C" {
 
 /**
  * @brief
- * 
- * @return 
+ *
+ * @return
  */
 static inline uint8_t U8_MIN(uint8_t a, uint8_t b) {
     return (a < b) ? a : b;
@@ -60,11 +63,11 @@ static inline uint8_t U8_MIN(uint8_t a, uint8_t b) {
 
 
 /**
- * @brief 
- * 
- * @param a 
- * @param b 
- * @return uint16_t 
+ * @brief
+ *
+ * @param a
+ * @param b
+ * @return uint16_t
  */
 static inline uint16_t U16_MIN(uint16_t a, uint16_t b) {
     return (a < b) ? a : b;

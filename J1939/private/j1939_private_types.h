@@ -11,7 +11,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 /**
  * @brief
@@ -32,6 +32,8 @@ typedef enum j1939_state {
  */
 typedef struct j1939_handle {
     int index;
+
+    int slave_mode;
 
     int oneshot;
     uint32_t last_time;

@@ -12,7 +12,7 @@ extern "C" {
 
 /**
  * @brief
- * 
+ *
  * J1939-21 (2006), figure 21, Format of Messages For Transport Protocol
  */
 typedef enum j1939_tp_cm_format {
@@ -26,7 +26,7 @@ typedef enum j1939_tp_cm_format {
 
 /**
  * @brief
- * 
+ *
  * J1939-21 (2006), table 7, Connection Abort Reason
  * J1939-21 (2022), table 6, Connection Abort Reason
  */
@@ -103,7 +103,7 @@ typedef struct __attribute__((__packed__)) j1939_tp_cm_BAM_control {
     uint8_t __reserved__[1];
 } j1939_tp_cm_BAM_control;
 
-    
+
 /**
  * @brief
  */
@@ -130,17 +130,17 @@ typedef struct __attribute__((__packed__)) j1939_tp_dt {
     uint8_t seq_num;
     uint8_t payload[J1939_MULTIPACKET_DATA_SZ];
 } j1939_tp_dt;
-    
+
 
 /**
  * @brief
- * 
+ *
  * @param total_msg_sz
  * @param total_pkt_num
  * @param max_pkt_num
  * @param PGN
- * 
- * @return 
+ *
+ * @return
  */
 static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t total_pkt_num, uint8_t max_pkt_num, uint32_t PGN) {
 #pragma GCC diagnostic push
@@ -159,12 +159,12 @@ static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t
 
 /**
  * @brief
- * 
+ *
  * @param pkt_num
  * @param pkt_next
  * @param PGN
- * 
- * @return 
+ *
+ * @return
  */
 static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_next, uint32_t PGN) {
 #pragma GCC diagnostic push
@@ -183,12 +183,12 @@ static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_n
 
 /**
  * @brief
- * 
+ *
  * @param total_msg_sz
  * @param total_pkt_num
  * @param PGN
- * 
- * @return 
+ *
+ * @return
  */
 static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN) {
 #pragma GCC diagnostic push
@@ -208,11 +208,11 @@ static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_
 
 /**
  * @brief
- * 
+ *
  * @param reason
  * @param PGN
- * 
- * @return 
+ *
+ * @return
  */
 static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint8_t role, uint32_t PGN) {
 #pragma GCC diagnostic push
@@ -231,12 +231,12 @@ static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint8_t
 
 /**
  * @brief
- * 
+ *
  * @param total_msg_sz
  * @param total_pkt_num
  * @param PGN
- * 
- * @return 
+ *
+ * @return
  */
 static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN) {
 #pragma GCC diagnostic push
@@ -255,12 +255,12 @@ static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t
 
 /**
  * @brief
- * 
+ *
  * @param src_addr
  * @param dst_addr
  * @param tp_dt
- * 
- * @return 
+ *
+ * @return
  */
 static inline int __send_TPDT(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_dt *const tp_dt) {
     j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPDT,
@@ -268,18 +268,18 @@ static inline int __send_TPDT(j1939_phandle phandle, uint8_t src_addr, uint8_t d
                                                       src_addr, dst_addr,
                                                       J1939_STD_PGN_TPDT_DLC,
                                                       tp_dt);
-    return __j1939_send_lock(phandle, &primitive);
+    return __j1939_send_control(phandle, &primitive);
 }
 
 
 /**
  * @brief
- * 
+ *
  * @param src_addr
  * @param dst_addr
  * @param tp_cm_control
- * 
- * @return 
+ *
+ * @return
  */
 static inline int __send_TPCM(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm_control) {
     j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPCM,
@@ -287,13 +287,13 @@ static inline int __send_TPCM(j1939_phandle phandle, uint8_t src_addr, uint8_t d
                                                       src_addr, dst_addr,
                                                       J1939_STD_PGN_TPCM_DLC,
                                                       tp_cm_control);
-    return __j1939_send_lock(phandle, &primitive);
+    return __j1939_send_control(phandle, &primitive);
 }
 
 
 /**
  * @brief
- * 
+ *
  * @param src_addr
  * @param dst_addr
  * @param PGN
@@ -308,7 +308,7 @@ static inline int __send_CTS(j1939_phandle phandle, uint8_t src_addr, uint8_t ds
 
 /**
  * @brief
- * 
+ *
  * @param tp_mgr_ctx
  * @param src_addr
  * @param dst_addr
@@ -323,7 +323,7 @@ static inline int __send_Conn_Abort(j1939_phandle phandle, uint8_t src_addr, uin
 
 /**
  * @brief
- * 
+ *
  * @param tp_mgr_ctx
  * @param src_addr
  * @param dst_addr

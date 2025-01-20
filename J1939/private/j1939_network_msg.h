@@ -50,7 +50,7 @@ static inline void __send_Claim_Address(j1939_phandle phandle, uint8_t address) 
     const j1939_primitive aclm_primitive =
         j1939_primitive_build(J1939_STD_PGN_ACLM, J1939_GENERIC_PRIORITY,
                               address, J1939_GLOBAL_ADDRESS, J1939_STD_PGN_ACLM_DLC, &phandle->CA_name);
-    __j1939_send_lock(phandle, &aclm_primitive);
+    __j1939_send_control(phandle, &aclm_primitive);
 }
 
 
@@ -80,7 +80,7 @@ static inline void __send_ACK(j1939_phandle phandle, j1939_ack_control ack_type,
         j1939_primitive_build(J1939_STD_PGN_ACKM, J1939_GENERIC_PRIORITY,
                               phandle->address, J1939_GLOBAL_ADDRESS,
                               J1939_STD_PGN_ACKM_DLC, &ack_body);
-    __j1939_send_lock(phandle, &ackm_primitive);
+    __j1939_send_control(phandle, &ackm_primitive);
 }
 
 #ifdef __cplusplus

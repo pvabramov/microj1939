@@ -65,6 +65,8 @@ int j1939_initialize(uint8_t index, const j1939_init_conf *const init_conf) {
 
     handle->index = index;
 
+    handle->slave_mode = init_conf->slave_mode;
+
     handle->claim_status = CLAIM_ADDRESS_UNKNOWN;
     handle->state = NOT_STARTED;
 
