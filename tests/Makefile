@@ -21,7 +21,7 @@ OBJS            := $(SRCS:%.c=%.o)
 
 CFLAGS_INCS     := $(INCDIRS:%=-I%)
 CFLAGS_DEFS     := $(DEFINES:%=-D%)
-CFLAGS          := -O2 -std=gnu11 -Wall -Wextra $(CFLAGS_DEFS) $(CFLAGS_INCS)
+CFLAGS          := -Og -g3 -std=gnu11 -Wall -Wextra $(CFLAGS_DEFS) $(CFLAGS_INCS)
 
 LDFLAGS         := -L.. -lj1939 -lgcov
 
