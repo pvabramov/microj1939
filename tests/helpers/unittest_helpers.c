@@ -24,6 +24,7 @@
 static void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 static int __user_j1939_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
+static int __user_j1939_node_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 
 uint32_t unittest_get_time(uint8_t index);
 int unittest_canlink_send(uint8_t index, const j1939_primitive *const primitive);
@@ -37,6 +38,7 @@ static int __sent_pipes[2] = { -1, -1 };
 static int __recv_pipes[2] = { -1, -1 };
 static int __claim_pipes[2] = { -1, -1 };
 static int __cannot_claim_pipes[2] = { -1, -1 };
+static int __node_claim_pipes[2] = { -1, -1 };
 
 static pthread_mutex_t __lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 
@@ -44,7 +46,8 @@ static pthread_mutex_t __lock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static const j1939_callbacks cb = {
     .rx_handler = __user_j1939_rx_handler,
     .claim_handler = __user_j1939_claim_handler,
-    .cannot_claim_handler = __user_j1939_cannot_claim_handler
+    .cannot_claim_handler = __user_j1939_cannot_claim_handler,
+    .node_claim_handler = __user_j1939_node_claim_handler,
 };
 
 
@@ -75,6 +78,10 @@ int unittest_helpers_setup(uint8_t index) {
     }
 
     if (pipe2(__cannot_claim_pipes, O_DIRECT | O_NONBLOCK) < 0) {
+        return -1;
+    }
+
+    if (pipe2(__node_claim_pipes, O_DIRECT | O_NONBLOCK) < 0) {
         return -1;
     }
 
@@ -115,6 +122,9 @@ void unittest_helpers_cleanup(void) {
 
     close_quietly(&__cannot_claim_pipes[PIPE_RD]);
     close_quietly(&__cannot_claim_pipes[PIPE_WR]);
+
+    close_quietly(&__node_claim_pipes[PIPE_RD]);
+    close_quietly(&__node_claim_pipes[PIPE_WR]);
 }
 
 
@@ -184,6 +194,19 @@ static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, con
     cannot_claim_status = 0;
 
     return status;
+}
+
+
+static int __user_j1939_node_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name) {
+    unittest_j1939_claim_msg msg;
+
+    msg.index = index;
+    msg.address = address;
+    msg.name = *name;
+
+    write(__node_claim_pipes[PIPE_WR], &msg, sizeof(msg));
+
+    return 0;
 }
 
 
@@ -295,4 +318,27 @@ int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg) {
     }
 
     return 0;
+}
+
+
+unsigned unittest_get_nodes(unittest_j1939_claim_msg *nodes) {
+
+    if (__node_claim_pipes[PIPE_RD] < 0) {
+        return 0;
+    }
+
+    unsigned count = 0;
+
+    while (1) {
+        unittest_j1939_claim_msg node;
+
+        int rd = read(__node_claim_pipes[PIPE_RD], &node, sizeof(node));
+        if (rd < 0)
+            break;
+
+        nodes[count] = node;
+        ++count;
+    }
+
+    return count;
 }

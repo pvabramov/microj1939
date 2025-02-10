@@ -42,4 +42,6 @@ int unittest_get_claim(unittest_j1939_claim_msg *msg);
 void unittest_set_cannot_claim_status(int status);
 int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg);
 
+unsigned unittest_get_nodes(unittest_j1939_claim_msg *nodes);
+
 #endif /* UNITTEST_HELPERS_H_ */
