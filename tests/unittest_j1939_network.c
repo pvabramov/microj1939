@@ -91,9 +91,6 @@ TEST(j1939_network, observe_nodes) {
 
     j1939_process(CAN_INDEX);
 
-    /* next tick */
-    unittest_add_time(20);
-
     TEST_ASSERT_EQUAL(4, unittest_get_nodes(nodes));
 
     TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[0].index);
@@ -111,6 +108,18 @@ TEST(j1939_network, observe_nodes) {
     TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[3].index);
     TEST_ASSERT_EQUAL(254,                          nodes[3].address);
     TEST_ASSERT_EQUAL_UINT64(0x0101010101010101,    nodes[3].name.name);
+
+    /* next tick */
+    unittest_add_time(1000);
+
+    /* observing timeout has been occured, now we should ignore Claim Address messages not addressed to us */
+    j1939_process(CAN_INDEX);
+
+    unittest_post_input(CAN_INDEX, 238 << 8, 0xFF, 0x01, 8,
+        /* NAME */
+        01, 02, 00, 00, 00, 00, 00, 00);
+
+    TEST_ASSERT_EQUAL(0, unittest_get_nodes(nodes));
 }
 
 
