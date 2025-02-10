@@ -43,7 +43,7 @@ endif
 
 # C flags
 CFLAGS ?= -O0 -g
-CFLAGS := -pipe -std=c11 -Wall -Wextra -pedantic $(CFLAGS)
+CFLAGS := -pipe -std=c11 -Wall -Wextra -Wunused -Wuninitialized -Wmissing-declarations -Wconversion -Wno-pointer-arith -Wshadow -Wlogical-op -Waggregate-return -Wfloat-equal -Wignored-qualifiers -pedantic $(CFLAGS)
 
 # flags required for dependency generation; passed to compilers
 DEPFLAGS = -MT $@ -MD -MP -MF $(DEPDIR)/$*.Td
