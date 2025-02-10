@@ -246,43 +246,44 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
             const int is_our_addr =
                 (frame->src_address != J1939_NULL_ADDRESS) &&
                 (frame->src_address == phandle->preferred_address);
-            const j1939_CA_name *their_CA_name;
-            int cannot_claim;
-            int undefined_behavior;
 
-            if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
-                return 0;
-            }
+            if (is_our_addr && frame->dlc == J1939_STD_PGN_ACLM_DLC) {
+                int cannot_claim;
+                int undefined_behavior;
 
-            their_CA_name = (const j1939_CA_name*) frame->payload_64;
+                const j1939_CA_name *their_CA_name = (const j1939_CA_name*) frame->payload_64;
 
-            cannot_claim        = their_CA_name->name < phandle->CA_name.name;
-            undefined_behavior  = their_CA_name->name == phandle->CA_name.name;
+                cannot_claim        = their_CA_name->name < phandle->CA_name.name;
+                undefined_behavior  = their_CA_name->name == phandle->CA_name.name;
 
-            /*
-            SAE J1939-81-2017
+                /*
+                SAE J1939-81-2017
 
-            4.5.3.3 Response to Address Claims of Own Address
+                4.5.3.3 Response to Address Claims of Own Address
 
-            A CA shall retransmit an address claim if it receives an address claim with a source address that matches its own and if
-            its own NAME is of a lower value (higher priority) than the NAME in the claim it received. If the CA's NAME is of a higher
-            value (lower priority) than the NAME in the claim it received, the CA shall not continue to use that address. (It may send a
-            Cannot Claim Address message or it may attempt to claim a different address.)
-            */
+                A CA shall retransmit an address claim if it receives an address claim with a source address that matches its own and if
+                its own NAME is of a lower value (higher priority) than the NAME in the claim it received. If the CA's NAME is of a higher
+                value (lower priority) than the NAME in the claim it received, the CA shall not continue to use that address. (It may send a
+                Cannot Claim Address message or it may attempt to claim a different address.)
+                */
 
-            if (cannot_claim) {
-                phandle->claim_status = CLAIM_ADDRESS_PROCESSING;
-                phandle->address = J1939_NULL_ADDRESS;
-                phandle->random_timer = CLAIM_RANDOM;
-                /* reset TP MGR in prior of Cannot Claim Address */
-                phandle->tp_mgr_ctx.reset = 1;
+                if (cannot_claim) {
+                    phandle->claim_status = CLAIM_ADDRESS_PROCESSING;
+                    phandle->address = J1939_NULL_ADDRESS;
+                    phandle->random_timer = CLAIM_RANDOM;
+                    /* reset TP MGR in prior of Cannot Claim Address */
+                    phandle->tp_mgr_ctx.reset = 1;
 
-                barrier();
+                    barrier();
 
-                phandle->state = CANNOT_CLAIM_ADDRESS;
-            } else if (!undefined_behavior) {
-                // do the reclaimation of the address
-                __send_Claim_Address(phandle, phandle->address);
+                    phandle->state = CANNOT_CLAIM_ADDRESS;
+                } else if (!undefined_behavior) {
+                    // do the reclaimation of the address
+                    __send_Claim_Address(phandle, phandle->address);
+
+                    /* skip observing part because we won the claiming of address and that node should send Cannot Claim Address */
+                    return 1;
+                }
             }
         }
 
