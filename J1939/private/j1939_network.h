@@ -11,6 +11,8 @@ extern "C" {
 
 extern int j1939_network_setup(j1939_phandle phandle, uint8_t preferred_address, const j1939_CA_name *const name);
 extern int j1939_network_claim_address(j1939_phandle phandle);
+extern int j1939_network_sendrequest(j1939_phandle phandle, uint32_t PGN, uint8_t dst_addr);
+extern int j1939_network_observe(j1939_phandle phandle);
 
 extern int j1939_network_rx_process(j1939_phandle phandle, const j1939_rx_info *const rx_info);
 extern int j1939_network_rx_handler(j1939_phandle phandle, const j1939_primitive * const frame, uint32_t time);

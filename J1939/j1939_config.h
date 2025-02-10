@@ -3,6 +3,10 @@
 
 #include <j1939_conf.h>
 
+#ifndef J1939_OBSERVING_NODES_TIMEOUT
+#   define J1939_OBSERVING_NODES_TIMEOUT    (500)
+#endif
+
 #ifndef J1939_CLAIM_ADDRESS_TIMEOUT
 #   define J1939_CLAIM_ADDRESS_TIMEOUT      (250)
 #endif

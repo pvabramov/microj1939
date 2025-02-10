@@ -46,6 +46,9 @@ int j1939_sendmsg_p(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_
 int j1939_sendmsg(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload);
 int j1939_sendraw(uint8_t index, const j1939_primitive *const primitive);
 
+int j1939_sendrequest(uint8_t index, uint32_t PGN, uint8_t dst_addr);
+int j1939_observenodes(uint8_t index);
+
 // int j1939_write_request(...);
 
 // must be called in process thread or logic thread

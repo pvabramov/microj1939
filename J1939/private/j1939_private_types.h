@@ -34,6 +34,7 @@ typedef struct j1939_handle {
     int index;
 
     int slave_mode;
+    volatile int observing;
 
     int oneshot;
     uint32_t last_time;
@@ -64,6 +65,7 @@ typedef struct j1939_handle {
     int preidle_timer;
     int claim_timer;
     int random_timer;
+    int observer_timer;
 } j1939_handle;
 
 

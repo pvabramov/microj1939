@@ -4,6 +4,9 @@
 #include <J1939/j1939_config.h>
 #include <J1939/j1939_types.h>
 
+#include "j1939_compiler.h"
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -15,10 +18,11 @@ typedef enum j1939_rx_info_type {
     J1939_RX_INFO_TYPE_UNKNOWN      = 0,
     J1939_RX_INFO_TYPE_FRAME        = 1,
     J1939_RX_INFO_TYPE_REQUEST      = 2,
+    J1939_RX_INFO_TYPE_CLAIM        = 3,
     J1939_RX_INFO_TYPE_MULTIPACKET  = 0x80
 } j1939_rx_info_type;
-    
-    
+
+
 /**
  * @brief
  */
@@ -30,11 +34,13 @@ typedef struct {
     uint8_t dst_addr;
     uint32_t PGN;
     uint16_t msg_sz;
+    uint16_t __padding__;
+    /* payload should be aligned to u64 */
     union {
         uint8_t payload[8];
         const void *payload_ptr;
     };
-} j1939_rx_info;
+} j1939_rx_info __aligned(8);
 
 
 /**

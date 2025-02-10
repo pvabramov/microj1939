@@ -186,6 +186,34 @@ int j1939_sendmsg(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz
 
 
 /**
+ * @brief Sends "Request PGN" message
+ *
+ * @param index
+ * @param PGN
+ * @param dst_addr
+ *
+ * @return
+ */
+int j1939_sendrequest(uint8_t index, uint32_t PGN, uint8_t dst_addr) {
+    j1939_handle *handle = &__j1939_handles[index];
+    return j1939_network_sendrequest(handle, PGN, dst_addr);
+}
+
+
+/**
+ * @brief Sends "Request Claim" message in order to get list of nodes
+ *
+ * @param index
+ *
+ * @return
+ */
+int j1939_observenodes(uint8_t index) {
+    j1939_handle *handle = &__j1939_handles[index];
+    return j1939_network_observe(handle);
+}
+
+
+/**
  * @brief
  *
  * @param primitive
@@ -440,7 +468,7 @@ int j1939_handle_receiving(uint8_t index, const j1939_primitive *const frame, ui
 
     const j1939_state state = phandle->state;
 
-    if (state == NOT_STARTED || state == BUS_OFF) {
+    if (state < INITIALIZED) {
         return 0;
     }
 

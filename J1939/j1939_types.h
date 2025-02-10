@@ -68,6 +68,7 @@ typedef struct j1939_callbacks {
     j1939_callback_request_handler request_handler;
     j1939_callback_claim_handler claim_handler; // result is ignored
     j1939_callback_claim_handler cannot_claim_handler;
+    j1939_callback_claim_handler node_claim_handler;
     j1939_callback_rx_tx_error_handler rx_error_handler;
     j1939_callback_rx_tx_error_handler tx_error_handler;
 } j1939_callbacks;

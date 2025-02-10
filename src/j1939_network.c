@@ -16,6 +16,42 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
 static int __rx_handle_PGN_request(j1939_phandle phandle, const j1939_primitive * const frame, uint32_t time);
 
 
+/**
+ * @brief Sends PGN request message
+ *
+ * @param index     The id of J1939 network.
+ * @param PGN       The requested PGN.
+ * @param dst_addr  The destination address of request.
+ */
+int j1939_network_sendrequest(j1939_phandle phandle, uint32_t PGN, uint8_t dst_addr) {
+
+    if (phandle->state < INITIALIZED) {
+        return -1;
+    }
+
+    return __send_Request(phandle, PGN, dst_addr);
+}
+
+
+int j1939_network_observe(j1939_phandle phandle) {
+    int status;
+
+    if (phandle->state < INITIALIZED) {
+        return -1;
+    }
+
+    status = __send_Request(phandle, J1939_STD_PGN_ACLM, J1939_GLOBAL_ADDRESS);
+    if (status < 0) {
+        return status;
+    }
+
+    phandle->observer_timer = J1939_OBSERVING_NODES_TIMEOUT;
+    phandle->observing      = 1;
+
+    return status;
+}
+
+
 int j1939_network_setup(j1939_phandle phandle, uint8_t preferred_address, const j1939_CA_name *const name) {
     const j1939_state state = phandle->state;
 
@@ -81,6 +117,15 @@ int j1939_network_rx_handler(j1939_phandle phandle, const j1939_primitive * cons
 int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
     const j1939_state state = phandle->state;
     int is_active = 0;
+
+    if (state > NOT_STARTED) {
+        if (phandle->observer_timer > 0) {
+            phandle->observer_timer -= (int) t_delta;
+            if (phandle->observer_timer <= 0) {
+                phandle->observing = 0;
+            }
+        }
+    }
 
     if (state == ATEMPT_TO_CLAIM_ADDRESS) {
         if (phandle->claim_timer > 0) {
@@ -152,23 +197,34 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
 
 int j1939_network_rx_process(j1939_phandle phandle, const j1939_rx_info *const rx_info) {
 
-    if (rx_info->type != J1939_RX_INFO_TYPE_REQUEST) {
-        return 0;
+    switch (rx_info->type) {
+        case J1939_RX_INFO_TYPE_REQUEST: {
+            j1939_request_status status;
+
+            if (phandle->callbacks.request_handler) {
+                status = phandle->callbacks.request_handler(phandle->index, rx_info->PGN, rx_info->src_addr, rx_info->dst_addr, rx_info->time);
+            } else {
+                status = J1939_REQ_NOT_SUPPORTED;
+            }
+
+            if ((status != J1939_REQ_HANDLED) && (rx_info->dst_addr != J1939_GLOBAL_ADDRESS)) {
+                __send_ACK(phandle, (j1939_ack_control)status, 0xFF, rx_info->src_addr, rx_info->PGN);
+            }
+
+            return 1;
+        }
+
+        case J1939_RX_INFO_TYPE_CLAIM: {
+
+            if (phandle->callbacks.node_claim_handler) {
+                phandle->callbacks.node_claim_handler(phandle->index, rx_info->src_addr, (const j1939_CA_name *const)&rx_info->payload[0]);
+            }
+
+            return 1;
+        }
     }
 
-    j1939_request_status status;
-
-    if (phandle->callbacks.request_handler) {
-        status = phandle->callbacks.request_handler(phandle->index, rx_info->PGN, rx_info->src_addr, rx_info->dst_addr, rx_info->time);
-    } else {
-        status = J1939_REQ_NOT_SUPPORTED;
-    }
-
-    if ((status != J1939_REQ_HANDLED) && (rx_info->dst_addr != J1939_GLOBAL_ADDRESS)) {
-        __send_ACK(phandle, (j1939_ack_control)status, 0xFF, rx_info->src_addr, rx_info->PGN);
-    }
-
-    return 1;
+    return 0;
 }
 
 
@@ -181,51 +237,69 @@ int j1939_network_rx_process(j1939_phandle phandle, const j1939_rx_info *const r
  */
 static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_primitive * const frame, uint32_t time) {
     const j1939_state state = phandle->state;
+    const int is_ACLM_PGN = frame->PGN == J1939_STD_PGN_ACLM;
     (void)time;
 
-    if (state == ATEMPT_TO_CLAIM_ADDRESS || state == ACTIVE) {
-        /* PDU1 format */
-        const int is_ACLM_PGN = frame->PGN == J1939_STD_PGN_ACLM;
-        const int is_our_addr =
-            (frame->src_address != J1939_NULL_ADDRESS) &&
-            (frame->src_address == phandle->preferred_address);
-        const j1939_CA_name *their_CA_name;
-        int cannot_claim;
-        int undefined_behavior;
+    if (is_ACLM_PGN) {
+        if (state == ATEMPT_TO_CLAIM_ADDRESS || state == ACTIVE) {
+            /* PDU1 format */
+            const int is_our_addr =
+                (frame->src_address != J1939_NULL_ADDRESS) &&
+                (frame->src_address == phandle->preferred_address);
+            const j1939_CA_name *their_CA_name;
+            int cannot_claim;
+            int undefined_behavior;
 
-        if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
-            return 0;
+            if (!is_ACLM_PGN || !is_our_addr || frame->dlc != J1939_STD_PGN_ACLM_DLC) {
+                return 0;
+            }
+
+            their_CA_name = (const j1939_CA_name*) frame->payload_64;
+
+            cannot_claim        = their_CA_name->name < phandle->CA_name.name;
+            undefined_behavior  = their_CA_name->name == phandle->CA_name.name;
+
+            /*
+            SAE J1939-81-2017
+
+            4.5.3.3 Response to Address Claims of Own Address
+
+            A CA shall retransmit an address claim if it receives an address claim with a source address that matches its own and if
+            its own NAME is of a lower value (higher priority) than the NAME in the claim it received. If the CA's NAME is of a higher
+            value (lower priority) than the NAME in the claim it received, the CA shall not continue to use that address. (It may send a
+            Cannot Claim Address message or it may attempt to claim a different address.)
+            */
+
+            if (cannot_claim) {
+                phandle->claim_status = CLAIM_ADDRESS_PROCESSING;
+                phandle->address = J1939_NULL_ADDRESS;
+                phandle->random_timer = CLAIM_RANDOM;
+                /* reset TP MGR in prior of Cannot Claim Address */
+                phandle->tp_mgr_ctx.reset = 1;
+
+                barrier();
+
+                phandle->state = CANNOT_CLAIM_ADDRESS;
+            } else if (!undefined_behavior) {
+                // do the reclaimation of the address
+                __send_Claim_Address(phandle, phandle->address);
+            }
         }
 
-        their_CA_name = (const j1939_CA_name*) frame->payload_64;
+        if (phandle->observing) {
 
-        cannot_claim        = their_CA_name->name < phandle->CA_name.name;
-        undefined_behavior  = their_CA_name->name == phandle->CA_name.name;
+            phandle->observer_timer = J1939_OBSERVING_NODES_TIMEOUT;
 
-        /*
-        SAE J1939-81-2017
-
-        4.5.3.3 Response to Address Claims of Own Address
-
-        A CA shall retransmit an address claim if it receives an address claim with a source address that matches its own and if
-        its own NAME is of a lower value (higher priority) than the NAME in the claim it received. If the CA's NAME is of a higher
-        value (lower priority) than the NAME in the claim it received, the CA shall not continue to use that address. (It may send a
-        Cannot Claim Address message or it may attempt to claim a different address.)
-        */
-
-        if (cannot_claim) {
-            phandle->claim_status = CLAIM_ADDRESS_PROCESSING;
-            phandle->address = J1939_NULL_ADDRESS;
-            phandle->random_timer = CLAIM_RANDOM;
-            /* reset TP MGR in prior of Cannot Claim Address */
-            phandle->tp_mgr_ctx.reset = 1;
-
-            barrier();
-
-            phandle->state = CANNOT_CLAIM_ADDRESS;
-        } else if (!undefined_behavior) {
-            // do the reclaimation of the address
-            __send_Claim_Address(phandle, phandle->address);
+            if (phandle->callbacks.node_claim_handler) {
+                __j1939_receive_notify(phandle, J1939_RX_INFO_TYPE_CLAIM,
+                    J1939_STD_PGN_ACLM,
+                    frame->src_address,
+                    frame->dest_address,
+                    frame->dlc,
+                    frame->payload,
+                    time
+                );
+            }
         }
 
         return 1;

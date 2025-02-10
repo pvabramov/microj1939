@@ -55,6 +55,28 @@ static inline void __send_Claim_Address(j1939_phandle phandle, uint8_t address) 
 
 
 /**
+ * @brief Sends "Request PGN" message.
+ *
+ * @param PGN`
+ * @param address
+ */
+static inline int __send_Request(j1939_phandle phandle, uint32_t PGN, uint8_t address) {
+    uint8_t dst_address = address;
+    uint8_t src_address = phandle->address;
+
+    if (src_address == J1939_NULL_ADDRESS && PGN != J1939_STD_PGN_ACLM) {
+        return -EINVAL;
+    }
+
+    const j1939_primitive reqm_primitive =
+        j1939_primitive_build(J1939_STD_PGN_RQST, J1939_GENERIC_PRIORITY,
+            src_address, dst_address, J1939_STD_PGN_RQST_DLC, &PGN);
+
+    return __j1939_send_control(phandle, &reqm_primitive);
+}
+
+
+/**
  * @brief
  *
  * @param ack_type
