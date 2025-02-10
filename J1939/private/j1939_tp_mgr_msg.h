@@ -142,18 +142,16 @@ typedef struct __attribute__((__packed__)) j1939_tp_dt {
  *
  * @return
  */
-static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t total_pkt_num, uint8_t max_pkt_num, uint32_t PGN) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-    j1939_tp_cm_control payload = {
-        .control = J1939_TP_CM_RTS,
-        .RTS.total_msg_sz = total_msg_sz,
-        .RTS.total_pkt_num = total_pkt_num,
-        .RTS.max_pkt_num = max_pkt_num
-    };
-    PACK_PGN(PGN, payload.PGN);
-#pragma GCC diagnostic pop
-    return payload;
+static inline j1939_tp_cm_control* __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t total_pkt_num, uint8_t max_pkt_num, uint32_t PGN, j1939_tp_cm_control *const tp) {
+    tp->control             = J1939_TP_CM_RTS;
+
+    tp->RTS.total_msg_sz    = total_msg_sz;
+    tp->RTS.total_pkt_num   = total_pkt_num;
+    tp->RTS.max_pkt_num     = max_pkt_num;
+
+    PACK_PGN(PGN, tp->PGN);
+
+    return tp;
 }
 
 
@@ -166,18 +164,17 @@ static inline j1939_tp_cm_control __new_tp_cm_RTS(uint16_t total_msg_sz, uint8_t
  *
  * @return
  */
-static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_next, uint32_t PGN) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-    j1939_tp_cm_control payload = {
-        .control = J1939_TP_CM_CTS,
-        .CTS.pkt_num = pkt_num,
-        .CTS.pkt_next = pkt_next,
-        .CTS.__reserved__ = { 0xFF, 0xFF }
-    };
-    PACK_PGN(PGN, payload.PGN);
-#pragma GCC diagnostic pop
-    return payload;
+static inline j1939_tp_cm_control* __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_next, uint32_t PGN, j1939_tp_cm_control *const tp) {
+    tp->control = J1939_TP_CM_CTS;
+
+    tp->CTS.pkt_num         = pkt_num;
+    tp->CTS.pkt_next        = pkt_next;
+    tp->CTS.__reserved__[0] = 0xFF;
+    tp->CTS.__reserved__[1] = 0xFF;
+
+    PACK_PGN(PGN, tp->PGN);
+
+    return tp;
 }
 
 
@@ -190,19 +187,16 @@ static inline j1939_tp_cm_control __new_tp_cm_CTS(uint8_t pkt_num, uint8_t pkt_n
  *
  * @return
  */
-static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-    j1939_tp_cm_control payload = {
-        .control = J1939_TP_CM_EndOfMsgACK,
-        .EoMA.total_msg_sz = total_msg_sz,
-        .EoMA.total_pkt_num = total_pkt_num,
-        .EoMA.__reserved__ = { 0xFF },
-        .PGN = PGN
-    };
-    PACK_PGN(PGN, payload.PGN);
-#pragma GCC diagnostic pop
-    return payload;
+static inline j1939_tp_cm_control* __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN, j1939_tp_cm_control *const tp) {
+    tp->control = J1939_TP_CM_EndOfMsgACK;
+
+    tp->EoMA.total_msg_sz       = total_msg_sz;
+    tp->EoMA.total_pkt_num      = total_pkt_num;
+    tp->EoMA.__reserved__[0]    = 0xFF;
+
+    PACK_PGN(PGN, tp->PGN);
+
+    return tp;
 }
 
 
@@ -214,18 +208,17 @@ static inline j1939_tp_cm_control __new_tp_cm_EoMA(uint16_t total_msg_sz, uint8_
  *
  * @return
  */
-static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint8_t role, uint32_t PGN) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-    j1939_tp_cm_control payload = {
-        .control = J1939_TP_CM_Conn_Abort,
-        .Conn_Abort.reason = reason,
-        .Conn_Abort.role = 0xFC | (role & 0x3),
-        .Conn_Abort.__reserved__ = { 0xFF, 0xFF }
-    };
-    PACK_PGN(PGN, payload.PGN);
-#pragma GCC diagnostic pop
-    return payload;
+static inline j1939_tp_cm_control* __new_tp_cm_Conn_Abort(uint8_t reason, uint8_t role, uint32_t PGN, j1939_tp_cm_control *const tp) {
+    tp->control = J1939_TP_CM_Conn_Abort;
+
+    tp->Conn_Abort.reason           = reason;
+    tp->Conn_Abort.role             = 0xFC | (role & 0x3);
+    tp->Conn_Abort.__reserved__[0]  = 0xFF;
+    tp->Conn_Abort.__reserved__[1]  = 0xFF;
+
+    PACK_PGN(PGN, tp->PGN);
+
+    return tp;
 }
 
 
@@ -238,18 +231,16 @@ static inline j1939_tp_cm_control __new_tp_cm_Conn_Abort(uint8_t reason, uint8_t
  *
  * @return
  */
-static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmissing-braces"
-    j1939_tp_cm_control payload = {
-        .control = J1939_TP_CM_BAM,
-        .BAM.total_msg_sz = total_msg_sz,
-        .BAM.total_pkt_num = total_pkt_num,
-        .BAM.__reserved__ = { 0xFF }
-    };
-    PACK_PGN(PGN, payload.PGN);
-#pragma GCC diagnostic pop
-    return payload;
+static inline j1939_tp_cm_control* __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t total_pkt_num, uint32_t PGN, j1939_tp_cm_control *const tp) {
+    tp->control = J1939_TP_CM_BAM;
+
+    tp->BAM.total_msg_sz    = total_msg_sz;
+    tp->BAM.total_pkt_num   = total_pkt_num;
+    tp->BAM.__reserved__[0] = 0xFF;
+
+    PACK_PGN(PGN, tp->PGN);
+
+    return tp;
 }
 
 
@@ -263,12 +254,13 @@ static inline j1939_tp_cm_control __new_tp_cm_BAM(uint16_t total_msg_sz, uint8_t
  * @return
  */
 static inline int __send_TPDT(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_dt *const tp_dt) {
-    j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPDT,
-                                                      J1939_TP_PRIORITY,
-                                                      src_addr, dst_addr,
-                                                      J1939_STD_PGN_TPDT_DLC,
-                                                      tp_dt);
-    return __j1939_send_control(phandle, &primitive);
+    j1939_primitive frame;
+    return __j1939_send_control(
+        phandle,
+        j1939_primitive_build(J1939_STD_PGN_TPDT, J1939_TP_PRIORITY,
+                              src_addr, dst_addr, J1939_STD_PGN_TPDT_DLC, tp_dt, &frame
+        )
+    );
 }
 
 
@@ -282,12 +274,13 @@ static inline int __send_TPDT(j1939_phandle phandle, uint8_t src_addr, uint8_t d
  * @return
  */
 static inline int __send_TPCM(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm_control) {
-    j1939_primitive primitive = j1939_primitive_build(J1939_STD_PGN_TPCM,
-                                                      J1939_TP_PRIORITY,
-                                                      src_addr, dst_addr,
-                                                      J1939_STD_PGN_TPCM_DLC,
-                                                      tp_cm_control);
-    return __j1939_send_control(phandle, &primitive);
+    j1939_primitive frame;
+    return __j1939_send_control(
+        phandle,
+        j1939_primitive_build(J1939_STD_PGN_TPCM, J1939_TP_PRIORITY,
+                              src_addr, dst_addr, J1939_STD_PGN_TPCM_DLC, tp_cm_control, &frame
+        )
+    );
 }
 
 
@@ -301,8 +294,8 @@ static inline int __send_TPCM(j1939_phandle phandle, uint8_t src_addr, uint8_t d
  * @param pkt_next
  */
 static inline int __send_CTS(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t pkt_num, uint8_t pkt_next) {
-    j1939_tp_cm_control payload = __new_tp_cm_CTS(pkt_num, pkt_next, PGN);
-    return __send_TPCM(phandle, src_addr, dst_addr, &payload);
+    j1939_tp_cm_control tp;
+    return __send_TPCM(phandle, src_addr, dst_addr, __new_tp_cm_CTS(pkt_num, pkt_next, PGN, &tp));
 }
 
 
@@ -316,8 +309,8 @@ static inline int __send_CTS(j1939_phandle phandle, uint8_t src_addr, uint8_t ds
  * @param reason
  */
 static inline int __send_Conn_Abort(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint8_t reason, uint8_t role) {
-    j1939_tp_cm_control payload = __new_tp_cm_Conn_Abort(reason, role, PGN);
-    return __send_TPCM(phandle, src_addr, dst_addr, &payload);
+    j1939_tp_cm_control tp;
+    return __send_TPCM(phandle, src_addr, dst_addr, __new_tp_cm_Conn_Abort(reason, role, PGN, &tp));
 }
 
 
@@ -332,8 +325,8 @@ static inline int __send_Conn_Abort(j1939_phandle phandle, uint8_t src_addr, uin
  * @param total_pkt_num
  */
 static inline int __send_EoMA(j1939_phandle phandle, uint8_t src_addr, uint8_t dst_addr, uint32_t PGN, uint16_t total_msg_sz, uint8_t total_pkt_num) {
-    j1939_tp_cm_control payload = __new_tp_cm_EoMA(total_msg_sz, total_pkt_num, PGN);
-    return __send_TPCM(phandle, src_addr, dst_addr, &payload);
+    j1939_tp_cm_control tp;
+    return __send_TPCM(phandle, src_addr, dst_addr, __new_tp_cm_EoMA(total_msg_sz, total_pkt_num, PGN, &tp));
 }
 
 

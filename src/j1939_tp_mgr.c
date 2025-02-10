@@ -26,7 +26,7 @@
  * @param tp_mgr_ctx
  */
 void j1939_tp_mgr_init(j1939_tp_mgr_ctx *const tp_mgr_ctx) {
-    register int i;
+    register uint8_t i;
 
     if (!tp_mgr_ctx) {
         return;
@@ -109,7 +109,7 @@ static int __get_free_tp_tx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int bam)
  * @param tp_mgr_ctx
  * @param session
  */
-void __clean_tables(j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *session) {
+static void __clean_tables(j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *session) {
     if (!session) {
         return;
     }
@@ -138,7 +138,7 @@ void __clean_tables(j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *sessio
  *
  * @return
  */
-int __detach_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
+static int __detach_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
     j1939_tp_session *session;
 
     if ((uint32_t)(sid) >= J1939_TP_SESSIONS_NUM) {
@@ -167,13 +167,13 @@ int __detach_tp_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
 
 
 /**
- * @brief 
- * 
- * @param tp_mgr_ctx 
- * @param sid 
- * @return int 
+ * @brief
+ *
+ * @param tp_mgr_ctx
+ * @param sid
+ * @return int
  */
-int __close_tp_session_with_error(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid, j1939_rx_tx_errno error) {
+static int __close_tp_session_with_error(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid, j1939_rx_tx_errno error) {
     j1939_tp_session *session;
 
     if ((uint32_t)(sid) >= J1939_TP_SESSIONS_NUM) {
@@ -216,7 +216,7 @@ int __close_tp_session_with_error(j1939_phandle phandle, j1939_tp_mgr_ctx *const
  *
  * @return
  */
-int __close_tp_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
+static int __close_tp_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid) {
     return __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_SUCCESS);
 }
 
@@ -230,7 +230,7 @@ int __close_tp_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx
  *
  * @return
  */
-j1939_tp_session *__look_at_rx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const uint8_t tab[], uint8_t addr) {
+static j1939_tp_session *__look_at_rx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const uint8_t tab[], uint8_t addr) {
     uint8_t sid;
 
     sid = tab[addr];
@@ -251,7 +251,7 @@ j1939_tp_session *__look_at_rx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const u
  *
  * @return
  */
-j1939_tp_session *__look_at_tx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const uint8_t tab[], uint8_t addr) {
+static j1939_tp_session *__look_at_tx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const uint8_t tab[], uint8_t addr) {
     uint8_t sid;
 
     sid = tab[addr];
@@ -271,7 +271,7 @@ j1939_tp_session *__look_at_tx_table(j1939_tp_mgr_ctx *const tp_mgr_ctx, const u
  * @param src_address
  * @param tp_cm
  */
-void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
+static void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     session->dst_addr               = J1939_GLOBAL_ADDRESS;
     session->src_addr               = src_address;
     session->dir                    = dir;
@@ -295,7 +295,7 @@ void __tp_session_setup_BAM(j1939_tp_session *const session, j1939_tp_session_di
  * @param dst_address
  * @param tp_cm
  */
-void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, uint8_t dst_address, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
+static void __tp_session_setup_RTS(j1939_tp_session *const session, j1939_tp_session_dir dir, uint8_t src_address, uint8_t dst_address, const j1939_tp_cm_control *const tp_cm, uint32_t time) {
     session->dst_addr               = dst_address;
     session->src_addr               = src_address;
     session->dir                    = dir;
@@ -341,10 +341,10 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
 
     if (tp_cm->control == J1939_TP_CM_BAM) {
         __tp_session_setup_BAM(session, J1939_TP_DIR_IN, src_addr, tp_cm, time);
-        tp_mgr_ctx->bam_rx_tab[src_addr] = sid;
+        tp_mgr_ctx->bam_rx_tab[src_addr] = (uint8_t) sid;
     } else {
         __tp_session_setup_RTS(session, J1939_TP_DIR_IN, src_addr, dst_addr, tp_cm, time);
-        tp_mgr_ctx->rts_rx_tab[src_addr] = sid;
+        tp_mgr_ctx->rts_rx_tab[src_addr] = (uint8_t) sid;
     }
 
     barrier();
@@ -388,10 +388,10 @@ static int __open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_m
 
     if (tp_cm->control == J1939_TP_CM_BAM) {
         __tp_session_setup_BAM(session, J1939_TP_DIR_OUT, self_addr, tp_cm, 0 /* on tx there is no time */);
-        tp_mgr_ctx->xxx_tx_tab[J1939_GLOBAL_ADDRESS] = sid;
+        tp_mgr_ctx->xxx_tx_tab[J1939_GLOBAL_ADDRESS] = (uint8_t) sid;
     } else {
         __tp_session_setup_RTS(session, J1939_TP_DIR_OUT, self_addr, dst_addr, tp_cm, 0 /* on tx there is no time */);
-        tp_mgr_ctx->xxx_tx_tab[dst_addr] = sid;
+        tp_mgr_ctx->xxx_tx_tab[dst_addr] = (uint8_t) sid;
     }
 
     return sid;
@@ -761,7 +761,7 @@ static int __tp_mgr_session_timeout_check(j1939_phandle phandle, j1939_tp_sessio
     CRITICAL_SECTION(phandle) {
 
         if (session->transmition_timeout != J1939_TP_TO_INF) {
-            session->transmition_timeout -= t_delta;
+            session->transmition_timeout -= (int) t_delta;
         }
 
         if (session->transmition_timeout < 0) {
@@ -824,7 +824,7 @@ static int __tp_mgr_process_timeout_check(j1939_phandle phandle, uint8_t self_ad
  */
 static int __tp_mgr_process_transmition(j1939_phandle phandle, uint8_t self_addr, j1939_tp_mgr_ctx *const tp_mgr_ctx, j1939_tp_session *const session) {
     j1939_tp_dt tp_dt;
-    unsigned msg_start;
+    uint16_t msg_start;
     unsigned msg_sz_min;
     int is_active;
 
@@ -841,7 +841,7 @@ static int __tp_mgr_process_transmition(j1939_phandle phandle, uint8_t self_addr
 
     memset(&tp_dt, 0xFF, sizeof(j1939_tp_dt));
 
-    msg_start  = (session->pkt_next - 1) * J1939_MULTIPACKET_DATA_SZ;
+    msg_start  = (uint16_t) (session->pkt_next - 1U) * (uint16_t) J1939_MULTIPACKET_DATA_SZ;
     msg_sz_min = U16_MIN(J1939_MULTIPACKET_DATA_SZ, (session->msg_sz - msg_start));
 
     /* copy transmition data into payload */
@@ -948,18 +948,20 @@ int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const 
     }
 
     /* number of packets should be 2 or more */
-    pkt_num = (msg_sz - 1) / J1939_MULTIPACKET_DATA_SZ + 1;
+    pkt_num = (unsigned) (msg_sz - 1U) / J1939_MULTIPACKET_DATA_SZ + 1U;
     if (pkt_num < 2) {
         return -EINVAL;
     }
 
     if (dst_addr == J1939_GLOBAL_ADDRESS) {
-        tp_cm_control = __new_tp_cm_BAM(msg_sz, pkt_num, PGN);
+        __new_tp_cm_BAM(msg_sz, (uint8_t) pkt_num, PGN, &tp_cm_control);
     } else {
-        tp_cm_control = __new_tp_cm_RTS(msg_sz,
-                                        pkt_num,
-                                        U8_MIN(pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS),
-                                        PGN);
+        __new_tp_cm_RTS(msg_sz,
+                        (uint8_t) pkt_num,
+                        U8_MIN((uint8_t) pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS),
+                        PGN,
+                        &tp_cm_control
+        );
     }
 
     CRITICAL_SECTION(phandle) {

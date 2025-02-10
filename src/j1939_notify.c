@@ -24,7 +24,7 @@ int __j1939_receive_notify(j1939_phandle phandle, uint32_t type, uint32_t PGN, u
         rx_info.sid = 255;
     }
 
-    rx_info.type = type;
+    rx_info.type = (uint8_t) type;
     rx_info.msg_sz = msg_sz;
     rx_info.src_addr = src_addr;
     rx_info.dst_addr = dst_addr;
@@ -43,7 +43,7 @@ int __j1939_receive_notify(j1939_phandle phandle, uint32_t type, uint32_t PGN, u
 
 /**
  * @brief
- * 
+ *
  * @param error
  * @param PGN
  * @param dst_addr
@@ -64,13 +64,13 @@ int __j1939_tx_error_notify(j1939_phandle phandle, j1939_rx_tx_errno error, uint
 
 
 /**
- * @brief 
- * 
- * @param error 
- * @param PGN 
- * @param src_addr 
- * @param msg_sz 
- * @return int 
+ * @brief
+ *
+ * @param error
+ * @param PGN
+ * @param src_addr
+ * @param msg_sz
+ * @return int
  */
 int __j1939_rx_error_notify(j1939_phandle phandle, j1939_rx_tx_errno error, uint32_t PGN, uint8_t src_addr, uint16_t msg_sz) {
     if (phandle->callbacks.rx_error_handler) {

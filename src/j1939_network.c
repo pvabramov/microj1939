@@ -138,7 +138,7 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
                 __send_Claim_Address(phandle, phandle->preferred_address);
             }
 
-            phandle->claim_timer -= t_delta;
+            phandle->claim_timer -= (int) t_delta;
 
             if (phandle->claim_timer <= 0) {
                 phandle->address = phandle->preferred_address;
@@ -178,7 +178,7 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
         if (phandle->random_timer > 0) {
             is_active = 1;
 
-            phandle->random_timer -= t_delta;
+            phandle->random_timer -= (int) t_delta;
 
             if (phandle->random_timer <= 0) {
                 phandle->claim_status = CLAIM_ADDRESS_FAILED;

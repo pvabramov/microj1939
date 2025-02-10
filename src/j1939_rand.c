@@ -20,7 +20,7 @@ void jsrand(uint32_t seed) {
 }
 
 int32_t jrand(void) {
-    return (__jrand_next = __jrand_next * 1103515245L + 12345L) % RAND_LOCAL_MAX;
+    return (int32_t) ((__jrand_next = __jrand_next * (uint32_t) 1103515245UL + (uint32_t) 12345UL) % ((uint32_t) RAND_LOCAL_MAX));
 }
 
 

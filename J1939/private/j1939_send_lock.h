@@ -45,9 +45,9 @@ retry:  error = __j1939_canlink_send(phandle, primitive);
 }
 
 
-static inline int __j1939_send_control(j1939_phandle phandle, const j1939_primitive *const j1939_primitive) {
+static inline int __j1939_send_control(j1939_phandle phandle, const j1939_primitive *const frame) {
     if (IS_NORMAL_MODE(phandle)) {
-        return __j1939_send_lock(phandle, j1939_primitive);
+        return __j1939_send_lock(phandle, frame);
     }
     return 0;
 }

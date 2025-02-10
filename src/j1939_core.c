@@ -157,13 +157,11 @@ int j1939_sendmsg_p(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_
     }
 
     if (msg_sz <= J1939_MAX_DL) {
-        j1939_primitive primitive =
-            j1939_primitive_build(PGN,
-                                  priority,
-                                  handle->address, dst_addr,
-                                  msg_sz,
-                                  payload);
-        return __j1939_send_lock(handle, &primitive);
+        j1939_primitive frame;
+        return __j1939_send_lock(
+            handle,
+            j1939_primitive_build(PGN, priority, handle->address, dst_addr, (uint8_t) msg_sz, payload, &frame)
+        );
     }
 
     return j1939_tp_mgr_open_tx_session(handle, &handle->tp_mgr_ctx, PGN, dst_addr, msg_sz, payload);
@@ -266,7 +264,7 @@ static int __process_tx(j1939_phandle phandle) {
 
     barrier();
 
-    for (tx_downcount = j1939_tx_fifo_size(&phandle->tx_fifo); tx_downcount > 0; --tx_downcount) {
+    for (tx_downcount = (int) j1939_tx_fifo_size(&phandle->tx_fifo); tx_downcount > 0; --tx_downcount) {
         j1939_primitive primitive;
 
         if (j1939_tx_fifo_read(&phandle->tx_fifo, &primitive) < 0) {
@@ -302,7 +300,7 @@ static int __process_rx(j1939_phandle phandle) {
 
     barrier();
 
-    max_rx_per_tick = j1939_rx_fifo_size(&phandle->rx_fifo);
+    max_rx_per_tick = (int) j1939_rx_fifo_size(&phandle->rx_fifo);
 
     for (rx_upcount = 0; rx_upcount < max_rx_per_tick; ++rx_upcount) {
         j1939_rx_info rx_info;
@@ -357,7 +355,7 @@ static int __process_errors(j1939_phandle phandle, j1939_rx_tx_error_fifo *const
     int upcount;
     int max_per_tick;
 
-    max_per_tick = j1939_rx_tx_error_fifo_size(fifo);
+    max_per_tick = (int) j1939_rx_tx_error_fifo_size(fifo);
 
     for (upcount = 0; upcount < max_per_tick; ++upcount) {
         j1939_rx_tx_error_info info;
@@ -425,7 +423,7 @@ static inline int __j1939_process(uint8_t index, uint32_t the_time) {
     if (activities > 0) {
         phandle->preidle_timer = J1939_PREIDLE_TIMER;
     } else {
-        phandle->preidle_timer -= t_delta;
+        phandle->preidle_timer -= (int) t_delta;
         if (phandle->preidle_timer < 0) {
             phandle->preidle_timer = 0;
         }

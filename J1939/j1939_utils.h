@@ -8,6 +8,7 @@
 #include "j1939_types.h"
 
 
+#define J1939_PRIORITY_MASK             0x7
 #define J1939_PGN_PDU1_MASK             0x3FF00U    // PDU1 mask
 #define J1939_PGN_PDU2_MASK             0x3FFFFU    // PDU2 mask
 
@@ -109,27 +110,33 @@ static inline uint32_t j1939_canid_build(uint8_t priority, uint32_t PGN, uint8_t
  * @param SA
  * @param DLC
  * @param payload
+ * @param frame
  *
  * @return
  */
-static inline j1939_primitive j1939_primitive_build(uint32_t PGN, uint8_t priority, uint8_t SA, uint8_t DA, uint8_t DLC, const volatile void *payload) {
-    struct j1939_primitive msg = {
-        .PGN            = PGN,
-        .priority       = priority > J1939_MAX_PRIORITY ? J1939_MAX_PRIORITY : priority,
-        .dest_address   = DA,
-        .src_address    = SA,
-        .dlc            = DLC > J1939_MAX_DL ? J1939_MAX_DL : DLC,
-    };
+static inline j1939_primitive* j1939_primitive_build(uint32_t PGN, uint8_t priority, uint8_t SA, uint8_t DA, uint8_t DLC, const volatile void *payload, j1939_primitive *const frame) {
+
+    if (!frame)
+        return NULL;
+
+    if (priority > J1939_MAX_PRIORITY)
+        priority = J1939_MAX_PRIORITY;
+
+    frame->PGN          = PGN & J1939_PGN_PDU2_MASK;
+    frame->priority     = (uint32_t) (priority & J1939_PRIORITY_MASK);
+    frame->dest_address = DA;
+    frame->src_address  = SA;
+    frame->dlc          = DLC > J1939_MAX_DL ? J1939_MAX_DL : DLC;
 
     /* PDU2 format is broadcast message */
     if (j1939_is_PDU2(PGN)) {
-        msg.dest_address = J1939_GLOBAL_ADDRESS;
+        frame->dest_address = J1939_GLOBAL_ADDRESS;
     }
 
-    memcpy(&msg.payload[0], (const void*)payload, msg.dlc);
-    memset(&msg.payload[msg.dlc], J1939_PADDING_DATA, J1939_MAX_DL - msg.dlc);
+    memcpy(&frame->payload[0], (const void*)payload, frame->dlc);
+    memset(&frame->payload[frame->dlc], J1939_PADDING_DATA, J1939_MAX_DL - frame->dlc);
 
-    return msg;
+    return frame;
 }
 
 #ifdef __cplusplus

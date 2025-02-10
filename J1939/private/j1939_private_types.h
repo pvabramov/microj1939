@@ -31,7 +31,7 @@ typedef enum j1939_state {
  * @brief
  */
 typedef struct j1939_handle {
-    int index;
+    uint8_t index;
 
     int slave_mode;
     volatile int observing;

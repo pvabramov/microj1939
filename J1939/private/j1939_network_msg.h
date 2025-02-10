@@ -47,10 +47,13 @@ typedef struct __attribute__((__packed__)) j1939_payload_ack {
  * @param address
  */
 static inline void __send_Claim_Address(j1939_phandle phandle, uint8_t address) {
-    const j1939_primitive aclm_primitive =
+    j1939_primitive aclm_primitive;
+    __j1939_send_control(
+        phandle,
         j1939_primitive_build(J1939_STD_PGN_ACLM, J1939_GENERIC_PRIORITY,
-                              address, J1939_GLOBAL_ADDRESS, J1939_STD_PGN_ACLM_DLC, &phandle->CA_name);
-    __j1939_send_control(phandle, &aclm_primitive);
+                              address, J1939_GLOBAL_ADDRESS, J1939_STD_PGN_ACLM_DLC, &phandle->CA_name, &aclm_primitive
+        )
+    );
 }
 
 
@@ -68,11 +71,14 @@ static inline int __send_Request(j1939_phandle phandle, uint32_t PGN, uint8_t ad
         return -EINVAL;
     }
 
-    const j1939_primitive reqm_primitive =
-        j1939_primitive_build(J1939_STD_PGN_RQST, J1939_GENERIC_PRIORITY,
-            src_address, dst_address, J1939_STD_PGN_RQST_DLC, &PGN);
+    j1939_primitive reqm_primitive;
 
-    return __j1939_send_control(phandle, &reqm_primitive);
+    return __j1939_send_control(
+        phandle,
+        j1939_primitive_build(J1939_STD_PGN_RQST, J1939_GENERIC_PRIORITY,
+                              src_address, dst_address, J1939_STD_PGN_RQST_DLC, &PGN, &reqm_primitive
+        )
+    );
 }
 
 
@@ -98,11 +104,14 @@ static inline void __send_ACK(j1939_phandle phandle, j1939_ack_control ack_type,
      * The Acknowledgment PGN response uses a global destination address even though the PGN that
      * causes Acknowledgment was sent to a specific destination address.
      */
-    const j1939_primitive ackm_primitive =
+    j1939_primitive ackm_primitive;
+
+    __j1939_send_control(
+        phandle,
         j1939_primitive_build(J1939_STD_PGN_ACKM, J1939_GENERIC_PRIORITY,
-                              phandle->address, J1939_GLOBAL_ADDRESS,
-                              J1939_STD_PGN_ACKM_DLC, &ack_body);
-    __j1939_send_control(phandle, &ackm_primitive);
+                              phandle->address, J1939_GLOBAL_ADDRESS, J1939_STD_PGN_ACKM_DLC, &ack_body, &ackm_primitive
+        )
+    );
 }
 
 #ifdef __cplusplus
