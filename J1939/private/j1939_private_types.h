@@ -17,13 +17,13 @@ extern "C" {
  * @brief
  */
 typedef enum j1939_state {
-    FATAL_ERROR = -1,
-    NOT_STARTED = 0,
+    BUS_OFF                 = -255,
+    FATAL_ERROR             = -4,
+    NOT_STARTED             = 0,
     INITIALIZED,
     ATEMPT_TO_CLAIM_ADDRESS,
     CANNOT_CLAIM_ADDRESS,
     ACTIVE,
-    BUS_OFF,
 } j1939_state;
 
 
