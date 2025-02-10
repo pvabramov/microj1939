@@ -11,16 +11,13 @@
 #include <string.h>
 
 #include <J1939/j1939_utils.h>
+
+#include "j1939_compiler.h"
 #include "j1939_private_types.h"
 
 
 #define IS_NORMAL_MODE(phandle)         (!(phandle)->slave_mode)
 
-/* Optimization barrier */
-#ifndef barrier
-/* The "volatile" is due to gcc bugs */
-#define barrier() __asm__ __volatile__("": : :"memory")
-#endif
 
 #ifndef CRITICAL_SECTION
 #define CRITICAL_SECTION(phandle) \
