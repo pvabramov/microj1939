@@ -17,6 +17,23 @@ static int __rx_handle_PGN_request(j1939_phandle phandle, const j1939_primitive 
 
 
 /**
+ * @brief Notifies observed node
+ */
+static void __observed_node(j1939_phandle phandle, uint8_t sa, const void *data, uint32_t time) {
+    if (phandle->callbacks.node_claim_handler) {
+        __j1939_receive_notify(phandle, J1939_RX_INFO_TYPE_CLAIM,
+            J1939_STD_PGN_ACLM,
+            sa,
+            J1939_GLOBAL_ADDRESS,
+            J1939_MAX_DL,
+            data,
+            time
+        );
+    }
+}
+
+
+/**
  * @brief Sends PGN request message
  *
  * @param index     The id of J1939 network.
@@ -40,13 +57,18 @@ int j1939_network_observe(j1939_phandle phandle) {
         return -1;
     }
 
+    phandle->observed_nodes = 0;
+    phandle->observer_state = J1939_OBSERVING_NODES_START;
+    phandle->observer_timer = J1939_OBSERVING_NODES_TIMEOUT;
+
+    barrier();
+
+    phandle->observing          = 1;
+
     status = __send_Request(phandle, J1939_STD_PGN_ACLM, J1939_GLOBAL_ADDRESS);
     if (status < 0) {
         return status;
     }
-
-    phandle->observer_timer = J1939_OBSERVING_NODES_TIMEOUT;
-    phandle->observing      = 1;
 
     return status;
 }
@@ -122,7 +144,14 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
         if (phandle->observer_timer > 0) {
             phandle->observer_timer -= (int) t_delta;
             if (phandle->observer_timer <= 0) {
-                phandle->observing = 0;
+                CRITICAL_SECTION(phandle) {
+                    phandle->observer_timer = 0;
+                    phandle->observer_state = J1939_OBSERVING_NODES_END;
+                    phandle->observing      = 0;
+
+                    /* to notify that an observing process has been ended */
+                    __observed_node(phandle, J1939_NULL_ADDRESS, NULL, phandle->last_time);
+                }
             }
         }
     }
@@ -216,8 +245,16 @@ int j1939_network_rx_process(j1939_phandle phandle, const j1939_rx_info *const r
 
         case J1939_RX_INFO_TYPE_CLAIM: {
 
+            if (phandle->observer_state != J1939_OBSERVING_NODES_END) {
+                ++phandle->observed_nodes;
+            }
+
             if (phandle->callbacks.node_claim_handler) {
-                phandle->callbacks.node_claim_handler(phandle->index, rx_info->src_addr, (const j1939_CA_name *const)&rx_info->payload[0]);
+                phandle->callbacks.node_claim_handler(phandle->index, rx_info->src_addr, (const j1939_CA_name *const)&rx_info->payload[0], phandle->observer_state, phandle->observed_nodes);
+            }
+
+            if (phandle->observer_state == J1939_OBSERVING_NODES_START) {
+                phandle->observer_state = J1939_OBSERVING_NODES_PROC;
             }
 
             return 1;
@@ -288,19 +325,8 @@ static int __rx_handle_PGN_claim_address(j1939_phandle phandle, const j1939_prim
         }
 
         if (phandle->observing) {
-
             phandle->observer_timer = J1939_OBSERVING_NODES_TIMEOUT;
-
-            if (phandle->callbacks.node_claim_handler) {
-                __j1939_receive_notify(phandle, J1939_RX_INFO_TYPE_CLAIM,
-                    J1939_STD_PGN_ACLM,
-                    frame->src_address,
-                    frame->dest_address,
-                    frame->dlc,
-                    frame->payload,
-                    time
-                );
-            }
+            __observed_node(phandle, frame->src_address, frame->payload, time);
         }
 
         return 1;

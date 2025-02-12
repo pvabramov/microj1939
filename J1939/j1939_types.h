@@ -51,6 +51,12 @@ typedef enum j1939_claim_status {
     CLAIM_ADDRESS_UNKNOWN
 } j1939_claim_status;
 
+typedef enum j1939_observing_nodes_state {
+    J1939_OBSERVING_NODES_END,
+    J1939_OBSERVING_NODES_START,
+    J1939_OBSERVING_NODES_PROC,
+} j1939_observing_nodes_state;
+
 ///
 typedef void (*j1939_callback_rx_handler)(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 ///
@@ -59,6 +65,8 @@ typedef void (*j1939_callback_rx_tx_error_handler)(uint8_t index, j1939_rx_tx_er
 typedef j1939_request_status (*j1939_callback_request_handler)(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint32_t time);
 ///
 typedef int (*j1939_callback_claim_handler)(uint8_t index, uint8_t address, const j1939_CA_name *const name);
+///
+typedef int (*j1939_callback_node_handler)(uint8_t index, uint8_t address, const j1939_CA_name *const name, j1939_observing_nodes_state state, unsigned count);
 
 /**
  * @brief
@@ -68,7 +76,7 @@ typedef struct j1939_callbacks {
     j1939_callback_request_handler request_handler;
     j1939_callback_claim_handler claim_handler; // result is ignored
     j1939_callback_claim_handler cannot_claim_handler;
-    j1939_callback_claim_handler node_claim_handler;
+    j1939_callback_node_handler node_claim_handler;
     j1939_callback_rx_tx_error_handler rx_error_handler;
     j1939_callback_rx_tx_error_handler tx_error_handler;
 } j1939_callbacks;

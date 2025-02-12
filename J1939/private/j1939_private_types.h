@@ -66,6 +66,9 @@ typedef struct j1939_handle {
     int claim_timer;
     int random_timer;
     int observer_timer;
+
+    j1939_observing_nodes_state observer_state;
+    unsigned observed_nodes;
 } j1939_handle;
 
 

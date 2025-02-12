@@ -33,8 +33,10 @@ int __j1939_receive_notify(j1939_phandle phandle, uint32_t type, uint32_t PGN, u
 
     if (type == J1939_RX_INFO_TYPE_MULTIPACKET) {
         rx_info.payload_ptr = payload;
-    } else {
+    } else if (payload) {
         memcpy(rx_info.payload, payload, U16_MIN(msg_sz, 8));
+    } else {
+        memset(rx_info.payload, J1939_PADDING_DATA, U16_MIN(msg_sz, 8));
     }
 
     return j1939_rx_fifo_write(&phandle->rx_fifo, &rx_info);
