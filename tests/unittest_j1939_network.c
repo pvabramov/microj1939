@@ -22,7 +22,7 @@ static const j1939_CA_name CA_name = {
 
 
 static j1939_primitive jframe;
-static unittest_j1939_claim_msg nodes[8];
+static unittest_j1939_observing_msg nodes[8];
 
 
 TEST_GROUP(j1939_network);
@@ -96,18 +96,22 @@ TEST(j1939_network, observe_nodes) {
     TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[0].index);
     TEST_ASSERT_EQUAL(0x01,                         nodes[0].address);
     TEST_ASSERT_EQUAL_UINT64(0x0201,                nodes[0].name.name);
+    TEST_ASSERT_EQUAL(J1939_OBSERVING_NODES_START,  nodes[0].state);
 
     TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[1].index);
     TEST_ASSERT_EQUAL(0x02,                         nodes[1].address);
     TEST_ASSERT_EQUAL_UINT64(0x0302,                nodes[1].name.name);
+    TEST_ASSERT_EQUAL(J1939_OBSERVING_NODES_PROC,   nodes[1].state);
 
     TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[2].index);
     TEST_ASSERT_EQUAL(0x03,                         nodes[2].address);
     TEST_ASSERT_EQUAL_UINT64(0x0403,                nodes[2].name.name);
+    TEST_ASSERT_EQUAL(J1939_OBSERVING_NODES_PROC,   nodes[2].state);
 
     TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[3].index);
     TEST_ASSERT_EQUAL(254,                          nodes[3].address);
     TEST_ASSERT_EQUAL_UINT64(0x0101010101010101,    nodes[3].name.name);
+    TEST_ASSERT_EQUAL(J1939_OBSERVING_NODES_PROC,   nodes[3].state);
 
     /* next tick */
     unittest_add_time(1000);
@@ -119,6 +123,21 @@ TEST(j1939_network, observe_nodes) {
         /* NAME */
         01, 02, 00, 00, 00, 00, 00, 00);
 
+    /* the end of obsering should be */
+    TEST_ASSERT_EQUAL(1, unittest_get_nodes(nodes));
+
+    TEST_ASSERT_EQUAL(CAN_INDEX,                    nodes[0].index);
+    TEST_ASSERT_EQUAL(254,                          nodes[0].address);
+    TEST_ASSERT_EQUAL_UINT64(0xFFFFFFFFFFFFFFFF,    nodes[0].name.name);
+    TEST_ASSERT_EQUAL(J1939_OBSERVING_NODES_END,    nodes[0].state);
+
+    /* next tick */
+    unittest_add_time(1000);
+
+    /* observing timeout has been occured, now we should ignore Claim Address messages not addressed to us */
+    j1939_process(CAN_INDEX);
+
+    /* no any observed nodes should be appeared */
     TEST_ASSERT_EQUAL(0, unittest_get_nodes(nodes));
 }
 

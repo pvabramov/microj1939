@@ -24,7 +24,7 @@
 static void __user_j1939_rx_handler(uint8_t index, uint32_t PGN, uint8_t src_address, uint8_t dst_address, uint16_t msg_sz, const void *const payload, uint32_t time);
 static int __user_j1939_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
 static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
-static int __user_j1939_node_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name);
+static int __user_j1939_node_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name, j1939_observing_nodes_state state, unsigned nodes);
 
 uint32_t unittest_get_time(uint8_t index);
 int unittest_canlink_send(uint8_t index, const j1939_primitive *const primitive);
@@ -197,12 +197,14 @@ static int __user_j1939_cannot_claim_handler(uint8_t index, uint8_t address, con
 }
 
 
-static int __user_j1939_node_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name) {
-    unittest_j1939_claim_msg msg;
+static int __user_j1939_node_claim_handler(uint8_t index, uint8_t address, const j1939_CA_name *const name, j1939_observing_nodes_state state, unsigned nodes) {
+    unittest_j1939_observing_msg msg;
 
     msg.index = index;
     msg.address = address;
     msg.name = *name;
+    msg.state = state;
+    msg.nodes = nodes;
 
     write(__node_claim_pipes[PIPE_WR], &msg, sizeof(msg));
 
@@ -321,7 +323,7 @@ int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg) {
 }
 
 
-unsigned unittest_get_nodes(unittest_j1939_claim_msg *nodes) {
+unsigned unittest_get_nodes(unittest_j1939_observing_msg *nodes) {
 
     if (__node_claim_pipes[PIPE_RD] < 0) {
         return 0;
@@ -330,7 +332,7 @@ unsigned unittest_get_nodes(unittest_j1939_claim_msg *nodes) {
     unsigned count = 0;
 
     while (1) {
-        unittest_j1939_claim_msg node;
+        unittest_j1939_observing_msg node;
 
         int rd = read(__node_claim_pipes[PIPE_RD], &node, sizeof(node));
         if (rd < 0)

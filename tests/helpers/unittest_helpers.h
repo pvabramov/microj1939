@@ -26,6 +26,15 @@ typedef struct unittest_j1939_claim_msg {
 } unittest_j1939_claim_msg;
 
 
+typedef struct unittest_j1939_observing_msg {
+    uint8_t index;
+    uint8_t address;
+    j1939_CA_name name;
+    j1939_observing_nodes_state state;
+    unsigned nodes;
+} unittest_j1939_observing_msg;
+
+
 int unittest_helpers_setup(uint8_t index);
 void unittest_helpers_cleanup(void);
 
@@ -42,6 +51,6 @@ int unittest_get_claim(unittest_j1939_claim_msg *msg);
 void unittest_set_cannot_claim_status(int status);
 int unittest_get_cannot_claim(unittest_j1939_claim_msg *msg);
 
-unsigned unittest_get_nodes(unittest_j1939_claim_msg *nodes);
+unsigned unittest_get_nodes(unittest_j1939_observing_msg *nodes);
 
 #endif /* UNITTEST_HELPERS_H_ */
