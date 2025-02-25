@@ -364,14 +364,13 @@ static int __open_rx_session(j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t src_add
  *
  * @return
  */
-static int __open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_addr, const j1939_tp_cm_control *const tp_cm) {
+static int __open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint8_t dst_addr, uint8_t control) {
     int sid;
-    j1939_tp_session *session;
     uint8_t self_addr = phandle->address;
 
-    if (!tp_mgr_ctx || !tp_cm ||
+    if (!tp_mgr_ctx ||
          (self_addr == J1939_NULL_ADDRESS) || (dst_addr == J1939_NULL_ADDRESS) ||
-         (tp_cm->control != J1939_TP_CM_BAM && tp_cm->control != J1939_TP_CM_RTS)) {
+         (control != J1939_TP_CM_BAM && control != J1939_TP_CM_RTS)) {
         return -EINVAL;
     }
 
@@ -379,18 +378,14 @@ static int __open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_m
         return -EISCONN;
     }
 
-    sid = __get_free_tp_tx_session(tp_mgr_ctx, (tp_cm->control == J1939_TP_CM_BAM));
+    sid = __get_free_tp_tx_session(tp_mgr_ctx, (control == J1939_TP_CM_BAM));
     if (sid < 0) {
         return -ENOMEM;
     }
 
-    session = &tp_mgr_ctx->sessions[sid];
-
-    if (tp_cm->control == J1939_TP_CM_BAM) {
-        __tp_session_setup_BAM(session, J1939_TP_DIR_OUT, self_addr, tp_cm, 0 /* on tx there is no time */);
+    if (control == J1939_TP_CM_BAM) {
         tp_mgr_ctx->xxx_tx_tab[J1939_GLOBAL_ADDRESS] = (uint8_t) sid;
     } else {
-        __tp_session_setup_RTS(session, J1939_TP_DIR_OUT, self_addr, dst_addr, tp_cm, 0 /* on tx there is no time */);
         tp_mgr_ctx->xxx_tx_tab[dst_addr] = (uint8_t) sid;
     }
 
@@ -937,50 +932,82 @@ int j1939_tp_mgr_process(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_c
  *
  * @return
  */
-int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, const void *const payload) {
+int j1939_tp_mgr_open_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, void **payload, int start_tx) {
     int sid;
-    j1939_tp_session *session;
-    j1939_tp_cm_control tp_cm_control;
-    unsigned pkt_num;
+    uint8_t control;
 
     if (dst_addr == J1939_NULL_ADDRESS || msg_sz > J1939_MAX_DATA_SZ) {
         return -EINVAL;
     }
 
-    /* number of packets should be 2 or more */
-    pkt_num = (unsigned) (msg_sz - 1U) / J1939_MULTIPACKET_DATA_SZ + 1U;
-    if (pkt_num < 2) {
-        return -EINVAL;
-    }
-
     if (dst_addr == J1939_GLOBAL_ADDRESS) {
-        __new_tp_cm_BAM(msg_sz, (uint8_t) pkt_num, PGN, &tp_cm_control);
+        control = J1939_TP_CM_BAM;
     } else {
-        __new_tp_cm_RTS(msg_sz,
-                        (uint8_t) pkt_num,
-                        U8_MIN((uint8_t) pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS),
-                        PGN,
-                        &tp_cm_control
-        );
+        control = J1939_TP_CM_RTS;
     }
 
     CRITICAL_SECTION(phandle) {
-        sid = __open_tx_session(phandle, tp_mgr_ctx, dst_addr, &tp_cm_control);
+        sid = __open_tx_session(phandle, tp_mgr_ctx, dst_addr, control);
     }
 
     if (sid < 0) {
         return -ENOMEM;
     }
 
-    session = &tp_mgr_ctx->sessions[sid];
+    j1939_tp_session *session = &tp_mgr_ctx->sessions[sid];
 
-    /* copy data to dedicated buffer */
-    memcpy(session->buffer, payload, msg_sz * sizeof(uint8_t));
+    if (start_tx) {
+        /* copy data to dedicated buffer */
+        memcpy(session->buffer, *payload, msg_sz * sizeof(uint8_t));
+
+        int status = j1939_tp_mgr_start_tx_session(phandle, tp_mgr_ctx, PGN, dst_addr, msg_sz, sid);
+        if (status < 0) {
+            j1939_tp_mgr_close_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
+            return status;
+        }
+    } else {
+        *payload = session->buffer;
+    }
+
+    return sid;
+}
+
+
+/**
+ * @brief
+ *
+ * @return
+ */
+int j1939_tp_mgr_start_tx_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, uint32_t PGN, uint8_t dst_addr, uint16_t msg_sz, int sid) {
+    j1939_tp_session *session = &tp_mgr_ctx->sessions[sid];
+    j1939_tp_cm_control tp_cm_control;
+    unsigned pkt_num;
+
+    if (msg_sz < (uint16_t)J1939_TP_MIN_MSG_SZ) {
+        return -EINVAL;
+    }
+
+    /* number of packets should be 2 or more by SAE J1939-21 */
+    pkt_num = (unsigned) (msg_sz - 1U) / J1939_MULTIPACKET_DATA_SZ + 1U;
+    if (pkt_num < 2) {
+        return -EINVAL;
+    }
 
     CRITICAL_SECTION(phandle) {
+        if (dst_addr == J1939_GLOBAL_ADDRESS) {
+            __new_tp_cm_BAM(msg_sz, (uint8_t) pkt_num, PGN, &tp_cm_control);
+            __tp_session_setup_BAM(session, J1939_TP_DIR_OUT, phandle->address, &tp_cm_control, 0 /* on tx there is no time */);
+        } else {
+            __new_tp_cm_RTS(msg_sz,
+                            (uint8_t) pkt_num,
+                            U8_MIN((uint8_t) pkt_num, J1939_TP_MGR_MAX_PACKETS_PER_CTS),
+                            PGN,
+                            &tp_cm_control
+            );
+            __tp_session_setup_RTS(session, J1939_TP_DIR_OUT, phandle->address, dst_addr, &tp_cm_control, 0 /* on tx there is no time */);
+        }
 
         if (__send_TPCM(phandle, session->src_addr, session->dst_addr, &tp_cm_control) < 0) {
-            __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
             CRITICAL_SECTION_EXIT(phandle, -EIO);
         }
 
@@ -1008,6 +1035,22 @@ int j1939_tp_mgr_close_session(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp
 
     CRITICAL_SECTION(phandle) {
         status = __close_tp_session(phandle, tp_mgr_ctx, sid);
+    }
+
+    return status;
+}
+
+
+/**
+ * @brief
+ *
+ * @return
+ */
+int j1939_tp_mgr_close_session_with_error(j1939_phandle phandle, j1939_tp_mgr_ctx *const tp_mgr_ctx, int sid, j1939_rx_tx_errno error) {
+    int status;
+
+    CRITICAL_SECTION(phandle) {
+        status = __close_tp_session_with_error(phandle, tp_mgr_ctx, sid, error);
     }
 
     return status;

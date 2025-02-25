@@ -64,14 +64,14 @@ typedef struct j1939_tp_session {
     volatile uint8_t state;
     uint8_t mode;
     uint8_t dir;
-    
+
     // pkt transmition control fields
     volatile int transmition_timeout;
-    
+
     volatile uint8_t total_pkt_num;
     volatile uint8_t pkt_max;
     volatile uint8_t pkt_next;
-    
+
     // pkt data and info
     uint32_t time;
     uint32_t PGN;

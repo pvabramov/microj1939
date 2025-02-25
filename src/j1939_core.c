@@ -164,7 +164,12 @@ int j1939_sendmsg_p(uint8_t index, uint32_t PGN, uint8_t dst_addr, uint16_t msg_
         );
     }
 
-    return j1939_tp_mgr_open_tx_session(handle, &handle->tp_mgr_ctx, PGN, dst_addr, msg_sz, payload);
+    int status = j1939_tp_mgr_open_tx_session(handle, &handle->tp_mgr_ctx, PGN, dst_addr, msg_sz, (void**)&payload, 1);
+    if (status < 0) {
+        return status;
+    }
+
+    return 0;
 }
 
 
