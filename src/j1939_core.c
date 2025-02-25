@@ -66,6 +66,9 @@ int j1939_initialize(uint8_t index, const j1939_init_conf *const init_conf) {
 
     memset(handle, 0, sizeof(j1939_handle));
 
+    handle->software = init_conf->software;
+    handle->component = init_conf->component;
+
     handle->index = index;
 
     handle->slave_mode = init_conf->slave_mode;
@@ -110,6 +113,30 @@ int j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_nam
             CRITICAL_SECTION_EXIT(handle, -1);
         }
     }
+
+    return 0;
+}
+
+
+/**
+ *
+ */
+int j1939_set_software_identification(uint8_t index, const j1939_software_identification *software) {
+    j1939_handle *const handle = &__j1939_handles[index];
+
+    handle->software = software;
+
+    return 0;
+}
+
+
+/**
+ *
+ */
+int j1939_set_component_identification(uint8_t index, const j1939_component_identification *component) {
+    j1939_handle *const handle = &__j1939_handles[index];
+
+    handle->component = component;
 
     return 0;
 }

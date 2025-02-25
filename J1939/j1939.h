@@ -25,6 +25,9 @@ typedef struct j1939_init_conf {
     const j1939_bsp *bsp;
     const j1939_callbacks *callbacks;
 
+    const j1939_software_identification *software;
+    const j1939_component_identification *component;
+
     int slave_mode;         // the mode that doesn't send control messages but sends application messages only
     uint32_t rand_seed;
 } j1939_init_conf;
@@ -34,6 +37,9 @@ typedef struct j1939_init_conf {
 int j1939_initialize(uint8_t index, const j1939_init_conf *const init_conf);
 // must be called in logic thread, no thread safe
 int j1939_configure(uint8_t index, uint8_t preferred_address, const j1939_CA_name *const CA_name);
+
+int j1939_set_software_identification(uint8_t index, const j1939_software_identification *software);
+int j1939_set_component_identification(uint8_t index, const j1939_component_identification *component);
 
 uint8_t j1939_get_address(uint8_t index);
 

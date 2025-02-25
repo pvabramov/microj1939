@@ -69,6 +69,9 @@ typedef struct j1939_handle {
 
     j1939_observing_nodes_state observer_state;
     unsigned observed_nodes;
+
+    const j1939_software_identification *software;
+    const j1939_component_identification *component;
 } j1939_handle;
 
 

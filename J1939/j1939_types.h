@@ -17,10 +17,35 @@
 #define J1939_MAX_DL                    8U
 #define J1939_PADDING_DATA              0xFFU
 
+#define J1939_MAX_SOFTWARE_IDENTIFICATION_LEN       125
+#define J1939_MAX_COMPONENT_MAKE_LEN                5
+#define J1939_MAX_COMPONENT_MODEL_LEN               200
+#define J1939_MAX_COMPONENT_SERIAL_LEN              200
+#define J1939_MAX_COMPONENT_UNIT_LEN                200
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+/**
+ * @brief
+ */
+typedef struct j1939_software_identification {
+    uint8_t nfields;
+    const char *identification;
+} j1939_software_identification;
+
+/**
+ * @brief
+ */
+typedef struct j1939_component_identification {
+    const char *make;
+    const char *model;
+    const char *serial_number;
+    const char *unit_number;
+} j1939_component_identification;
 
 /**
  * @brief

@@ -3,9 +3,11 @@
 #include <J1939/private/j1939_private.h>
 #include <J1939/private/j1939_rand.h>
 #include <J1939/private/j1939_notify.h>
+#include <J1939/private/j1939_string.h>
 
 #include <J1939/private/j1939_network_msg.h>
 #include <J1939/private/j1939_network.h>
+#include <J1939/private/j1939_tp_mgr.h>
 
 
 #define INITIAL_CLAIM_ADDRESS_TIMEOUT   (J1939_CLAIM_ADDRESS_TIMEOUT + 1)
@@ -224,13 +226,83 @@ int j1939_network_process(j1939_phandle phandle, uint32_t t_delta) {
 }
 
 
+
+static j1939_request_status __request_software_identification(j1939_phandle phandle, uint8_t dst_addr) {
+    static const char no_software_ident[] = "No software ident.*";
+    uint16_t msg_sz;
+    char *buf;
+    const j1939_software_identification *software = phandle->software;
+
+    /* open session, don't start transmition */
+    int sid = j1939_tp_mgr_open_tx_session(phandle, &phandle->tp_mgr_ctx, J1939_STD_PGN_SOFTWARE_IDENTIFICATION, dst_addr, 0, (void**)&buf, 0);
+    if (sid < 0) {
+        return J1939_REQ_BUSY;
+    }
+
+    if (!software || !software->nfields || !software->identification) {
+        buf[0] = 1;
+        msg_sz = 1U + (uint16_t) jstring_copy(&buf[1], no_software_ident, J1939_MAX_SOFTWARE_IDENTIFICATION_LEN);
+    } else {
+        buf[0] = (char) software->nfields;
+        msg_sz = 1U + (uint16_t) jstring_copy_maxmin(&buf[1], 0xFF, software->identification, J1939_MAX_SOFTWARE_IDENTIFICATION_LEN, J1939_TP_MIN_MSG_SZ);
+    }
+
+    /* buffer is ready, start transmition */
+    if (j1939_tp_mgr_start_tx_session(phandle, &phandle->tp_mgr_ctx, J1939_STD_PGN_SOFTWARE_IDENTIFICATION, dst_addr, msg_sz, sid) < 0) {
+        j1939_tp_mgr_close_session_with_error(phandle, &phandle->tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
+        return J1939_REQ_BUSY;
+    }
+
+    return J1939_REQ_HANDLED;
+}
+
+
+static j1939_request_status __request_component_identification(j1939_phandle phandle, uint8_t dst_addr) {
+    uint16_t msg_sz;
+    char *buf;
+    const j1939_component_identification *component = phandle->component;
+
+    if (!component) {
+        return J1939_REQ_NOT_SUPPORTED;
+    }
+
+    /* open session, don't start transmition */
+    int sid = j1939_tp_mgr_open_tx_session(phandle, &phandle->tp_mgr_ctx, J1939_STD_PGN_COMPONENT_IDENTIFICATION, dst_addr, 0, (void**)&buf, 0);
+    if (sid < 0) {
+        return J1939_REQ_BUSY;
+    }
+
+    msg_sz  = (uint16_t) jstring_copy(&buf[0], component->make, J1939_MAX_COMPONENT_MAKE_LEN);
+    buf[msg_sz++] = '*';
+    msg_sz += (uint16_t) jstring_copy(&buf[msg_sz], component->model, J1939_MAX_COMPONENT_MODEL_LEN);
+    buf[msg_sz++] = '*';
+    msg_sz += (uint16_t) jstring_copy(&buf[msg_sz], component->serial_number, J1939_MAX_COMPONENT_SERIAL_LEN);
+    buf[msg_sz++] = '*';
+    msg_sz += (uint16_t) jstring_copy(&buf[msg_sz], component->unit_number, J1939_MAX_COMPONENT_UNIT_LEN);
+    buf[msg_sz++] = '*';
+
+    /* buffer is ready, start transmition */
+    if (j1939_tp_mgr_start_tx_session(phandle, &phandle->tp_mgr_ctx, J1939_STD_PGN_COMPONENT_IDENTIFICATION, dst_addr, msg_sz, sid) < 0) {
+        j1939_tp_mgr_close_session_with_error(phandle, &phandle->tp_mgr_ctx, sid, J1939_RX_TX_ERROR_FAILED);
+        return J1939_REQ_BUSY;
+    }
+
+    return J1939_REQ_HANDLED;
+}
+
+
+
 int j1939_network_rx_process(j1939_phandle phandle, const j1939_rx_info *const rx_info) {
 
     switch (rx_info->type) {
         case J1939_RX_INFO_TYPE_REQUEST: {
             j1939_request_status status;
 
-            if (phandle->callbacks.request_handler) {
+            if (phandle->software && rx_info->PGN == J1939_STD_PGN_SOFTWARE_IDENTIFICATION) {
+                status = __request_software_identification(phandle, (rx_info->dst_addr != J1939_GLOBAL_ADDRESS) ? rx_info->src_addr : J1939_GLOBAL_ADDRESS);
+            } else if (phandle->component && rx_info->PGN == J1939_STD_PGN_COMPONENT_IDENTIFICATION) {
+                status = __request_component_identification(phandle, (rx_info->dst_addr != J1939_GLOBAL_ADDRESS) ? rx_info->src_addr : J1939_GLOBAL_ADDRESS);
+            } else if (phandle->callbacks.request_handler) {
                 status = phandle->callbacks.request_handler(phandle->index, rx_info->PGN, rx_info->src_addr, rx_info->dst_addr, rx_info->time);
             } else {
                 status = J1939_REQ_NOT_SUPPORTED;
@@ -390,7 +462,7 @@ static int __rx_handle_PGN_request(j1939_phandle phandle, const j1939_primitive 
 
         default:
             if (phandle->state == ACTIVE) {
-                if (phandle->callbacks.request_handler != NULL) {
+                if (phandle->callbacks.request_handler != NULL || phandle->software || phandle->component) {
                     __j1939_receive_notify(phandle, J1939_RX_INFO_TYPE_REQUEST,
                             requested_PGN,
                             frame->src_address,
