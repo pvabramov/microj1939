@@ -61,8 +61,11 @@ static const j1939_canlink canlink = {
     .send = unittest_canlink_send,
 };
 
-
 int unittest_helpers_setup(uint8_t index) {
+    return unittest_helpers_setup_ext(index, NULL, NULL);
+}
+
+int unittest_helpers_setup_ext(uint8_t index, const j1939_software_identification *sw_ident, const j1939_component_identification *comp_ident) {
     __the_time = 0;
 
     if (pipe2(__sent_pipes, O_DIRECT | O_NONBLOCK) < 0) {
@@ -91,6 +94,8 @@ int unittest_helpers_setup(uint8_t index) {
         .canlink = &canlink,
         .bsp = &bsp,
         .callbacks = &cb,
+        .software = sw_ident,
+        .component = comp_ident,
     };
 
     return j1939_initialize(index, &init_conf);

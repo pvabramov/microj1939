@@ -35,6 +35,7 @@ typedef struct unittest_j1939_observing_msg {
 } unittest_j1939_observing_msg;
 
 
+int unittest_helpers_setup_ext(uint8_t index, const j1939_software_identification *sw_ident, const j1939_component_identification *comp_ident);
 int unittest_helpers_setup(uint8_t index);
 void unittest_helpers_cleanup(void);
 
