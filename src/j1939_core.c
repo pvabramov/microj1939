@@ -244,11 +244,28 @@ int j1939_observenodes(uint8_t index) {
 
 
 /**
- * @brief
+ * @brief Sends Acknowledgment message to the originator of a frame
  *
- * @param primitive
+ * @param index The J1939 handle index
+ * @param ack_type The type of acknowledgment (e.g., ACK, NACK)
+ * @param gf The group function number (if applied)
+ * @param originator The address of the originator of the frame
+ * @param PGN The Protocol Group Number (PGN) of the frame
  *
- * @return
+ * @return 0 on success, non-zero on failure
+ */
+int j1939_sendack(uint8_t index, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN) {
+    j1939_handle *handle = &__j1939_handles[index];
+    return j1939_network_sendack(handle, ack_type, gf, originator, PGN);
+}
+
+
+/**
+ * @brief Send a J1939 frame to the network.
+ *
+ * @param primitive The primitive structure containing the frame data.
+ *
+ * @return 0 on success, non-zero on failure
  */
 int j1939_sendraw(uint8_t index, const j1939_primitive *const primitive) {
     j1939_handle *handle = &__j1939_handles[index];

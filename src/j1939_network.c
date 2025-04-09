@@ -52,6 +52,25 @@ int j1939_network_sendrequest(j1939_phandle phandle, uint32_t PGN, uint8_t dst_a
 }
 
 
+/**
+ * @brief Sends Acknowledge message
+ *
+ * @param phandle    The handle of J1939 network.
+ * @param ack_type  The type of acknowledge.
+ * @param gf        The GF value.
+ * @param originator The originator address.
+ * @param PGN       The PGN of the acknowledged message.
+ */
+int j1939_network_sendack(j1939_phandle phandle, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN) {
+
+    if (phandle->state < INITIALIZED) {
+        return -1;
+    }
+
+    return __send_ACK(phandle, ack_type, gf, originator, PGN);
+}
+
+
 int j1939_network_observe(j1939_phandle phandle) {
     int status;
 
@@ -309,7 +328,7 @@ int j1939_network_rx_process(j1939_phandle phandle, const j1939_rx_info *const r
             }
 
             if ((status != J1939_REQ_HANDLED) && (rx_info->dst_addr != J1939_GLOBAL_ADDRESS)) {
-                __send_ACK(phandle, (j1939_ack_control)status, 0xFF, rx_info->src_addr, rx_info->PGN);
+                __send_ACK_control(phandle, (j1939_ack_control)status, 0xFF, rx_info->src_addr, rx_info->PGN);
             }
 
             return 1;
@@ -475,7 +494,7 @@ static int __rx_handle_PGN_request(j1939_phandle phandle, const j1939_primitive 
                     * A global request shall not be responded to with a NACK when a particular PGN is not supported by a node.
                     */
                     if (dst_addr != J1939_GLOBAL_ADDRESS) {
-                        __send_ACK(phandle, J1939_ACK_NEGATIVE, 0xFF, frame->src_address, requested_PGN);
+                        __send_ACK_control(phandle, J1939_ACK_NEGATIVE, 0xFF, frame->src_address, requested_PGN);
                     }
                 }
             }

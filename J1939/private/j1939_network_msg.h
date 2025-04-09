@@ -13,17 +13,6 @@ extern "C" {
 /**
  * @brief
  */
-typedef enum j1939_ack_control {
-    J1939_ACK_POSITIVE = 0,
-    J1939_ACK_NEGATIVE = 1,
-    J1939_ACK_ACCESS_DENIED = 2,
-    J1939_ACK_BUSY = 3
-} j1939_ack_control;
-
-
-/**
- * @brief
- */
 typedef struct __attribute__((__packed__)) j1939_payload_request {
     uint8_t PGN[3];
 } j1939_payload_request;
@@ -90,7 +79,7 @@ static inline int __send_Request(j1939_phandle phandle, uint32_t PGN, uint8_t ad
  * @param originator_sa
  * @param PGN
  */
-static inline void __send_ACK(j1939_phandle phandle, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN) {
+static inline int __send_ACK(j1939_phandle phandle, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN) {
     j1939_payload_ack ack_body = {
         .__reserved__ = { 0xFF, 0xFF},
         .control = ack_type,
@@ -106,12 +95,29 @@ static inline void __send_ACK(j1939_phandle phandle, j1939_ack_control ack_type,
      */
     j1939_primitive ackm_primitive;
 
-    __j1939_send_control(
+    return __j1939_send_lock(
         phandle,
         j1939_primitive_build(J1939_STD_PGN_ACKM, J1939_GENERIC_PRIORITY,
                               phandle->address, J1939_GLOBAL_ADDRESS, J1939_STD_PGN_ACKM_DLC, &ack_body, &ackm_primitive
         )
     );
+}
+
+/**
+ * @brief Sends an Acknowledgment message
+ *
+ * This function sends an Acknowledgment message to the specified destination address only if J1939 is working in the normal mode.
+ *
+ * @param phandle The handle of the J1939 network interface
+ * @param ack_type The type of acknowledgment control (e.g., ACK, NACK)
+ * @param gf The group function number
+ * @param originator The originator's address
+ * @param PGN The PGN to which the acknowledgment applies
+ */
+static inline void __send_ACK_control(j1939_phandle phandle, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN) {
+    if (IS_NORMAL_MODE(phandle)) {
+        __send_ACK(phandle, ack_type, gf, originator, PGN);
+    }
 }
 
 #ifdef __cplusplus

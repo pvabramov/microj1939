@@ -54,6 +54,7 @@ int j1939_sendraw(uint8_t index, const j1939_primitive *const primitive);
 
 int j1939_sendrequest(uint8_t index, uint32_t PGN, uint8_t dst_addr);
 int j1939_observenodes(uint8_t index);
+int j1939_sendack(uint8_t index, j1939_ack_control ack_type, uint8_t gf, uint8_t originator, uint32_t PGN);
 
 // int j1939_write_request(...);
 
